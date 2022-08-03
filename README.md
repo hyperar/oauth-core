@@ -1,2 +1,2 @@
 # OAuthCore
-DevDefined.OAuth fork for .Net Core
+An OAuth Consumer and Provider implemented for .Net Core. Forked from bittercoder/DevDefined.OAuth.
