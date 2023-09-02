@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Hyperar.OauthCore
+namespace Hyperar.OAuthCore.Framework
 {
     using Hyperar.OauthCore.Framework;
 

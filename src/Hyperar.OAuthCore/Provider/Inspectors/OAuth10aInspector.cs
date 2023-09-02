@@ -27,7 +27,7 @@ namespace Hyperar.OauthCore.Provider.Inspectors
     using Hyperar.OauthCore.Storage;
 
     /// <summary>
-    /// This inspector implements additional behavior required by the 1.0a version of OAuth.
+    /// This inspector implements additional behavior required by the 1.0a version of OauthCore.
     /// </summary>
     public class OAuth10AInspector : IContextInspector
     {

@@ -132,7 +132,7 @@ namespace Hyperar.OauthCore.Provider
                 string secret = this._tokenStore.GetRequestTokenSecret(context);
                 context.TokenSecret = secret;
             }
-            else if (phase == ProviderPhase.AccessProtectedResourceRequest || phase == ProviderPhase.RenewAccessToken)
+            else if (phase is ProviderPhase.AccessProtectedResourceRequest or ProviderPhase.RenewAccessToken)
             {
                 string secret = this._tokenStore.GetAccessTokenSecret(context);
 

@@ -33,40 +33,30 @@ namespace Hyperar.OauthCore.Consumer
 
     public class ConsumerRequest : IConsumerRequest
     {
-        private readonly IOAuthConsumerContext _consumerContext;
-
-        private readonly IOAuthContext _context;
-
         private readonly IToken _token;
 
         public ConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token)
         {
             if (context == null)
             {
-                throw new ArgumentNullException("context");
+                throw new ArgumentNullException(nameof(context));
             }
 
             if (consumerContext == null)
             {
-                throw new ArgumentNullException("consumerContext");
+                throw new ArgumentNullException(nameof(consumerContext));
             }
 
-            this._context = context;
-            this._consumerContext = consumerContext;
+            this.Context = context;
+            this.ConsumerContext = consumerContext;
             this._token = token;
         }
 
         public string AcceptsType { get; set; }
 
-        public IOAuthConsumerContext ConsumerContext
-        {
-            get { return this._consumerContext; }
-        }
+        public IOAuthConsumerContext ConsumerContext { get; }
 
-        public IOAuthContext Context
-        {
-            get { return this._context; }
-        }
+        public IOAuthContext Context { get; }
 
         public Uri ProxyServerUri { get; set; }
 
@@ -84,49 +74,49 @@ namespace Hyperar.OauthCore.Consumer
 
         public RequestDescription GetRequestDescription()
         {
-            if (string.IsNullOrEmpty(this._context.Signature))
+            if (string.IsNullOrEmpty(this.Context.Signature))
             {
                 if (this._token != null)
                 {
-                    this._consumerContext.SignContextWithToken(this._context, this._token);
+                    this.ConsumerContext.SignContextWithToken(this.Context, this._token);
                 }
                 else
                 {
-                    this._consumerContext.SignContext(this._context);
+                    this.ConsumerContext.SignContext(this.Context);
                 }
             }
 
-            Uri uri = this._context.GenerateUri();
+            Uri uri = this.Context.GenerateUri();
 
             var description = new RequestDescription
             {
                 Url = uri,
-                Method = this._context.RequestMethod,
+                Method = this.Context.RequestMethod,
             };
 
-            if ((this._context.FormEncodedParameters != null) && (this._context.FormEncodedParameters.Count > 0))
+            if ((this.Context.FormEncodedParameters != null) && (this.Context.FormEncodedParameters.Count > 0))
             {
                 description.ContentType = Parameters.HttpFormEncoded;
-                description.Body = UriUtility.FormatQueryString(this._context.FormEncodedParameters.ToQueryParametersExcludingTokenSecret());
+                description.Body = UriUtility.FormatQueryString(this.Context.FormEncodedParameters.ToQueryParametersExcludingTokenSecret());
             }
             else if (!string.IsNullOrEmpty(this.RequestBody))
             {
                 description.Body = UriUtility.UrlEncode(this.RequestBody);
             }
-            else if (this._context.RawContent != null)
+            else if (this.Context.RawContent != null)
             {
-                description.ContentType = this._context.RawContentType;
-                description.RawBody = this._context.RawContent;
+                description.ContentType = this.Context.RawContentType;
+                description.RawBody = this.Context.RawContent;
             }
 
-            if (this._context.Headers != null)
+            if (this.Context.Headers != null)
             {
-                description.Headers.Add(this._context.Headers);
+                description.Headers.Add(this.Context.Headers);
             }
 
-            if (this._consumerContext.UseHeaderForOAuthParameters)
+            if (this.ConsumerContext.UseHeaderForOAuthParameters)
             {
-                description.Headers[Parameters.OAuth_Authorization_Header] = this._context.GenerateOAuthParametersForHeader();
+                description.Headers[Parameters.OAuth_Authorization_Header] = this.Context.GenerateOAuthParametersForHeader();
             }
 
             return description;
@@ -135,7 +125,7 @@ namespace Hyperar.OauthCore.Consumer
         public IConsumerRequest SignWithoutToken()
         {
             this.EnsureRequestHasNotBeenSignedYet();
-            this._consumerContext.SignContext(this._context);
+            this.ConsumerContext.SignContext(this.Context);
             return this;
         }
 
@@ -147,7 +137,7 @@ namespace Hyperar.OauthCore.Consumer
         public IConsumerRequest SignWithToken(IToken token)
         {
             this.EnsureRequestHasNotBeenSignedYet();
-            this.ConsumerContext.SignContextWithToken(this._context, token);
+            this.ConsumerContext.SignContextWithToken(this.Context, token);
             return this;
         }
 
@@ -157,10 +147,7 @@ namespace Hyperar.OauthCore.Consumer
             {
                 string encodedFormParameters = this.ToString();
 
-                if (this.ResponseBodyAction != null)
-                {
-                    this.ResponseBodyAction(encodedFormParameters);
-                }
+                this.ResponseBodyAction?.Invoke(encodedFormParameters);
 
                 try
                 {
@@ -203,7 +190,7 @@ namespace Hyperar.OauthCore.Consumer
 
             var request = (HttpWebRequest)WebRequest.Create(description.Url);
             request.Method = description.Method;
-            request.UserAgent = this._consumerContext.UserAgent;
+            request.UserAgent = this.ConsumerContext.UserAgent;
 
             if (this.Timeout.HasValue)
             {
@@ -272,9 +259,8 @@ namespace Hyperar.OauthCore.Consumer
             }
             catch (WebException webEx)
             {
-                OAuthException authException;
 
-                if (WebExceptionHelper.TryWrapException(this.Context, webEx, out authException, this.ResponseBodyAction))
+                if (WebExceptionHelper.TryWrapException(this.Context, webEx, out OAuthException authException, this.ResponseBodyAction))
                 {
                     throw authException;
                 }
@@ -285,7 +271,7 @@ namespace Hyperar.OauthCore.Consumer
 
         private void EnsureRequestHasNotBeenSignedYet()
         {
-            if (!string.IsNullOrEmpty(this._context.Signature))
+            if (!string.IsNullOrEmpty(this.Context.Signature))
             {
                 throw Error.ThisConsumerRequestHasAlreadyBeenSigned();
             }

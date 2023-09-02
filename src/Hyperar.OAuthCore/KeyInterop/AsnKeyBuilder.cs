@@ -19,7 +19,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-namespace MonoRailsOAuth.Core.KeyInterop
+
+namespace Hyperar.OAuthCore.KeyInterop
 {
     using System;
     using System.Collections.Generic;
@@ -29,9 +30,9 @@ namespace MonoRailsOAuth.Core.KeyInterop
 
     internal class AsnKeyBuilder
     {
-        private static byte[] EMPTY = new byte[] { };
+        private static readonly byte[] EMPTY = new byte[] { };
 
-        private static byte[] ZERO = new byte[] { 0 };
+        private static readonly byte[] ZERO = new byte[] { 0 };
 
         /// <summary>
         /// <para>An ordered sequence of zero, one or more bits. Returns
@@ -46,11 +47,11 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <seealso cref="CreateBitString(byte[], uint)"/>
         /// <seealso cref="CreateBitString(AsnType)"/>
         /// <seealso cref="CreateBitString(AsnType[])"/>
-        /// <seealso cref="CreateBitString(String)"/>
+        /// <seealso cref="CreateBitString(string)"/>
         /// <seealso cref="CreateOctetString(byte[])"/>
         /// <seealso cref="CreateOctetString(AsnType)"/>
         /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <seealso cref="CreateOctetString(string)"/>
         public static AsnType CreateBitString(byte[] octets)
         {
             // BitString: Tag 0x03 (3, Universal, Primitive)
@@ -75,11 +76,11 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <seealso cref="CreateBitString(byte[])"/>
         /// <seealso cref="CreateBitString(AsnType)"/>
         /// <seealso cref="CreateBitString(AsnType[])"/>
-        /// <seealso cref="CreateBitString(String)"/>
+        /// <seealso cref="CreateBitString(string)"/>
         /// <seealso cref="CreateOctetString(byte[])"/>
         /// <seealso cref="CreateOctetString(AsnType)"/>
         /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <seealso cref="CreateOctetString(string)"/>
         public static AsnType CreateBitString(byte[] octets, uint unusedBits)
         {
             if (IsEmpty(octets))
@@ -109,11 +110,11 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <seealso cref="CreateBitString(byte[])"/>
         /// <seealso cref="CreateBitString(byte[], uint)"/>
         /// <seealso cref="CreateBitString(AsnType[])"/>
-        /// <seealso cref="CreateBitString(String)"/>
+        /// <seealso cref="CreateBitString(string)"/>
         /// <seealso cref="CreateOctetString(byte[])"/>
         /// <seealso cref="CreateOctetString(AsnType)"/>
         /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <seealso cref="CreateOctetString(string)"/>
         public static AsnType CreateBitString(AsnType value)
         {
             if (IsEmpty(value))
@@ -135,11 +136,11 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <seealso cref="CreateBitString(byte[])"/>
         /// <seealso cref="CreateBitString(byte[], uint)"/>
         /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(String)"/>
+        /// <seealso cref="CreateBitString(string)"/>
         /// <seealso cref="CreateOctetString(byte[])"/>
         /// <seealso cref="CreateOctetString(AsnType)"/>
         /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <seealso cref="CreateOctetString(string)"/>
         public static AsnType CreateBitString(AsnType[] values)
         {
             if (IsEmpty(values))
@@ -169,16 +170,17 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <seealso cref="CreateOctetString(byte[])"/>
         /// <seealso cref="CreateOctetString(AsnType)"/>
         /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
-        public static AsnType CreateBitString(String value)
+        /// <seealso cref="CreateOctetString(string)"/>
+        public static AsnType CreateBitString(string value)
         {
             if (IsEmpty(value))
             { return CreateBitString(EMPTY); }
 
             // Any unused bits?
             int lstrlen = value.Length;
-            int unusedBits = 8 - (lstrlen % 8);
-            if (8 == unusedBits) { unusedBits = 0; }
+            int unusedBits = 8 - lstrlen % 8;
+            if (8 == unusedBits)
+            { unusedBits = 0; }
 
             for (int i = 0; i < unusedBits; i++)
             { value += "0"; }
@@ -189,7 +191,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
             List<byte> octets = new List<byte>();
             for (int i = 0; i < loctlen; i++)
             {
-                String s = value.Substring(i * 8, 8);
+                string s = value.Substring(i * 8, 8);
                 byte b = 0x00;
 
                 try
@@ -338,7 +340,8 @@ namespace MonoRailsOAuth.Core.KeyInterop
         {
             byte[] i = null, d = Duplicate(value);
 
-            if (IsEmpty(d)) { d = ZERO; }
+            if (IsEmpty(d))
+            { d = ZERO; }
 
             // Mediate the 2's compliment representation.
             // If the first byte has its high bit set, we will
@@ -380,10 +383,10 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <seealso cref="CreateBitString(byte[])"/>
         /// <seealso cref="CreateBitString(byte[], uint)"/>
         /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(String)"/>
+        /// <seealso cref="CreateBitString(string)"/>
         /// <seealso cref="CreateOctetString(AsnType)"/>
         /// <seealso cref="CreateOctetString(AsnType[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <seealso cref="CreateOctetString(string)"/>
         public static AsnType CreateOctetString(byte[] value)
         {
             if (IsEmpty(value))
@@ -408,9 +411,9 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <seealso cref="CreateBitString(byte[])"/>
         /// <seealso cref="CreateBitString(byte[], uint)"/>
         /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(String)"/>
+        /// <seealso cref="CreateBitString(string)"/>
         /// <seealso cref="CreateOctetString(byte[])"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <seealso cref="CreateOctetString(string)"/>
         public static AsnType CreateOctetString(AsnType value)
         {
             if (IsEmpty(value))
@@ -435,10 +438,10 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <seealso cref="CreateBitString(byte[])"/>
         /// <seealso cref="CreateBitString(byte[], uint)"/>
         /// <seealso cref="CreateBitString(AsnType)"/>
-        /// <seealso cref="CreateBitString(String)"/>
+        /// <seealso cref="CreateBitString(string)"/>
         /// <seealso cref="CreateOctetString(byte[])"/>
         /// <seealso cref="CreateOctetString(AsnType)"/>
-        /// <seealso cref="CreateOctetString(String)"/>
+        /// <seealso cref="CreateOctetString(string)"/>
         public static AsnType CreateOctetString(AsnType[] values)
         {
             if (IsEmpty(values))
@@ -467,12 +470,12 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// encoded octet string.</returns>
         /// <seealso cref="CreateBitString(byte[])"/>
         /// <seealso cref="CreateBitString(byte[], uint)"/>
-        /// <seealso cref="CreateBitString(String)"/>
+        /// <seealso cref="CreateBitString(string)"/>
         /// <seealso cref="CreateBitString(AsnType)"/>
         /// <seealso cref="CreateOctetString(byte[])"/>
         /// <seealso cref="CreateOctetString(AsnType)"/>
         /// <seealso cref="CreateOctetString(AsnType[])"/>
-        public static AsnType CreateOctetString(String value)
+        public static AsnType CreateOctetString(string value)
         {
             if (IsEmpty(value))
             { return CreateOctetString(EMPTY); }
@@ -483,7 +486,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
             List<byte> octets = new List<byte>();
             for (int i = 0; i < len; i++)
             {
-                String s = value.Substring(i * 2, 2);
+                string s = value.Substring(i * 2, 2);
                 byte b = 0x00;
 
                 try
@@ -513,7 +516,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// <code>AsnType oid = CreateOid("1.2.840.113549.1.1.1")</code>
         /// </example>
         /// <seealso cref="CreateOid(byte[])"/>
-        public static AsnType CreateOid(String value)
+        public static AsnType CreateOid(string value)
         {
             // Punt?
             if (IsEmpty(value))
@@ -521,7 +524,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                 return null;
             }
 
-            String[] tokens = value.Split(new Char[] { ' ', '.' });
+            string[] tokens = value.Split(new char[] { ' ', '.' });
 
             // Punt?
             if (IsEmpty(tokens))
@@ -530,17 +533,19 @@ namespace MonoRailsOAuth.Core.KeyInterop
             }
 
             // Parsing/Manipulation of the arc value
-            UInt64 a = 0;
+            ulong a = 0;
 
             // One or more strings are available
-            List<UInt64> arcs = new List<UInt64>();
+            List<ulong> arcs = new List<ulong>();
 
-            foreach (String t in tokens)
+            foreach (string t in tokens)
             {
                 // No empty or ill-formed strings...
-                if (t.Length == 0) { break; }
+                if (t.Length == 0)
+                { break; }
 
-                try { a = Convert.ToUInt64(t, CultureInfo.InvariantCulture); }
+                try
+                { a = Convert.ToUInt64(t, CultureInfo.InvariantCulture); }
                 catch (FormatException /*e*/) { break; }
                 catch (OverflowException /*e*/) { break; }
 
@@ -558,9 +563,11 @@ namespace MonoRailsOAuth.Core.KeyInterop
 
             // Guard the case of a small list
             // The list has at least 1 item...
-            if (arcs.Count >= 1) { a = arcs[0] * 40; }
-            if (arcs.Count >= 2) { a += arcs[1]; }
-            octets.Add((byte)(a));
+            if (arcs.Count >= 1)
+            { a = arcs[0] * 40; }
+            if (arcs.Count >= 2)
+            { a += arcs[1]; }
+            octets.Add((byte)a);
 
             // Add remaining arcs (subidentifiers)
             for (int i = 2; i < arcs.Count; i++)
@@ -569,7 +576,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                 List<byte> temp = new List<byte>();
 
                 // The current arc (subidentifier)
-                UInt64 arc = arcs[i];
+                ulong arc = arcs[i];
 
                 // Build the arc (subidentifier) byte array
                 // The array is built in reverse (LSB to MSB).
@@ -578,7 +585,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                     // Each entry is formed from the low 7 bits (0x7F).
                     // Set high bit of all entries (0x80) per X.680. We
                     // will unset the high bit of the final byte later.
-                    temp.Add((byte)(0x80 | (arc & 0x7F)));
+                    temp.Add((byte)(0x80 | arc & 0x7F));
                     arc >>= 7;
                 } while (0 != arc);
 
@@ -617,7 +624,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
         /// byte[] rsa = new byte[] { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 };
         /// AsnType = CreateOid(rsa)</code>
         /// </example>
-        /// <seealso cref="CreateOid(String)"/>
+        /// <seealso cref="CreateOid(string)"/>
         public static AsnType CreateOid(byte[] value)
         {
             // Punt...
@@ -687,7 +694,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
             { throw new ArgumentException("A sequence requires at least one value."); }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
-            return new AsnType((0x10 | 0x20), Concatenate(values));
+            return new AsnType(0x10 | 0x20, Concatenate(values));
         }
 
         /// <summary>
@@ -1005,7 +1012,8 @@ namespace MonoRailsOAuth.Core.KeyInterop
             int pos = 0;
             foreach (byte b in d)
             {
-                if (0 != b) { break; }
+                if (0 != b)
+                { break; }
                 pos++;
             }
 
@@ -1077,7 +1085,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                 c = new byte[d.Length + 1];
 
                 // Sign Extend....
-                c[0] = (byte)0xFF;
+                c[0] = 0xFF;
 
                 Array.Copy(d, 0, c, 1, d.Length);
             }
@@ -1175,7 +1183,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
             return false;
         }
 
-        private static bool IsEmpty(String s)
+        private static bool IsEmpty(string s)
         {
             if (null == s || 0 == s.Length)
             { return true; }
@@ -1183,7 +1191,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
             return false;
         }
 
-        private static bool IsEmpty(String[] strings)
+        private static bool IsEmpty(string[] strings)
         {
             if (null == strings || 0 == strings.Length)
             {
@@ -1237,11 +1245,11 @@ namespace MonoRailsOAuth.Core.KeyInterop
 
         public class AsnMessage
         {
-            private String m_format;
+            private readonly string m_format;
 
-            private byte[] m_octets;
+            private readonly byte[] m_octets;
 
-            public AsnMessage(byte[] octets, String format)
+            public AsnMessage(byte[] octets, string format)
             {
                 this.m_octets = octets;
                 this.m_format = format;
@@ -1251,7 +1259,8 @@ namespace MonoRailsOAuth.Core.KeyInterop
             {
                 get
                 {
-                    if (null == this.m_octets) { return 0; }
+                    if (null == this.m_octets)
+                    { return 0; }
                     return this.m_octets.Length;
                 }
 
@@ -1266,7 +1275,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                 return this.m_octets;
             }
 
-            public String GetFormat()
+            public string GetFormat()
             { return this.m_format; }
         }
 
@@ -1282,7 +1291,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
             private bool m_raw;
 
             // Setters and Getters
-            private byte[] m_tag;
+            private readonly byte[] m_tag;
 
             public AsnType(byte tag, byte octet)
             {
@@ -1444,7 +1453,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                 {
                     length = new byte[2];
                     length[0] = 0x81;
-                    length[1] = (byte)((this.m_octets.Length & 0xFF));
+                    length[1] = (byte)(this.m_octets.Length & 0xFF);
                 }
 
                 //
@@ -1457,7 +1466,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                     length = new byte[3];
                     length[0] = 0x82;
                     length[1] = (byte)((this.m_octets.Length & 0xFF00) >> 8);
-                    length[2] = (byte)((this.m_octets.Length & 0xFF));
+                    length[2] = (byte)(this.m_octets.Length & 0xFF);
                 }
 
                 // 0xFFFF < length <= 0xFFFFFF
@@ -1467,7 +1476,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                     length[0] = 0x83;
                     length[1] = (byte)((this.m_octets.Length & 0xFF0000) >> 16);
                     length[2] = (byte)((this.m_octets.Length & 0xFF00) >> 8);
-                    length[3] = (byte)((this.m_octets.Length & 0xFF));
+                    length[3] = (byte)(this.m_octets.Length & 0xFF);
                 }
 
                 // 0xFFFFFF < length <= 0xFFFFFFFF
@@ -1478,7 +1487,7 @@ namespace MonoRailsOAuth.Core.KeyInterop
                     length[1] = (byte)((this.m_octets.Length & 0xFF000000) >> 24);
                     length[2] = (byte)((this.m_octets.Length & 0xFF0000) >> 16);
                     length[3] = (byte)((this.m_octets.Length & 0xFF00) >> 8);
-                    length[4] = (byte)((this.m_octets.Length & 0xFF));
+                    length[4] = (byte)(this.m_octets.Length & 0xFF);
                 }
 
                 this.m_length = length;

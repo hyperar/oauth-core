@@ -33,6 +33,7 @@ namespace Hyperar.OauthCore.KeyInterop
     using System.IO;
     using System.Security.Cryptography;
     using System.Text;
+    using Hyperar.OAuthCore.KeyInterop;
 
     public class AsnKeyParser
     {

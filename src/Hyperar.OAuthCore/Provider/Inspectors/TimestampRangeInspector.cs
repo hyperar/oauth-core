@@ -30,9 +30,9 @@ namespace Hyperar.OauthCore.Provider.Inspectors
     {
         private readonly Func<DateTime> _nowFunc;
 
-        private TimeSpan _maxAfterNow;
+        private readonly TimeSpan _maxAfterNow;
 
-        private TimeSpan _maxBeforeNow;
+        private readonly TimeSpan _maxBeforeNow;
 
         public TimestampRangeInspector(TimeSpan window)
             : this(new TimeSpan(window.Ticks / 2), new TimeSpan(window.Ticks / 2))

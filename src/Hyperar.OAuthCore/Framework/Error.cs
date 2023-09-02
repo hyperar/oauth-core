@@ -165,9 +165,7 @@ namespace Hyperar.OauthCore.Framework
 
         public static Exception RequestFailed(WebException innerException)
         {
-            var response = innerException.Response as HttpWebResponse;
-
-            if (response != null)
+            if (innerException.Response is HttpWebResponse response)
             {
                 using (var reader = new StreamReader(innerException.Response.GetResponseStream()))
                 {

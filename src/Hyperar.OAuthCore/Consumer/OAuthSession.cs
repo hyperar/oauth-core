@@ -290,7 +290,7 @@ namespace Hyperar.OauthCore.Consumer
             var context = new OAuthContext
             {
                 UseAuthorizationHeader = this.ConsumerContext.UseHeaderForOAuthParameters,
-                IncludeOAuthRequestBodyHashInSignature = AddBodyHashesToRawRequests
+                IncludeOAuthRequestBodyHashInSignature = this.AddBodyHashesToRawRequests
             };
 
             context.Cookies.Add(this._cookies);
@@ -311,7 +311,7 @@ namespace Hyperar.OauthCore.Consumer
             var context = new OAuthContext
             {
                 UseAuthorizationHeader = this.ConsumerContext.UseHeaderForOAuthParameters,
-                IncludeOAuthRequestBodyHashInSignature = AddBodyHashesToRawRequests
+                IncludeOAuthRequestBodyHashInSignature = this.AddBodyHashesToRawRequests
             };
 
             context.Cookies.Add(this._cookies);

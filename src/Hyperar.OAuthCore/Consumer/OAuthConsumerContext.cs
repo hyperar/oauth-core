@@ -27,6 +27,7 @@ namespace Hyperar.OauthCore.Consumer
     using Hyperar.OauthCore.Framework;
     using Hyperar.OauthCore.Framework.Signing;
     using Hyperar.OauthCore.Utility;
+    using Hyperar.OAuthCore.Framework;
 
     [Serializable]
     public class OAuthConsumerContext : IOAuthConsumerContext
@@ -84,7 +85,7 @@ namespace Hyperar.OauthCore.Consumer
 
             this._signer.SignContext(context,
                                 new SigningContext
-                                { Algorithm = Key, SignatureBase = signatureBase, ConsumerSecret = ConsumerSecret });
+                                { Algorithm = this.Key, SignatureBase = signatureBase, ConsumerSecret = this.ConsumerSecret });
         }
 
         public void SignContextWithToken(IOAuthContext context, IToken token)
