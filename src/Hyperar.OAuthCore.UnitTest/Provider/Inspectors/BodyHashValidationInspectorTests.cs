@@ -5,7 +5,7 @@
     // The MIT License
     //
     // Copyright (c) 2006-2008 DevDefined Limited.
-    // 
+    //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
     // in the Software without restriction, including without limitation the rights
@@ -24,26 +24,42 @@
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    #endregion
+    #endregion License
 
-    using Hyperar.OauthCore.Framework;
-    using Hyperar.OauthCore.Provider.Inspectors;
+    using Hyperar.OAuthCore.Framework;
+    using Hyperar.OAuthCore.Provider.Inspectors;
     using Xunit;
 
     [TestClass]
     public class BodyHashValidationInspectorTests
     {
         private const string EmptyBodyHash = "2jmj7l5rSw0yVb/vlWAYkK/YBwk=";
+
         private readonly BodyHashValidationInspector inspector = new BodyHashValidationInspector();
 
         [TestMethod]
-        public void InspectBodyForPlainttextSignatureDoesNothing()
+        public void InspectBodyForHmacSha1SignatureDoesNotThrowWhenBodyHashIsNull()
         {
             var context = new OAuthContext
             {
                 UseAuthorizationHeader = true,
-                BodyHash = "wrong",
-                SignatureMethod = SignatureMethod.PlainText
+                BodyHash = null,
+                SignatureMethod = SignatureMethod.HmacSha1
+            };
+
+            var exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
+
+            Assert.IsNull(exception);
+        }
+
+        [TestMethod]
+        public void InspectBodyForHmacSha1SignatureDoesNotThrowWhenHashMatches()
+        {
+            var context = new OAuthContext
+            {
+                UseAuthorizationHeader = true,
+                BodyHash = EmptyBodyHash,
+                SignatureMethod = SignatureMethod.HmacSha1
             };
 
             var exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
@@ -67,28 +83,13 @@
         }
 
         [TestMethod]
-        public void InspectBodyForHmacSha1SignatureDoesNotThrowWhenHashMatches()
+        public void InspectBodyForPlainttextSignatureDoesNothing()
         {
             var context = new OAuthContext
             {
                 UseAuthorizationHeader = true,
-                BodyHash = EmptyBodyHash,
-                SignatureMethod = SignatureMethod.HmacSha1
-            };
-
-            var exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
-
-            Assert.IsNull(exception);
-        }
-
-        [TestMethod]
-        public void InspectBodyForHmacSha1SignatureDoesNotThrowWhenBodyHashIsNull()
-        {
-            var context = new OAuthContext
-            {
-                UseAuthorizationHeader = true,
-                BodyHash = null,
-                SignatureMethod = SignatureMethod.HmacSha1
+                BodyHash = "wrong",
+                SignatureMethod = SignatureMethod.PlainText
             };
 
             var exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));

@@ -1,6 +1,6 @@
 // The MIT License
 //
-// Copyright (c) 2022 Hyperar.
+// Copyright (c) 2024 Hyperar.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -1284,14 +1284,14 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Constructors
             // No default - must specify tag and data
 
+            // Setters and Getters
+            private readonly byte[] m_tag;
+
             private byte[] m_length;
 
             private byte[] m_octets;
 
             private bool m_raw;
-
-            // Setters and Getters
-            private readonly byte[] m_tag;
 
             public AsnType(byte tag, byte octet)
             {
@@ -1338,6 +1338,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     { return EMPTY; }
                     return this.m_octets;
                 }
+
                 set
                 { this.m_octets = value; }
             }

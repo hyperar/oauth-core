@@ -1,6 +1,6 @@
 // The MIT License
 //
-// Copyright (c) 2022 Hyperar.
+// Copyright (c) 2024 Hyperar.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Hyperar.OauthCore.Consumer
+namespace Hyperar.OAuthCore.Consumer
 {
     using System;
     using System.Collections;
     using System.Collections.Specialized;
     using System.Net;
     using System.Text;
-    using Hyperar.OauthCore.Framework;
-    using Hyperar.OauthCore.Utility;
+    using Hyperar.OAuthCore.Framework;
+    using Hyperar.OAuthCore.Utility;
 
     public static class ConsumerRequestExtensions
     {

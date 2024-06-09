@@ -5,7 +5,7 @@
     // The MIT License
     //
     // Copyright (c) 2006-2008 DevDefined Limited.
-    // 
+    //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
     // in the Software without restriction, including without limitation the rights
@@ -24,15 +24,23 @@
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    #endregion
+    #endregion License
 
     using System;
     using System.Text;
-    using Hyperar.OauthCore.Framework;
+    using Hyperar.OAuthCore.Framework;
 
     [TestClass]
     public class OAuthContextTests
     {
+        [TestMethod]
+        public void GenerateSignatureForEmptyBody()
+        {
+            var context = new OAuthContext();
+
+            Assert.AreEqual("2jmj7l5rSw0yVb/vlWAYkK/YBwk=", context.GenerateBodyHash());
+        }
+
         [TestMethod]
         public void GenerateSignatureWhenTokenIsUrlEncoded()
         {
@@ -78,14 +86,6 @@
             Assert.AreEqual(
                 "POST&http%3A%2F%2Fwww.example.com%2Fresource&oauth_body_hash%3DLve95gjOVATpfV8EL5X4nxwjKHE%253D%26oauth_consumer_key%3Dconsumer%26oauth_nonce%3D10369470270925%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1236874236%26oauth_token%3Dtoken%26oauth_version%3D1.0",
                 context.GenerateSignatureBase());
-        }
-
-        [TestMethod]
-        public void GenerateSignatureForEmptyBody()
-        {
-            var context = new OAuthContext();
-
-            Assert.AreEqual("2jmj7l5rSw0yVb/vlWAYkK/YBwk=", context.GenerateBodyHash());
         }
 
         [TestMethod]

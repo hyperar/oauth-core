@@ -1,7 +1,7 @@
-﻿namespace Hyperar.OauthCore.Provider.Inspectors
+﻿namespace Hyperar.OAuthCore.Provider.Inspectors
 {
     using System;
-    using Hyperar.OauthCore.Framework;
+    using Hyperar.OAuthCore.Framework;
 
     public class XAuthValidationInspector : IContextInspector
     {

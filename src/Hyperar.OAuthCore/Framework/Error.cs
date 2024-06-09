@@ -1,6 +1,6 @@
 // The MIT License
 //
-// Copyright (c) 2022 Hyperar.
+// Copyright (c) 2024 Hyperar.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Hyperar.OauthCore.Framework
+namespace Hyperar.OAuthCore.Framework
 {
     using System;
     using System.IO;
     using System.Net;
-    using Hyperar.OauthCore.Provider;
+    using Hyperar.OAuthCore.Provider;
 
     public static class Error
     {
