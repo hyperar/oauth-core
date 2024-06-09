@@ -5,7 +5,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
     // The MIT License
     //
     // Copyright (c) 2006-2008 DevDefined Limited.
-    // 
+    //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
     // in the Software without restriction, including without limitation the rights
@@ -24,13 +24,12 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    #endregion
+    #endregion License
 
     using System;
-    using Hyperar.OauthCore.Consumer;
-    using Hyperar.OauthCore.Provider;
-    using Hyperar.OauthCore.Provider.Inspectors;
-    using Hyperar.OauthCore.Testing;
+    using Hyperar.OAuthCore.Consumer;
+    using Hyperar.OAuthCore.Provider;
+    using Hyperar.OAuthCore.Provider.Inspectors;
     using Hyperar.OAuthCore.Testing;
 
     [TestClass]

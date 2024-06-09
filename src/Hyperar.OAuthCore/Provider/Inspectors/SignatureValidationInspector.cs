@@ -1,6 +1,6 @@
 // The MIT License
 //
-// Copyright (c) 2022 Hyperar.
+// Copyright (c) 2024 Hyperar.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,11 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Hyperar.OauthCore.Provider.Inspectors
+namespace Hyperar.OAuthCore.Provider.Inspectors
 {
-    using Hyperar.OauthCore.Framework;
-    using Hyperar.OauthCore.Framework.Signing;
-    using Hyperar.OauthCore.Storage;
+    using Hyperar.OAuthCore.Framework;
+    using Hyperar.OAuthCore.Framework.Signing;
+    using Hyperar.OAuthCore.Storage;
 
     public class SignatureValidationInspector : IContextInspector
     {

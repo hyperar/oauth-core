@@ -5,7 +5,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
     // The MIT License
     //
     // Copyright (c) 2006-2008 DevDefined Limited.
-    // 
+    //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
     // in the Software without restriction, including without limitation the rights
@@ -24,15 +24,47 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    #endregion
+    #endregion License
 
     using System.Text;
-    using Hyperar.OauthCore.Consumer;
-    using Hyperar.OauthCore.Framework;
+    using Hyperar.OAuthCore.Consumer;
+    using Hyperar.OAuthCore.Framework;
 
     [TestClass]
     public class OAuthSessionTests
     {
+        [TestMethod]
+        public void CreateSessionUsingContextOnlyConstructorDoesNotThrow()
+        {
+            var session = new OAuthSession(new OAuthConsumerContext());
+
+            Assert.IsNotNull(session);
+        }
+
+        [TestMethod]
+        public void GenerateRequestWithRawBodyIncludesBodyHash()
+        {
+            var session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer", UseHeaderForOAuthParameters = true }, "http://localhost/request", "http://localhost/userauth",
+                                           "http://localhost/access");
+
+            var accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
+
+            byte[] rawContents = Encoding.UTF8.GetBytes("Hello World!");
+
+            IConsumerRequest content = session
+                .EnableOAuthRequestBodyHashes()
+                .Request(accessToken)
+                .Post()
+                .ForUrl("http://localhost/resource")
+                .WithRawContent(rawContents);
+
+            RequestDescription description = content.GetRequestDescription();
+
+            Assert.AreEqual(rawContents, description.RawBody);
+
+            Assert.IsTrue(description.Headers[Parameters.OAuth_Authorization_Header].Contains("oauth_body_hash=\"Lve95gjOVATpfV8EL5X4nxwjKHE%3D\""));
+        }
+
         [TestMethod]
         public void GetRequestTokenForConsumerWithCallbackUrl()
         {
@@ -145,38 +177,6 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
                 .GetRequestDescription();
 
             Assert.IsFalse(description.Url.ToString().Contains(Parameters.OAuth_Token_Secret));
-        }
-
-        [TestMethod]
-        public void GenerateRequestWithRawBodyIncludesBodyHash()
-        {
-            var session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer", UseHeaderForOAuthParameters = true }, "http://localhost/request", "http://localhost/userauth",
-                                           "http://localhost/access");
-
-            var accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
-
-            byte[] rawContents = Encoding.UTF8.GetBytes("Hello World!");
-
-            IConsumerRequest content = session
-                .EnableOAuthRequestBodyHashes()
-                .Request(accessToken)
-                .Post()
-                .ForUrl("http://localhost/resource")
-                .WithRawContent(rawContents);
-
-            RequestDescription description = content.GetRequestDescription();
-
-            Assert.AreEqual(rawContents, description.RawBody);
-
-            Assert.IsTrue(description.Headers[Parameters.OAuth_Authorization_Header].Contains("oauth_body_hash=\"Lve95gjOVATpfV8EL5X4nxwjKHE%3D\""));
-        }
-
-        [TestMethod]
-        public void CreateSessionUsingContextOnlyConstructorDoesNotThrow()
-        {
-            var session = new OAuthSession(new OAuthConsumerContext());
-
-            Assert.IsNotNull(session);
         }
     }
 }

@@ -1,6 +1,6 @@
 // The MIT License
 //
-// Copyright (c) 2022 Hyperar.
+// Copyright (c) 2024 Hyperar.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 namespace Hyperar.OAuthCore.Framework
 {
     using System;
-    using Hyperar.OauthCore.Framework;
 
     /// <summary>
     /// Generates unique nonces (via Guids) to let the server detect duplicated requests.

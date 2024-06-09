@@ -1,11 +1,11 @@
-namespace Hyperar.OauthCore.Testing
+namespace Hyperar.OAuthCore.Testing
 {
     #region License
 
     // The MIT License
     //
     // Copyright (c) 2006-2008 DevDefined Limited.
-    // 
+    //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
     // in the Software without restriction, including without limitation the rights
@@ -24,25 +24,19 @@ namespace Hyperar.OauthCore.Testing
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    #endregion
+    #endregion License
 
     using System;
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
-    using Hyperar.OauthCore.Framework;
-    using Hyperar.OauthCore.Storage;
-    using Hyperar.OAuthCore.Testing;
+    using Hyperar.OAuthCore.Framework;
+    using Hyperar.OAuthCore.Storage;
 
     public class TestConsumerStore : IConsumerStore
     {
-        public bool IsConsumer(IConsumer consumer)
+        public AsymmetricAlgorithm GetConsumerPublicKey(IConsumer consumer)
         {
-            return (consumer.ConsumerKey == "key" && string.IsNullOrEmpty(consumer.Realm));
-        }
-
-        public void SetConsumerSecret(IConsumer consumer, string consumerSecret)
-        {
-            throw new NotImplementedException();
+            return TestCertificates.OAuthTestCertificate().PublicKey.Key;
         }
 
         public string GetConsumerSecret(IOAuthContext consumer)
@@ -50,14 +44,19 @@ namespace Hyperar.OauthCore.Testing
             return "secret";
         }
 
+        public bool IsConsumer(IConsumer consumer)
+        {
+            return (consumer.ConsumerKey == "key" && string.IsNullOrEmpty(consumer.Realm));
+        }
+
         public void SetConsumerCertificate(IConsumer consumer, X509Certificate2 certificate)
         {
             throw new NotImplementedException();
         }
 
-        public AsymmetricAlgorithm GetConsumerPublicKey(IConsumer consumer)
+        public void SetConsumerSecret(IConsumer consumer, string consumerSecret)
         {
-            return TestCertificates.OAuthTestCertificate().PublicKey.Key;
+            throw new NotImplementedException();
         }
     }
 }

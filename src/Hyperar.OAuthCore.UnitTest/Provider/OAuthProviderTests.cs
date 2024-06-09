@@ -5,7 +5,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
     // The MIT License
     //
     // Copyright (c) 2006-2008 DevDefined Limited.
-    // 
+    //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
     // in the Software without restriction, including without limitation the rights
@@ -24,13 +24,13 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    #endregion
+    #endregion License
 
     using System;
-    using Hyperar.OauthCore.Framework;
-    using Hyperar.OauthCore.Provider;
-    using Hyperar.OauthCore.Provider.Inspectors;
-    using Hyperar.OauthCore.Testing;
+    using Hyperar.OAuthCore.Framework;
+    using Hyperar.OAuthCore.Provider;
+    using Hyperar.OAuthCore.Provider.Inspectors;
+    using Hyperar.OAuthCore.Testing;
 
     [TestClass]
     public class OAuthProvider10Tests
@@ -68,14 +68,22 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         //    return session;
         //}
 
-        public bool ValidateXAuthMode(string authMode)
-        {
-            return authMode == "client_auth";
-        }
-
         public bool AuthenticateXAuthUsernameAndPassword(string username, string password)
         {
             return username == "username" && password == "password";
+        }
+
+        [TestMethod]
+        public void RequestTokenWithTokenSecretParamterThrowsException()
+        {
+            IOAuthContext context = new OAuthContext { TokenSecret = "secret" };
+            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
+            Assert.AreEqual("The oauth_token_secret must not be transmitted to the provider.", ex.Message);
+        }
+
+        public bool ValidateXAuthMode(string authMode)
+        {
+            return authMode == "client_auth";
         }
 
         //[TestMethod]
@@ -193,15 +201,6 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         //    var ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
         //    Assert.AreEqual("Failed to validate signature", ex.Message);
         //}
-
-        [TestMethod]
-        public void RequestTokenWithTokenSecretParamterThrowsException()
-        {
-            IOAuthContext context = new OAuthContext { TokenSecret = "secret" };
-            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
-            Assert.AreEqual("The oauth_token_secret must not be transmitted to the provider.", ex.Message);
-        }
-
         //[TestMethod]
         //public void AccessTokenWithHmacSha1()
         //{

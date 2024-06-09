@@ -1,4 +1,4 @@
-namespace Hyperar.OauthCore.Framework
+namespace Hyperar.OAuthCore.Framework
 {
     using System;
     using System.Net;

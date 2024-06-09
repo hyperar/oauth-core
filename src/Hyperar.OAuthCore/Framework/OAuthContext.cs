@@ -1,6 +1,6 @@
 // The MIT License
 //
-// Copyright (c) 2022 Hyperar.
+// Copyright (c) 2024 Hyperar.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Hyperar.OauthCore.Framework
+namespace Hyperar.OAuthCore.Framework
 {
     using System;
     using System.Collections.Generic;
@@ -114,6 +114,7 @@ namespace Hyperar.OauthCore.Framework
 
                 return this._authorizationHeaderParameters;
             }
+
             set { this._authorizationHeaderParameters = value; }
         }
 
@@ -146,6 +147,7 @@ namespace Hyperar.OauthCore.Framework
 
                 return this._cookies;
             }
+
             set { this._cookies = value; }
         }
 
@@ -160,6 +162,7 @@ namespace Hyperar.OauthCore.Framework
 
                 return this._formEncodedParameters;
             }
+
             set { this._formEncodedParameters = value; }
         }
 
@@ -174,6 +177,7 @@ namespace Hyperar.OauthCore.Framework
 
                 return this._headers;
             }
+
             set { this._headers = value; }
         }
 
@@ -201,6 +205,7 @@ namespace Hyperar.OauthCore.Framework
 
                 return this._queryParameters;
             }
+
             set { this._queryParameters = value; }
         }
 
@@ -211,6 +216,7 @@ namespace Hyperar.OauthCore.Framework
         public Uri RawUri
         {
             get { return this._rawUri; }
+
             set
             {
                 this._rawUri = value;

@@ -5,7 +5,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
     // The MIT License
     //
     // Copyright (c) 2006-2008 DevDefined Limited.
-    // 
+    //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
     // in the Software without restriction, including without limitation the rights
@@ -24,11 +24,11 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    #endregion
+    #endregion License
 
-    using Hyperar.OauthCore.Framework;
-    using Hyperar.OauthCore.Provider.Inspectors;
-    using Hyperar.OauthCore.Storage;
+    using Hyperar.OAuthCore.Framework;
+    using Hyperar.OAuthCore.Provider.Inspectors;
+    using Hyperar.OAuthCore.Storage;
     using Rhino.Mocks;
     using Xunit;
 
@@ -61,7 +61,6 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
             nonceStore.Stub(stub => stub.RecordNonceAndCheckIsUnique(context, "2")).Return(true);
 
             var inspector = new NonceStoreInspector(nonceStore);
-
 
             var exception = Record.Exception(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
 

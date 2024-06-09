@@ -1,10 +1,10 @@
-namespace Hyperar.OauthCore.KeyInterop
+namespace Hyperar.OAuthCore.KeyInterop
 {
     #region License
 
     // The MIT License
     //
-    // Copyright (c) 2022 Hyperar.
+    // Copyright (c) 2024 Hyperar.
     //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,6 @@ namespace Hyperar.OauthCore.KeyInterop
     using System.IO;
     using System.Security.Cryptography;
     using System.Text;
-    using Hyperar.OAuthCore.KeyInterop;
 
     public class AsnKeyParser
     {

@@ -1,6 +1,6 @@
 ﻿// The MIT License
 //
-// Copyright (c) 2022 Hyperar.
+// Copyright (c) 2024 Hyperar.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Hyperar.OauthCore.Storage.Basic
+namespace Hyperar.OAuthCore.Storage.Basic
 {
-    using Hyperar.OauthCore.Framework;
+    using Hyperar.OAuthCore.Framework;
 
     /// <summary>
     /// A simplistic repository for access and request of token models - the example implementation of

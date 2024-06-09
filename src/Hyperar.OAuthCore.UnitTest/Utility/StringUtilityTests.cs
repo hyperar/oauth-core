@@ -5,7 +5,7 @@
     // The MIT License
     //
     // Copyright (c) 2006-2008 DevDefined Limited.
-    // 
+    //
     // Permission is hereby granted, free of charge, to any person obtaining a copy
     // of this software and associated documentation files (the "Software"), to deal
     // in the Software without restriction, including without limitation the rights
@@ -24,11 +24,11 @@
     // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     // THE SOFTWARE.
 
-    #endregion
+    #endregion License
 
     using System.Diagnostics;
     using System.Linq;
-    using Hyperar.OauthCore.Utility;
+    using Hyperar.OAuthCore.Utility;
 
     [TestClass]
     public class StringUtilityTests
@@ -89,28 +89,6 @@
             Assert.AreEqual(expected, value.EqualsInConstantTime(other));
         }
 
-        private static string GenerateTestString(double percentMatch, int length)
-        {
-            var matchLength = (int)(percentMatch * length);
-            int nonMatchLength = length - matchLength;
-
-            if (nonMatchLength == 0)
-            {
-                return new string('X', length);
-            }
-
-            return new string('X', matchLength) + new string('Y', nonMatchLength);
-        }
-
-        private static decimal CalculatePercentageDifference(long[] rangesOfTime)
-        {
-            long maxTime = rangesOfTime.Max();
-
-            long minTime = rangesOfTime.Min();
-
-            return 1.0m - 1.0m / maxTime * minTime;
-        }
-
         public long TimeCompareValuesOverIterationsConstantTime(string value, string other, int iterations)
         {
             Stopwatch stopWatch = Stopwatch.StartNew();
@@ -133,6 +111,28 @@
             }
 
             return stopWatch.ElapsedTicks;
+        }
+
+        private static decimal CalculatePercentageDifference(long[] rangesOfTime)
+        {
+            long maxTime = rangesOfTime.Max();
+
+            long minTime = rangesOfTime.Min();
+
+            return 1.0m - 1.0m / maxTime * minTime;
+        }
+
+        private static string GenerateTestString(double percentMatch, int length)
+        {
+            var matchLength = (int)(percentMatch * length);
+            int nonMatchLength = length - matchLength;
+
+            if (nonMatchLength == 0)
+            {
+                return new string('X', length);
+            }
+
+            return new string('X', matchLength) + new string('Y', nonMatchLength);
         }
     }
 }

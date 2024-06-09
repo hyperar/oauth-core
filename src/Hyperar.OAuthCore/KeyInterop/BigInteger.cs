@@ -137,10 +137,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         // maximum length of the BigInteger in uint (4 bytes)
         // change this to suit the required level of precision.
 
-        private const int maxLength = 1024;
-
-        // primes smaller than 2000 to test the generated prime number
-
         public static readonly int[] primesBelow2000 = {
                                                        2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59,
                                                        61, 67, 71, 73, 79, 83, 89, 97,
@@ -182,8 +178,15 @@ namespace Hyperar.OAuthCore.KeyInterop
                                                        1901, 1907, 1913, 1931, 1933, 1949, 1951, 1973, 1979, 1987, 1993,
                                                        1997, 1999
                                                    };
+
+        public int dataLength;
+
+        private const int maxLength = 1024;
+
+        // primes smaller than 2000 to test the generated prime number
         private readonly uint[] data; // stores bytes from the Big Integer
-        public int dataLength; // number of actual chars used
+
+        // number of actual chars used
 
         //***********************************************************************
         // Constructor (Default value for BigInteger is 0
@@ -528,6 +531,22 @@ namespace Hyperar.OAuthCore.KeyInterop
         // For BigInteger bi = 10;
         //***********************************************************************
 
+        public static BigInteger GenPseudoPrime(int bits, int confidence, Random rand)
+        {
+            var result = new BigInteger();
+            bool done = false;
+
+            while (!done)
+            {
+                result.GenRandomBits(bits, rand);
+                result.data[0] |= 0x01; // make it odd
+
+                // prime test
+                done = result.IsProbablePrime(confidence);
+            }
+            return result;
+        }
+
         public static implicit operator BigInteger(long value)
         {
             return new BigInteger(value);
@@ -552,94 +571,228 @@ namespace Hyperar.OAuthCore.KeyInterop
         // Overloading of addition operator
         //***********************************************************************
 
-        public static BigInteger operator +(BigInteger bi1, BigInteger bi2)
+        public static int Jacobi(BigInteger a, BigInteger b)
         {
-            var result = new BigInteger
+            // Jacobi defined only for odd integers
+            if ((b.data[0] & 0x1) == 0)
             {
-                dataLength = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength
-            };
-
-            long carry = 0;
-            for (int i = 0; i < result.dataLength; i++)
-            {
-                long sum = bi1.data[i] + (long)bi2.data[i] + carry;
-                carry = sum >> 32;
-                result.data[i] = (uint)(sum & 0xFFFFFFFF);
+                throw new ArgumentException("Jacobi defined only for odd integers.");
             }
 
-            if (carry != 0 && result.dataLength < maxLength)
+            if (a >= b)
             {
-                result.data[result.dataLength] = (uint)carry;
-                result.dataLength++;
+                a %= b;
             }
 
-            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
+            if (a.dataLength == 1 && a.data[0] == 0)
             {
-                result.dataLength--;
+                return 0; // a == 0
             }
 
-            // overflow check
-            int lastPos = maxLength - 1;
-            if ((bi1.data[lastPos] & 0x80000000) == (bi2.data[lastPos] & 0x80000000) &&
-                (result.data[lastPos] & 0x80000000) != (bi1.data[lastPos] & 0x80000000))
+            if (a.dataLength == 1 && a.data[0] == 1)
             {
-                throw new ArithmeticException();
+                return 1; // a == 1
             }
 
-            return result;
-        }
-
-        //***********************************************************************
-        // Overloading of the unary ++ operator
-        //***********************************************************************
-
-        public static BigInteger operator ++(BigInteger bi1)
-        {
-            var result = new BigInteger(bi1);
-
-            long val, carry = 1;
-            int index = 0;
-
-            while (carry != 0 && index < maxLength)
+            if (a < 0)
             {
-                val = result.data[index];
-                val++;
-
-                result.data[index] = (uint)(val & 0xFFFFFFFF);
-                carry = val >> 32;
-
-                index++;
-            }
-
-            if (index > result.dataLength)
-            {
-                result.dataLength = index;
-            }
-            else
-            {
-                while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
+                if (((b - 1).data[0] & 0x2) == 0) //if( (((b-1) >> 1).data[0] & 0x1) == 0)
                 {
-                    result.dataLength--;
+                    return Jacobi(-a, b);
+                }
+                else
+                {
+                    return -Jacobi(-a, b);
                 }
             }
 
-            // overflow check
-            int lastPos = maxLength - 1;
-
-            // overflow if initial value was +ve but ++ caused a sign
-            // change to negative.
-
-            if ((bi1.data[lastPos] & 0x80000000) == 0 &&
-                (result.data[lastPos] & 0x80000000) != (bi1.data[lastPos] & 0x80000000))
+            int e = 0;
+            for (int index = 0; index < a.dataLength; index++)
             {
-                throw new ArithmeticException("Overflow in ++.");
+                uint mask = 0x01;
+
+                for (int i = 0; i < 32; i++)
+                {
+                    if ((a.data[index] & mask) != 0)
+                    {
+                        index = a.dataLength; // to break the outer loop
+                        break;
+                    }
+                    mask <<= 1;
+                    e++;
+                }
             }
-            return result;
+
+            BigInteger a1 = a >> e;
+
+            int s = 1;
+            if ((e & 0x1) != 0 && ((b.data[0] & 0x7) == 3 || (b.data[0] & 0x7) == 5))
+            {
+                s = -1;
+            }
+
+            if ((b.data[0] & 0x3) == 3 && (a1.data[0] & 0x3) == 3)
+            {
+                s = -s;
+            }
+
+            if (a1.dataLength == 1 && a1.data[0] == 1)
+            {
+                return s;
+            }
+            else
+            {
+                return s * Jacobi(b % a1, a1);
+            }
         }
 
-        //***********************************************************************
-        // Overloading of subtraction operator
-        //***********************************************************************
+        public static BigInteger[] LucasSequence(BigInteger P, BigInteger Q,
+                                                 BigInteger k, BigInteger n)
+        {
+            if (k.dataLength == 1 && k.data[0] == 0)
+            {
+                var result = new BigInteger[3];
+
+                result[0] = 0;
+                result[1] = 2 % n;
+                result[2] = 1 % n;
+                return result;
+            }
+
+            // calculate constant = b^(2k) / m
+            // for Barrett Reduction
+            var constant = new BigInteger();
+
+            int nLen = n.dataLength << 1;
+            constant.data[nLen] = 0x00000001;
+            constant.dataLength = nLen + 1;
+
+            constant /= n;
+
+            // calculate values of s and t
+            int s = 0;
+
+            for (int index = 0; index < k.dataLength; index++)
+            {
+                uint mask = 0x01;
+
+                for (int i = 0; i < 32; i++)
+                {
+                    if ((k.data[index] & mask) != 0)
+                    {
+                        index = k.dataLength; // to break the outer loop
+                        break;
+                    }
+                    mask <<= 1;
+                    s++;
+                }
+            }
+
+            BigInteger t = k >> s;
+
+            //Console.WriteLine("s = " + s + " t = " + t);
+            return LucasSequenceHelper(P, Q, t, n, constant, s);
+        }
+
+        public static void MulDivTest(int rounds)
+        {
+            var rand = new Random();
+            var val = new byte[64];
+            var val2 = new byte[64];
+
+            for (int count = 0; count < rounds; count++)
+            {
+                // generate 2 numbers of random length
+                int t1 = 0;
+                while (t1 == 0)
+                {
+                    t1 = (int)(rand.NextDouble() * 65);
+                }
+
+                int t2 = 0;
+                while (t2 == 0)
+                {
+                    t2 = (int)(rand.NextDouble() * 65);
+                }
+
+                bool done = false;
+                while (!done)
+                {
+                    for (int i = 0; i < 64; i++)
+                    {
+                        if (i < t1)
+                        {
+                            val[i] = (byte)(rand.NextDouble() * 256);
+                        }
+                        else
+                        {
+                            val[i] = 0;
+                        }
+
+                        if (val[i] != 0)
+                        {
+                            done = true;
+                        }
+                    }
+                }
+
+                done = false;
+                while (!done)
+                {
+                    for (int i = 0; i < 64; i++)
+                    {
+                        if (i < t2)
+                        {
+                            val2[i] = (byte)(rand.NextDouble() * 256);
+                        }
+                        else
+                        {
+                            val2[i] = 0;
+                        }
+
+                        if (val2[i] != 0)
+                        {
+                            done = true;
+                        }
+                    }
+                }
+
+                while (val[0] == 0)
+                {
+                    val[0] = (byte)(rand.NextDouble() * 256);
+                }
+
+                while (val2[0] == 0)
+                {
+                    val2[0] = (byte)(rand.NextDouble() * 256);
+                }
+
+                Console.WriteLine(count);
+                var bn1 = new BigInteger(val, t1);
+                var bn2 = new BigInteger(val2, t2);
+
+                // Determine the quotient and remainder by dividing
+                // the first number by the second.
+
+                BigInteger bn3 = bn1 / bn2;
+                BigInteger bn4 = bn1 % bn2;
+
+                // Recalculate the number
+                BigInteger bn5 = (bn3 * bn2) + bn4;
+
+                // Make sure they're the same
+                if (bn5 != bn1)
+                {
+                    Console.WriteLine("Error at " + count);
+                    Console.WriteLine(bn1 + "\n");
+                    Console.WriteLine(bn2 + "\n");
+                    Console.WriteLine(bn3 + "\n");
+                    Console.WriteLine(bn4 + "\n");
+                    Console.WriteLine(bn5 + "\n");
+                    return;
+                }
+            }
+        }
 
         public static BigInteger operator -(BigInteger bi1, BigInteger bi2)
         {
@@ -695,9 +848,53 @@ namespace Hyperar.OAuthCore.KeyInterop
             return result;
         }
 
-        //***********************************************************************
-        // Overloading of the unary -- operator
-        //***********************************************************************
+        public static BigInteger operator -(BigInteger bi1)
+        {
+            // handle neg of zero separately since it'll cause an overflow
+            // if we proceed.
+
+            if (bi1.dataLength == 1 && bi1.data[0] == 0)
+            {
+                return new BigInteger();
+            }
+
+            var result = new BigInteger(bi1);
+
+            // 1's complement
+            for (int i = 0; i < maxLength; i++)
+            {
+                result.data[i] = ~bi1.data[i];
+            }
+
+            // add one to result of 1's complement
+            long val, carry = 1;
+            int index = 0;
+
+            while (carry != 0 && index < maxLength)
+            {
+                val = result.data[index];
+                val++;
+
+                result.data[index] = (uint)(val & 0xFFFFFFFF);
+                carry = val >> 32;
+
+                index++;
+            }
+
+            if ((bi1.data[maxLength - 1] & 0x80000000) == (result.data[maxLength - 1] & 0x80000000))
+            {
+                throw new ArithmeticException("Overflow in negation.\n");
+            }
+
+            result.dataLength = maxLength;
+
+            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
+            {
+                result.dataLength--;
+            }
+
+            return result;
+        }
 
         public static BigInteger operator --(BigInteger bi1)
         {
@@ -747,9 +944,74 @@ namespace Hyperar.OAuthCore.KeyInterop
             return result;
         }
 
-        //***********************************************************************
-        // Overloading of multiplication operator
-        //***********************************************************************
+        public static bool operator !=(BigInteger bi1, BigInteger bi2)
+        {
+            return !bi1.Equals(bi2);
+        }
+
+        public static BigInteger operator %(BigInteger bi1, BigInteger bi2)
+        {
+            var quotient = new BigInteger();
+            var remainder = new BigInteger(bi1);
+
+            int lastPos = maxLength - 1;
+            bool dividendNeg = false;
+
+            if ((bi1.data[lastPos] & 0x80000000) != 0) // bi1 negative
+            {
+                bi1 = -bi1;
+                dividendNeg = true;
+            }
+            if ((bi2.data[lastPos] & 0x80000000) != 0) // bi2 negative
+            {
+                bi2 = -bi2;
+            }
+
+            if (bi1 < bi2)
+            {
+                return remainder;
+            }
+            else
+            {
+                if (bi2.dataLength == 1)
+                {
+                    SingleByteDivide(bi1, bi2, quotient, remainder);
+                }
+                else
+                {
+                    MultiByteDivide(bi1, bi2, quotient, remainder);
+                }
+
+                if (dividendNeg)
+                {
+                    return -remainder;
+                }
+
+                return remainder;
+            }
+        }
+
+        public static BigInteger operator &(BigInteger bi1, BigInteger bi2)
+        {
+            var result = new BigInteger();
+
+            int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
+
+            for (int i = 0; i < len; i++)
+            {
+                uint sum = bi1.data[i] & bi2.data[i];
+                result.data[i] = sum;
+            }
+
+            result.dataLength = maxLength;
+
+            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
+            {
+                result.dataLength--;
+            }
+
+            return result;
+        }
 
         public static BigInteger operator *(BigInteger bi1, BigInteger bi2)
         {
@@ -861,142 +1123,92 @@ namespace Hyperar.OAuthCore.KeyInterop
             return result;
         }
 
-        //***********************************************************************
-        // Overloading of unary << operators
-        //***********************************************************************
-
-        public static BigInteger operator <<(BigInteger bi1, int shiftVal)
+        public static BigInteger operator /(BigInteger bi1, BigInteger bi2)
         {
-            var result = new BigInteger(bi1);
-            result.dataLength = ShiftLeft(result.data, shiftVal);
+            var quotient = new BigInteger();
+            var remainder = new BigInteger();
 
-            return result;
-        }
+            int lastPos = maxLength - 1;
+            bool divisorNeg = false, dividendNeg = false;
 
-        // least significant bits at lower part of buffer
-
-        private static int ShiftLeft(uint[] buffer, int shiftVal)
-        {
-            int shiftAmount = 32;
-            int bufLen = buffer.Length;
-
-            while (bufLen > 1 && buffer[bufLen - 1] == 0)
+            if ((bi1.data[lastPos] & 0x80000000) != 0) // bi1 negative
             {
-                bufLen--;
+                bi1 = -bi1;
+                dividendNeg = true;
+            }
+            if ((bi2.data[lastPos] & 0x80000000) != 0) // bi2 negative
+            {
+                bi2 = -bi2;
+                divisorNeg = true;
             }
 
-            for (int count = shiftVal; count > 0;)
+            if (bi1 < bi2)
             {
-                if (count < shiftAmount)
-                {
-                    shiftAmount = count;
-                }
-
-                //Console.WriteLine("shiftAmount = {0}", shiftAmount);
-
-                ulong carry = 0;
-                for (int i = 0; i < bufLen; i++)
-                {
-                    ulong val = (ulong)buffer[i] << shiftAmount;
-                    val |= carry;
-
-                    buffer[i] = (uint)(val & 0xFFFFFFFF);
-                    carry = val >> 32;
-                }
-
-                if (carry != 0)
-                {
-                    if (bufLen + 1 <= buffer.Length)
-                    {
-                        buffer[bufLen] = (uint)carry;
-                        bufLen++;
-                    }
-                }
-                count -= shiftAmount;
+                return quotient;
             }
-            return bufLen;
+            else
+            {
+                if (bi2.dataLength == 1)
+                {
+                    SingleByteDivide(bi1, bi2, quotient, remainder);
+                }
+                else
+                {
+                    MultiByteDivide(bi1, bi2, quotient, remainder);
+                }
+
+                if (dividendNeg != divisorNeg)
+                {
+                    return -quotient;
+                }
+
+                return quotient;
+            }
         }
 
-        //***********************************************************************
-        // Overloading of unary >> operators
-        //***********************************************************************
-
-        public static BigInteger operator >>(BigInteger bi1, int shiftVal)
+        public static BigInteger operator ^(BigInteger bi1, BigInteger bi2)
         {
-            var result = new BigInteger(bi1);
-            result.dataLength = ShiftRight(result.data, shiftVal);
+            var result = new BigInteger();
 
-            if ((bi1.data[maxLength - 1] & 0x80000000) != 0) // negative
+            int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
+
+            for (int i = 0; i < len; i++)
             {
-                for (int i = maxLength - 1; i >= result.dataLength; i--)
-                {
-                    result.data[i] = 0xFFFFFFFF;
-                }
+                uint sum = bi1.data[i] ^ bi2.data[i];
+                result.data[i] = sum;
+            }
 
-                uint mask = 0x80000000;
-                for (int i = 0; i < 32; i++)
-                {
-                    if ((result.data[result.dataLength - 1] & mask) != 0)
-                    {
-                        break;
-                    }
+            result.dataLength = maxLength;
 
-                    result.data[result.dataLength - 1] |= mask;
-                    mask >>= 1;
-                }
-                result.dataLength = maxLength;
+            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
+            {
+                result.dataLength--;
             }
 
             return result;
         }
 
-        private static int ShiftRight(uint[] buffer, int shiftVal)
+        public static BigInteger operator |(BigInteger bi1, BigInteger bi2)
         {
-            int shiftAmount = 32;
-            int invShift = 0;
-            int bufLen = buffer.Length;
+            var result = new BigInteger();
 
-            while (bufLen > 1 && buffer[bufLen - 1] == 0)
+            int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
+
+            for (int i = 0; i < len; i++)
             {
-                bufLen--;
+                uint sum = bi1.data[i] | bi2.data[i];
+                result.data[i] = sum;
             }
 
-            //Console.WriteLine("bufLen = " + bufLen + " buffer.Length = " + buffer.Length);
+            result.dataLength = maxLength;
 
-            for (int count = shiftVal; count > 0;)
+            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
             {
-                if (count < shiftAmount)
-                {
-                    shiftAmount = count;
-                    invShift = 32 - shiftAmount;
-                }
-
-                //Console.WriteLine("shiftAmount = {0}", shiftAmount);
-
-                ulong carry = 0;
-                for (int i = bufLen - 1; i >= 0; i--)
-                {
-                    ulong val = (ulong)buffer[i] >> shiftAmount;
-                    val |= carry;
-
-                    carry = (ulong)buffer[i] << invShift;
-                    buffer[i] = (uint)val;
-                }
-
-                count -= shiftAmount;
+                result.dataLength--;
             }
 
-            while (bufLen > 1 && buffer[bufLen - 1] == 0)
-            {
-                bufLen--;
-            }
-
-            return bufLen;
+            return result;
         }
-
-        //***********************************************************************
-        // Overloading of the NOT operator (1's complement)
-        //***********************************************************************
 
         public static BigInteger operator ~(BigInteger bi1)
         {
@@ -1017,29 +1229,51 @@ namespace Hyperar.OAuthCore.KeyInterop
             return result;
         }
 
-        //***********************************************************************
-        // Overloading of the NEGATE operator (2's complement)
-        //***********************************************************************
-
-        public static BigInteger operator -(BigInteger bi1)
+        public static BigInteger operator +(BigInteger bi1, BigInteger bi2)
         {
-            // handle neg of zero separately since it'll cause an overflow
-            // if we proceed.
-
-            if (bi1.dataLength == 1 && bi1.data[0] == 0)
+            var result = new BigInteger
             {
-                return new BigInteger();
+                dataLength = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength
+            };
+
+            long carry = 0;
+            for (int i = 0; i < result.dataLength; i++)
+            {
+                long sum = bi1.data[i] + (long)bi2.data[i] + carry;
+                carry = sum >> 32;
+                result.data[i] = (uint)(sum & 0xFFFFFFFF);
             }
 
+            if (carry != 0 && result.dataLength < maxLength)
+            {
+                result.data[result.dataLength] = (uint)carry;
+                result.dataLength++;
+            }
+
+            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
+            {
+                result.dataLength--;
+            }
+
+            // overflow check
+            int lastPos = maxLength - 1;
+            if ((bi1.data[lastPos] & 0x80000000) == (bi2.data[lastPos] & 0x80000000) &&
+                (result.data[lastPos] & 0x80000000) != (bi1.data[lastPos] & 0x80000000))
+            {
+                throw new ArithmeticException();
+            }
+
+            return result;
+        }
+
+        //***********************************************************************
+        // Overloading of the unary ++ operator
+        //***********************************************************************
+
+        public static BigInteger operator ++(BigInteger bi1)
+        {
             var result = new BigInteger(bi1);
 
-            // 1's complement
-            for (int i = 0; i < maxLength; i++)
-            {
-                result.data[i] = ~bi1.data[i];
-            }
-
-            // add one to result of 1's complement
             long val, carry = 1;
             int index = 0;
 
@@ -1054,97 +1288,44 @@ namespace Hyperar.OAuthCore.KeyInterop
                 index++;
             }
 
-            if ((bi1.data[maxLength - 1] & 0x80000000) == (result.data[maxLength - 1] & 0x80000000))
+            if (index > result.dataLength)
             {
-                throw new ArithmeticException("Overflow in negation.\n");
+                result.dataLength = index;
+            }
+            else
+            {
+                while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
+                {
+                    result.dataLength--;
+                }
             }
 
-            result.dataLength = maxLength;
+            // overflow check
+            int lastPos = maxLength - 1;
 
-            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
+            // overflow if initial value was +ve but ++ caused a sign
+            // change to negative.
+
+            if ((bi1.data[lastPos] & 0x80000000) == 0 &&
+                (result.data[lastPos] & 0x80000000) != (bi1.data[lastPos] & 0x80000000))
             {
-                result.dataLength--;
+                throw new ArithmeticException("Overflow in ++.");
             }
-
             return result;
         }
 
         //***********************************************************************
-        // Overloading of equality operator
+        // Overloading of subtraction operator
         //***********************************************************************
-
-        public static bool operator ==(BigInteger bi1, BigInteger bi2)
-        {
-            return bi1.Equals(bi2);
-        }
-
-        public static bool operator !=(BigInteger bi1, BigInteger bi2)
-        {
-            return !bi1.Equals(bi2);
-        }
-
-        public override bool Equals(object o)
-        {
-            var bi = (BigInteger)o;
-
-            if (this.dataLength != bi.dataLength)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < this.dataLength; i++)
-            {
-                if (this.data[i] != bi.data[i])
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public override int GetHashCode()
-        {
-            return this.ToString().GetHashCode();
-        }
-
         //***********************************************************************
-        // Overloading of inequality operator
+        // Overloading of the unary -- operator
         //***********************************************************************
-
-        public static bool operator >(BigInteger bi1, BigInteger bi2)
-        {
-            int pos = maxLength - 1;
-
-            // bi1 is negative, bi2 is positive
-            if ((bi1.data[pos] & 0x80000000) != 0 && (bi2.data[pos] & 0x80000000) == 0)
-            {
-                return false;
-            }
-
-            // bi1 is positive, bi2 is negative
-            else if ((bi1.data[pos] & 0x80000000) == 0 && (bi2.data[pos] & 0x80000000) != 0)
-            {
-                return true;
-            }
-
-            // same sign
-            int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
-            for (pos = len - 1; pos >= 0 && bi1.data[pos] == bi2.data[pos]; pos--)
-            {
-                ;
-            }
-
-            if (pos >= 0)
-            {
-                if (bi1.data[pos] > bi2.data[pos])
-                {
-                    return true;
-                }
-
-                return false;
-            }
-            return false;
-        }
+        //***********************************************************************
+        // Overloading of multiplication operator
+        //***********************************************************************
+        //***********************************************************************
+        // Overloading of unary << operators
+        //***********************************************************************
 
         public static bool operator <(BigInteger bi1, BigInteger bi2)
         {
@@ -1181,22 +1362,1484 @@ namespace Hyperar.OAuthCore.KeyInterop
             return false;
         }
 
-        public static bool operator >=(BigInteger bi1, BigInteger bi2)
+        public static BigInteger operator <<(BigInteger bi1, int shiftVal)
         {
-            return bi1 == bi2 || bi1 > bi2;
+            var result = new BigInteger(bi1);
+            result.dataLength = ShiftLeft(result.data, shiftVal);
+
+            return result;
         }
+
+        // least significant bits at lower part of buffer
 
         public static bool operator <=(BigInteger bi1, BigInteger bi2)
         {
             return bi1 == bi2 || bi1 < bi2;
         }
 
+        public static bool operator ==(BigInteger bi1, BigInteger bi2)
+        {
+            return bi1.Equals(bi2);
+        }
+
+        public static bool operator >(BigInteger bi1, BigInteger bi2)
+        {
+            int pos = maxLength - 1;
+
+            // bi1 is negative, bi2 is positive
+            if ((bi1.data[pos] & 0x80000000) != 0 && (bi2.data[pos] & 0x80000000) == 0)
+            {
+                return false;
+            }
+
+            // bi1 is positive, bi2 is negative
+            else if ((bi1.data[pos] & 0x80000000) == 0 && (bi2.data[pos] & 0x80000000) != 0)
+            {
+                return true;
+            }
+
+            // same sign
+            int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
+            for (pos = len - 1; pos >= 0 && bi1.data[pos] == bi2.data[pos]; pos--)
+            {
+                ;
+            }
+
+            if (pos >= 0)
+            {
+                if (bi1.data[pos] > bi2.data[pos])
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            return false;
+        }
+
         //***********************************************************************
-        // Private function that supports the division of two numbers with
-        // a divisor that has more than 1 digit.
-        //
-        // Algorithm taken from [1]
+        // Overloading of inequality operator
         //***********************************************************************
+        public static bool operator >=(BigInteger bi1, BigInteger bi2)
+        {
+            return bi1 == bi2 || bi1 > bi2;
+        }
+
+        public static BigInteger operator >>(BigInteger bi1, int shiftVal)
+        {
+            var result = new BigInteger(bi1);
+            result.dataLength = ShiftRight(result.data, shiftVal);
+
+            if ((bi1.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                for (int i = maxLength - 1; i >= result.dataLength; i--)
+                {
+                    result.data[i] = 0xFFFFFFFF;
+                }
+
+                uint mask = 0x80000000;
+                for (int i = 0; i < 32; i++)
+                {
+                    if ((result.data[result.dataLength - 1] & mask) != 0)
+                    {
+                        break;
+                    }
+
+                    result.data[result.dataLength - 1] |= mask;
+                    mask >>= 1;
+                }
+                result.dataLength = maxLength;
+            }
+
+            return result;
+        }
+
+        public static void RSATest(int rounds)
+        {
+            var rand = new Random(1);
+            var val = new byte[64];
+
+            // private and public key
+            var bi_e =
+                new BigInteger(
+                    "a932b948feed4fb2b692609bd22164fc9edb59fae7880cc1eaff7b3c9626b7e5b241c27a974833b2622ebe09beb451917663d47232488f23a117fc97720f1e7",
+                    16);
+            var bi_d =
+                new BigInteger(
+                    "4adf2f7a89da93248509347d2ae506d683dd3a16357e859a980c4f77a4e2f7a01fae289f13a851df6e9db5adaa60bfd2b162bbbe31f7c8f828261a6839311929d2cef4f864dde65e556ce43c89bbbf9f1ac5511315847ce9cc8dc92470a747b8792d6a83b0092d2e5ebaf852c85cacf34278efa99160f2f8aa7ee7214de07b7",
+                    16);
+            var bi_n =
+                new BigInteger(
+                    "e8e77781f36a7b3188d711c2190b560f205a52391b3479cdb99fa010745cbeba5f2adc08e1de6bf38398a0487c4a73610d94ec36f17f3f46ad75e17bc1adfec99839589f45f95ccc94cb2a5c500b477eb3323d8cfab0c8458c96f0147a45d27e45a4d11d54d77684f65d48f15fafcc1ba208e71e921b9bd9017c16a5231af7f",
+                    16);
+
+            Console.WriteLine("e =\n" + bi_e.ToString(10));
+            Console.WriteLine("\nd =\n" + bi_d.ToString(10));
+            Console.WriteLine("\nn =\n" + bi_n.ToString(10) + "\n");
+
+            for (int count = 0; count < rounds; count++)
+            {
+                // generate data of random length
+                int t1 = 0;
+                while (t1 == 0)
+                {
+                    t1 = (int)(rand.NextDouble() * 65);
+                }
+
+                bool done = false;
+                while (!done)
+                {
+                    for (int i = 0; i < 64; i++)
+                    {
+                        if (i < t1)
+                        {
+                            val[i] = (byte)(rand.NextDouble() * 256);
+                        }
+                        else
+                        {
+                            val[i] = 0;
+                        }
+
+                        if (val[i] != 0)
+                        {
+                            done = true;
+                        }
+                    }
+                }
+
+                while (val[0] == 0)
+                {
+                    val[0] = (byte)(rand.NextDouble() * 256);
+                }
+
+                Console.Write("Round = " + count);
+
+                // encrypt and decrypt data
+                var bi_data = new BigInteger(val, t1);
+                BigInteger bi_encrypted = bi_data.ModPow(bi_e, bi_n);
+                BigInteger bi_decrypted = bi_encrypted.ModPow(bi_d, bi_n);
+
+                // compare
+                if (bi_decrypted != bi_data)
+                {
+                    Console.WriteLine("\nError at round " + count);
+                    Console.WriteLine(bi_data + "\n");
+                    return;
+                }
+                Console.WriteLine(" <PASSED>.");
+            }
+        }
+
+        public static void RSATest2(int rounds)
+        {
+            var rand = new Random();
+            var val = new byte[64];
+
+            byte[] pseudoPrime1 = {
+                                  0x85, 0x84, 0x64, 0xFD, 0x70, 0x6A,
+                                  0x9F, 0xF0, 0x94, 0x0C, 0x3E, 0x2C,
+                                  0x74, 0x34, 0x05, 0xC9, 0x55, 0xB3,
+                                  0x85, 0x32, 0x98, 0x71, 0xF9, 0x41,
+                                  0x21, 0x5F, 0x02, 0x9E, 0xEA, 0x56,
+                                  0x8D, 0x8C, 0x44, 0xCC, 0xEE, 0xEE,
+                                  0x3D, 0x2C, 0x9D, 0x2C, 0x12, 0x41,
+                                  0x1E, 0xF1, 0xC5, 0x32, 0xC3, 0xAA,
+                                  0x31, 0x4A, 0x52, 0xD8, 0xE8, 0xAF,
+                                  0x42, 0xF4, 0x72, 0xA1, 0x2A, 0x0D,
+                                  0x97, 0xB1, 0x31, 0xB3,
+                              };
+
+            byte[] pseudoPrime2 = {
+                                  0x99, 0x98, 0xCA, 0xB8, 0x5E, 0xD7,
+                                  0xE5, 0xDC, 0x28, 0x5C, 0x6F, 0x0E,
+                                  0x15, 0x09, 0x59, 0x6E, 0x84, 0xF3,
+                                  0x81, 0xCD, 0xDE, 0x42, 0xDC, 0x93,
+                                  0xC2, 0x7A, 0x62, 0xAC, 0x6C, 0xAF,
+                                  0xDE, 0x74, 0xE3, 0xCB, 0x60, 0x20,
+                                  0x38, 0x9C, 0x21, 0xC3, 0xDC, 0xC8,
+                                  0xA2, 0x4D, 0xC6, 0x2A, 0x35, 0x7F,
+                                  0xF3, 0xA9, 0xE8, 0x1D, 0x7B, 0x2C,
+                                  0x78, 0xFA, 0xB8, 0x02, 0x55, 0x80,
+                                  0x9B, 0xC2, 0xA5, 0xCB,
+                              };
+
+            var bi_p = new BigInteger(pseudoPrime1);
+            var bi_q = new BigInteger(pseudoPrime2);
+            BigInteger bi_pq = (bi_p - 1) * (bi_q - 1);
+            BigInteger bi_n = bi_p * bi_q;
+
+            for (int count = 0; count < rounds; count++)
+            {
+                // generate private and public key
+                BigInteger bi_e = bi_pq.GenCoPrime(512, rand);
+                BigInteger bi_d = bi_e.ModInverse(bi_pq);
+
+                Console.WriteLine("\ne =\n" + bi_e.ToString(10));
+                Console.WriteLine("\nd =\n" + bi_d.ToString(10));
+                Console.WriteLine("\nn =\n" + bi_n.ToString(10) + "\n");
+
+                // generate data of random length
+                int t1 = 0;
+                while (t1 == 0)
+                {
+                    t1 = (int)(rand.NextDouble() * 65);
+                }
+
+                bool done = false;
+                while (!done)
+                {
+                    for (int i = 0; i < 64; i++)
+                    {
+                        if (i < t1)
+                        {
+                            val[i] = (byte)(rand.NextDouble() * 256);
+                        }
+                        else
+                        {
+                            val[i] = 0;
+                        }
+
+                        if (val[i] != 0)
+                        {
+                            done = true;
+                        }
+                    }
+                }
+
+                while (val[0] == 0)
+                {
+                    val[0] = (byte)(rand.NextDouble() * 256);
+                }
+
+                Console.Write("Round = " + count);
+
+                // encrypt and decrypt data
+                var bi_data = new BigInteger(val, t1);
+                BigInteger bi_encrypted = bi_data.ModPow(bi_e, bi_n);
+                BigInteger bi_decrypted = bi_encrypted.ModPow(bi_d, bi_n);
+
+                // compare
+                if (bi_decrypted != bi_data)
+                {
+                    Console.WriteLine("\nError at round " + count);
+                    Console.WriteLine(bi_data + "\n");
+                    return;
+                }
+                Console.WriteLine(" <PASSED>.");
+            }
+        }
+
+        public static void SqrtTest(int rounds)
+        {
+            var rand = new Random();
+            for (int count = 0; count < rounds; count++)
+            {
+                // generate data of random length
+                int t1 = 0;
+                while (t1 == 0)
+                {
+                    t1 = (int)(rand.NextDouble() * 1024);
+                }
+
+                Console.Write("Round = " + count);
+
+                var a = new BigInteger();
+                a.GenRandomBits(t1, rand);
+
+                BigInteger b = a.Sqrt();
+                BigInteger c = (b + 1) * (b + 1);
+
+                // check that b is the largest integer such that b*b <= a
+                if (c <= a)
+                {
+                    Console.WriteLine("\nError at round " + count);
+                    Console.WriteLine(a + "\n");
+                    return;
+                }
+                Console.WriteLine(" <PASSED>.");
+            }
+        }
+
+        public BigInteger Abs()
+        {
+            if ((this.data[maxLength - 1] & 0x80000000) != 0)
+            {
+                return -this;
+            }
+            else
+            {
+                return new BigInteger(this);
+            }
+        }
+
+        public int BitCount()
+        {
+            while (this.dataLength > 1 && this.data[this.dataLength - 1] == 0)
+            {
+                this.dataLength--;
+            }
+
+            uint value = this.data[this.dataLength - 1];
+            uint mask = 0x80000000;
+            int bits = 32;
+
+            while (bits > 0 && (value & mask) == 0)
+            {
+                bits--;
+                mask >>= 1;
+            }
+            bits += (this.dataLength - 1) << 5;
+
+            return bits;
+        }
+
+        //***********************************************************************
+        // Overloading of the NOT operator (1's complement)
+        //***********************************************************************
+        //***********************************************************************
+        // Overloading of the NEGATE operator (2's complement)
+        //***********************************************************************
+        //***********************************************************************
+        // Overloading of equality operator
+        //***********************************************************************
+        public override bool Equals(object o)
+        {
+            var bi = (BigInteger)o;
+
+            if (this.dataLength != bi.dataLength)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < this.dataLength; i++)
+            {
+                if (this.data[i] != bi.data[i])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public bool FermatLittleTest(int confidence)
+        {
+            BigInteger thisVal;
+            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                thisVal = -this;
+            }
+            else
+            {
+                thisVal = this;
+            }
+
+            if (thisVal.dataLength == 1)
+            {
+                // test small numbers
+                if (thisVal.data[0] is 0 or 1)
+                {
+                    return false;
+                }
+                else if (thisVal.data[0] is 2 or 3)
+                {
+                    return true;
+                }
+            }
+
+            if ((thisVal.data[0] & 0x1) == 0) // even numbers
+            {
+                return false;
+            }
+
+            int bits = thisVal.BitCount();
+            var a = new BigInteger();
+            BigInteger p_sub1 = thisVal - new BigInteger(1);
+            var rand = new Random();
+
+            for (int round = 0; round < confidence; round++)
+            {
+                bool done = false;
+
+                while (!done) // generate a < n
+                {
+                    int testBits = 0;
+
+                    // make sure "a" has at least 2 bits
+                    while (testBits < 2)
+                    {
+                        testBits = (int)(rand.NextDouble() * bits);
+                    }
+
+                    a.GenRandomBits(testBits, rand);
+
+                    int byteLen = a.dataLength;
+
+                    // make sure "a" is not 0
+                    if (byteLen > 1 || (byteLen == 1 && a.data[0] != 1))
+                    {
+                        done = true;
+                    }
+                }
+
+                // check whether a factor exists (fix for version 1.03)
+                BigInteger gcdTest = a.Gcd(thisVal);
+                if (gcdTest.dataLength == 1 && gcdTest.data[0] != 1)
+                {
+                    return false;
+                }
+
+                // calculate a^(p-1) mod p
+                BigInteger expResult = a.ModPow(p_sub1, thisVal);
+
+                int resultLen = expResult.dataLength;
+
+                // is NOT prime is a^(p-1) mod p != 1
+
+                if (resultLen > 1 || (resultLen == 1 && expResult.data[0] != 1))
+                {
+                    //Console.WriteLine("a = " + a.ToString());
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public BigInteger Gcd(BigInteger bi)
+        {
+            BigInteger x;
+            BigInteger y;
+
+            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                x = -this;
+            }
+            else
+            {
+                x = this;
+            }
+
+            if ((bi.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                y = -bi;
+            }
+            else
+            {
+                y = bi;
+            }
+
+            BigInteger g = y;
+
+            while (x.dataLength > 1 || (x.dataLength == 1 && x.data[0] != 0))
+            {
+                g = x;
+                x = y % x;
+                y = g;
+            }
+
+            return g;
+        }
+
+        public BigInteger GenCoPrime(int bits, Random rand)
+        {
+            bool done = false;
+            var result = new BigInteger();
+
+            while (!done)
+            {
+                result.GenRandomBits(bits, rand);
+                //Console.WriteLine(result.ToString(16));
+
+                // gcd test
+                BigInteger g = result.Gcd(this);
+                if (g.dataLength == 1 && g.data[0] == 1)
+                {
+                    done = true;
+                }
+            }
+
+            return result;
+        }
+
+        public void GenRandomBits(int bits, Random rand)
+        {
+            int dwords = bits >> 5;
+            int remBits = bits & 0x1F;
+
+            if (remBits != 0)
+            {
+                dwords++;
+            }
+
+            if (dwords > maxLength)
+            {
+                throw new ArithmeticException("Number of required bits > maxLength.");
+            }
+
+            for (int i = 0; i < dwords; i++)
+            {
+                this.data[i] = (uint)(rand.NextDouble() * 0x100000000);
+            }
+
+            for (int i = dwords; i < maxLength; i++)
+            {
+                this.data[i] = 0;
+            }
+
+            if (remBits != 0)
+            {
+                var mask = (uint)(0x01 << (remBits - 1));
+                this.data[dwords - 1] |= mask;
+
+                mask = 0xFFFFFFFF >> (32 - remBits);
+                this.data[dwords - 1] &= mask;
+            }
+            else
+            {
+                this.data[dwords - 1] |= 0x80000000;
+            }
+
+            this.dataLength = dwords;
+
+            if (this.dataLength == 0)
+            {
+                this.dataLength = 1;
+            }
+        }
+
+        public byte[] GetBytes()
+        {
+            int numBits = this.BitCount();
+
+            int numBytes = numBits >> 3;
+            if ((numBits & 0x7) != 0)
+            {
+                numBytes++;
+            }
+
+            var result = new byte[numBytes];
+
+            //Console.WriteLine(result.Length);
+
+            int pos = 0;
+            uint tempVal, val = this.data[this.dataLength - 1];
+
+            if ((tempVal = (val >> 24) & 0xFF) != 0)
+            {
+                result[pos++] = (byte)tempVal;
+            }
+
+            if ((tempVal = (val >> 16) & 0xFF) != 0)
+            {
+                result[pos++] = (byte)tempVal;
+            }
+            else if (pos > 0)
+            {
+                pos++;
+            }
+
+            if ((tempVal = (val >> 8) & 0xFF) != 0)
+            {
+                result[pos++] = (byte)tempVal;
+            }
+            else if (pos > 0)
+            {
+                pos++;
+            }
+
+            if ((tempVal = val & 0xFF) != 0)
+            {
+                result[pos++] = (byte)tempVal;
+            }
+
+            for (int i = this.dataLength - 2; i >= 0; i--, pos += 4)
+            {
+                val = this.data[i];
+                result[pos + 3] = (byte)(val & 0xFF);
+                val >>= 8;
+                result[pos + 2] = (byte)(val & 0xFF);
+                val >>= 8;
+                result[pos + 1] = (byte)(val & 0xFF);
+                val >>= 8;
+                result[pos] = (byte)(val & 0xFF);
+            }
+
+            return result;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.ToString().GetHashCode();
+        }
+
+        public int IntValue()
+        {
+            return (int)this.data[0];
+        }
+
+        public bool IsProbablePrime(int confidence)
+        {
+            BigInteger thisVal;
+            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                thisVal = -this;
+            }
+            else
+            {
+                thisVal = this;
+            }
+
+            // test for divisibility by primes < 2000
+            for (int p = 0; p < primesBelow2000.Length; p++)
+            {
+                BigInteger divisor = primesBelow2000[p];
+
+                if (divisor >= thisVal)
+                {
+                    break;
+                }
+
+                BigInteger resultNum = thisVal % divisor;
+                if (resultNum.IntValue() == 0)
+                {
+                    /*
+    Console.WriteLine("Not prime!  Divisible by {0}\n",
+                              primesBelow2000[p]);
+            */
+                    return false;
+                }
+            }
+
+            if (thisVal.RabinMillerTest(confidence))
+            {
+                return true;
+            }
+            else
+            {
+                //Console.WriteLine("Not prime!  Failed primality test\n");
+                return false;
+            }
+        }
+
+        public bool IsProbablePrime()
+        {
+            BigInteger thisVal;
+            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                thisVal = -this;
+            }
+            else
+            {
+                thisVal = this;
+            }
+
+            if (thisVal.dataLength == 1)
+            {
+                // test small numbers
+                if (thisVal.data[0] is 0 or 1)
+                {
+                    return false;
+                }
+                else if (thisVal.data[0] is 2 or 3)
+                {
+                    return true;
+                }
+            }
+
+            if ((thisVal.data[0] & 0x1) == 0) // even numbers
+            {
+                return false;
+            }
+
+            // test for divisibility by primes < 2000
+            for (int p = 0; p < primesBelow2000.Length; p++)
+            {
+                BigInteger divisor = primesBelow2000[p];
+
+                if (divisor >= thisVal)
+                {
+                    break;
+                }
+
+                BigInteger resultNum = thisVal % divisor;
+                if (resultNum.IntValue() == 0)
+                {
+                    //Console.WriteLine("Not prime!  Divisible by {0}\n",
+                    //                  primesBelow2000[p]);
+
+                    return false;
+                }
+            }
+
+            // Perform BASE 2 Rabin-Miller Test
+
+            // calculate values of s and t
+            BigInteger p_sub1 = thisVal - new BigInteger(1);
+            int s = 0;
+
+            for (int index = 0; index < p_sub1.dataLength; index++)
+            {
+                uint mask = 0x01;
+
+                for (int i = 0; i < 32; i++)
+                {
+                    if ((p_sub1.data[index] & mask) != 0)
+                    {
+                        index = p_sub1.dataLength; // to break the outer loop
+                        break;
+                    }
+                    mask <<= 1;
+                    s++;
+                }
+            }
+
+            BigInteger t = p_sub1 >> s;
+
+            int bits = thisVal.BitCount();
+            BigInteger a = 2;
+
+            // b = a^t mod p
+            BigInteger b = a.ModPow(t, thisVal);
+            bool result = false;
+
+            if (b.dataLength == 1 && b.data[0] == 1) // a^t mod p = 1
+            {
+                result = true;
+            }
+
+            for (int j = 0; result == false && j < s; j++)
+            {
+                if (b == p_sub1) // a^((2^j)*t) mod p = p-1 for some 0 <= j <= s-1
+                {
+                    result = true;
+                    break;
+                }
+
+                b = b * b % thisVal;
+            }
+
+            // if number is strong pseudoprime to base 2, then do a strong lucas test
+            if (result)
+            {
+                result = this.LucasStrongTestHelper(thisVal);
+            }
+
+            return result;
+        }
+
+        public long LongValue()
+        {
+            long val = this.data[0];
+            try
+            {
+                // exception if maxLength = 1
+                val |= (long)this.data[1] << 32;
+            }
+            catch (Exception)
+            {
+                if ((this.data[0] & 0x80000000) != 0) // negative
+                {
+                    val = (int)this.data[0];
+                }
+            }
+
+            return val;
+        }
+
+        public bool LucasStrongTest()
+        {
+            BigInteger thisVal;
+            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                thisVal = -this;
+            }
+            else
+            {
+                thisVal = this;
+            }
+
+            if (thisVal.dataLength == 1)
+            {
+                // test small numbers
+                if (thisVal.data[0] is 0 or 1)
+                {
+                    return false;
+                }
+                else if (thisVal.data[0] is 2 or 3)
+                {
+                    return true;
+                }
+            }
+
+            if ((thisVal.data[0] & 0x1) == 0) // even numbers
+            {
+                return false;
+            }
+
+            return this.LucasStrongTestHelper(thisVal);
+        }
+
+        public BigInteger Max(BigInteger bi)
+        {
+            if (this > bi)
+            {
+                return new BigInteger(this);
+            }
+            else
+            {
+                return new BigInteger(bi);
+            }
+        }
+
+        public BigInteger Min(BigInteger bi)
+        {
+            if (this < bi)
+            {
+                return new BigInteger(this);
+            }
+            else
+            {
+                return new BigInteger(bi);
+            }
+        }
+
+        public BigInteger ModInverse(BigInteger modulus)
+        {
+            BigInteger[] p = { 0, 1 };
+            var q = new BigInteger[2]; // quotients
+            BigInteger[] r = { 0, 0 }; // remainders
+
+            int step = 0;
+
+            BigInteger a = modulus;
+            BigInteger b = this;
+
+            while (b.dataLength > 1 || (b.dataLength == 1 && b.data[0] != 0))
+            {
+                var quotient = new BigInteger();
+                var remainder = new BigInteger();
+
+                if (step > 1)
+                {
+                    BigInteger pval = (p[0] - (p[1] * q[0])) % modulus;
+                    p[0] = p[1];
+                    p[1] = pval;
+                }
+
+                if (b.dataLength == 1)
+                {
+                    SingleByteDivide(a, b, quotient, remainder);
+                }
+                else
+                {
+                    MultiByteDivide(a, b, quotient, remainder);
+                }
+
+                /*
+          Console.WriteLine(quotient.dataLength);
+          Console.WriteLine("{0} = {1}({2}) + {3}  p = {4}", a.ToString(10),
+                            b.ToString(10), quotient.ToString(10), remainder.ToString(10),
+                            p[1].ToString(10));
+          */
+
+                q[0] = q[1];
+                r[0] = r[1];
+                q[1] = quotient;
+                r[1] = remainder;
+
+                a = b;
+                b = remainder;
+
+                step++;
+            }
+
+            if (r[0].dataLength > 1 || (r[0].dataLength == 1 && r[0].data[0] != 1))
+            {
+                throw new ArithmeticException("No inverse!");
+            }
+
+            BigInteger result = (p[0] - (p[1] * q[0])) % modulus;
+
+            if ((result.data[maxLength - 1] & 0x80000000) != 0)
+            {
+                result += modulus; // get the least positive modulus
+            }
+
+            return result;
+        }
+
+        public BigInteger ModPow(BigInteger exp, BigInteger n)
+        {
+            if ((exp.data[maxLength - 1] & 0x80000000) != 0)
+            {
+                throw new ArithmeticException("Positive exponents only.");
+            }
+
+            BigInteger resultNum = 1;
+            BigInteger tempNum;
+            bool thisNegative = false;
+
+            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative this
+            {
+                tempNum = -this % n;
+                thisNegative = true;
+            }
+            else
+            {
+                tempNum = this % n; // ensures (tempNum * tempNum) < b^(2k)
+            }
+
+            if ((n.data[maxLength - 1] & 0x80000000) != 0) // negative n
+            {
+                n = -n;
+            }
+
+            // calculate constant = b^(2k) / m
+            var constant = new BigInteger();
+
+            int i = n.dataLength << 1;
+            constant.data[i] = 0x00000001;
+            constant.dataLength = i + 1;
+
+            constant /= n;
+            int totalBits = exp.BitCount();
+            int count = 0;
+
+            // perform squaring and multiply exponentiation
+            for (int pos = 0; pos < exp.dataLength; pos++)
+            {
+                uint mask = 0x01;
+                //Console.WriteLine("pos = " + pos);
+
+                for (int index = 0; index < 32; index++)
+                {
+                    if ((exp.data[pos] & mask) != 0)
+                    {
+                        resultNum = this.BarrettReduction(resultNum * tempNum, n, constant);
+                    }
+
+                    mask <<= 1;
+
+                    tempNum = this.BarrettReduction(tempNum * tempNum, n, constant);
+
+                    if (tempNum.dataLength == 1 && tempNum.data[0] == 1)
+                    {
+                        if (thisNegative && (exp.data[0] & 0x1) != 0) //odd exp
+                        {
+                            return -resultNum;
+                        }
+
+                        return resultNum;
+                    }
+                    count++;
+                    if (count == totalBits)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (thisNegative && (exp.data[0] & 0x1) != 0) //odd exp
+            {
+                return -resultNum;
+            }
+
+            return resultNum;
+        }
+
+        public bool RabinMillerTest(int confidence)
+        {
+            BigInteger thisVal;
+            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                thisVal = -this;
+            }
+            else
+            {
+                thisVal = this;
+            }
+
+            if (thisVal.dataLength == 1)
+            {
+                // test small numbers
+                if (thisVal.data[0] is 0 or 1)
+                {
+                    return false;
+                }
+                else if (thisVal.data[0] is 2 or 3)
+                {
+                    return true;
+                }
+            }
+
+            if ((thisVal.data[0] & 0x1) == 0) // even numbers
+            {
+                return false;
+            }
+
+            // calculate values of s and t
+            BigInteger p_sub1 = thisVal - new BigInteger(1);
+            int s = 0;
+
+            for (int index = 0; index < p_sub1.dataLength; index++)
+            {
+                uint mask = 0x01;
+
+                for (int i = 0; i < 32; i++)
+                {
+                    if ((p_sub1.data[index] & mask) != 0)
+                    {
+                        index = p_sub1.dataLength; // to break the outer loop
+                        break;
+                    }
+                    mask <<= 1;
+                    s++;
+                }
+            }
+
+            BigInteger t = p_sub1 >> s;
+
+            int bits = thisVal.BitCount();
+            var a = new BigInteger();
+            var rand = new Random();
+
+            for (int round = 0; round < confidence; round++)
+            {
+                bool done = false;
+
+                while (!done) // generate a < n
+                {
+                    int testBits = 0;
+
+                    // make sure "a" has at least 2 bits
+                    while (testBits < 2)
+                    {
+                        testBits = (int)(rand.NextDouble() * bits);
+                    }
+
+                    a.GenRandomBits(testBits, rand);
+
+                    int byteLen = a.dataLength;
+
+                    // make sure "a" is not 0
+                    if (byteLen > 1 || (byteLen == 1 && a.data[0] != 1))
+                    {
+                        done = true;
+                    }
+                }
+
+                // check whether a factor exists (fix for version 1.03)
+                BigInteger gcdTest = a.Gcd(thisVal);
+                if (gcdTest.dataLength == 1 && gcdTest.data[0] != 1)
+                {
+                    return false;
+                }
+
+                BigInteger b = a.ModPow(t, thisVal);
+
+                /*
+          Console.WriteLine("a = " + a.ToString(10));
+          Console.WriteLine("b = " + b.ToString(10));
+          Console.WriteLine("t = " + t.ToString(10));
+          Console.WriteLine("s = " + s);
+          */
+
+                bool result = false;
+
+                if (b.dataLength == 1 && b.data[0] == 1) // a^t mod p = 1
+                {
+                    result = true;
+                }
+
+                for (int j = 0; result == false && j < s; j++)
+                {
+                    if (b == p_sub1) // a^((2^j)*t) mod p = p-1 for some 0 <= j <= s-1
+                    {
+                        result = true;
+                        break;
+                    }
+
+                    b = b * b % thisVal;
+                }
+
+                if (result == false)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void SetBit(uint bitNum)
+        {
+            uint bytePos = bitNum >> 5; // divide by 32
+            var bitPos = (byte)(bitNum & 0x1F); // get the lowest 5 bits
+
+            uint mask = (uint)1 << bitPos;
+            this.data[bytePos] |= mask;
+
+            if (bytePos >= this.dataLength)
+            {
+                this.dataLength = (int)bytePos + 1;
+            }
+        }
+
+        public bool SolovayStrassenTest(int confidence)
+        {
+            BigInteger thisVal;
+            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                thisVal = -this;
+            }
+            else
+            {
+                thisVal = this;
+            }
+
+            if (thisVal.dataLength == 1)
+            {
+                // test small numbers
+                if (thisVal.data[0] is 0 or 1)
+                {
+                    return false;
+                }
+                else if (thisVal.data[0] is 2 or 3)
+                {
+                    return true;
+                }
+            }
+
+            if ((thisVal.data[0] & 0x1) == 0) // even numbers
+            {
+                return false;
+            }
+
+            int bits = thisVal.BitCount();
+            var a = new BigInteger();
+            BigInteger p_sub1 = thisVal - 1;
+            BigInteger p_sub1_shift = p_sub1 >> 1;
+
+            var rand = new Random();
+
+            for (int round = 0; round < confidence; round++)
+            {
+                bool done = false;
+
+                while (!done) // generate a < n
+                {
+                    int testBits = 0;
+
+                    // make sure "a" has at least 2 bits
+                    while (testBits < 2)
+                    {
+                        testBits = (int)(rand.NextDouble() * bits);
+                    }
+
+                    a.GenRandomBits(testBits, rand);
+
+                    int byteLen = a.dataLength;
+
+                    // make sure "a" is not 0
+                    if (byteLen > 1 || (byteLen == 1 && a.data[0] != 1))
+                    {
+                        done = true;
+                    }
+                }
+
+                // check whether a factor exists (fix for version 1.03)
+                BigInteger gcdTest = a.Gcd(thisVal);
+                if (gcdTest.dataLength == 1 && gcdTest.data[0] != 1)
+                {
+                    return false;
+                }
+
+                // calculate a^((p-1)/2) mod p
+
+                BigInteger expResult = a.ModPow(p_sub1_shift, thisVal);
+                if (expResult == p_sub1)
+                {
+                    expResult = -1;
+                }
+
+                // calculate Jacobi symbol
+                BigInteger jacob = Jacobi(a, thisVal);
+
+                //Console.WriteLine("a = " + a.ToString(10) + " b = " + thisVal.ToString(10));
+                //Console.WriteLine("expResult = " + expResult.ToString(10) + " Jacob = " + jacob.ToString(10));
+
+                // if they are different then it is not prime
+                if (expResult != jacob)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public BigInteger Sqrt()
+        {
+            var numBits = (uint)this.BitCount();
+
+            if ((numBits & 0x1) != 0) // odd number of bits
+            {
+                numBits = (numBits >> 1) + 1;
+            }
+            else
+            {
+                numBits >>= 1;
+            }
+
+            uint bytePos = numBits >> 5;
+            var bitPos = (byte)(numBits & 0x1F);
+
+            uint mask;
+
+            var result = new BigInteger();
+            if (bitPos == 0)
+            {
+                mask = 0x80000000;
+            }
+            else
+            {
+                mask = (uint)1 << bitPos;
+                bytePos++;
+            }
+            result.dataLength = (int)bytePos;
+
+            for (int i = (int)bytePos - 1; i >= 0; i--)
+            {
+                while (mask != 0)
+                {
+                    // guess
+                    result.data[i] ^= mask;
+
+                    // undo the guess if its square is larger than this
+                    if (result * result > this)
+                    {
+                        result.data[i] ^= mask;
+                    }
+
+                    mask >>= 1;
+                }
+                mask = 0x80000000;
+            }
+            return result;
+        }
+
+        public string ToHexString()
+        {
+            string result = this.data[this.dataLength - 1].ToString("X");
+
+            for (int i = this.dataLength - 2; i >= 0; i--)
+            {
+                result += this.data[i].ToString("X8");
+            }
+
+            return result;
+        }
+
+        public override string ToString()
+        {
+            return this.ToString(10);
+        }
+
+        public string ToString(int radix)
+        {
+            if (radix is < 2 or > 36)
+            {
+                throw new ArgumentException("Radix must be >= 2 and <= 36");
+            }
+
+            string charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            string result = "";
+
+            BigInteger a = this;
+
+            bool negative = false;
+            if ((a.data[maxLength - 1] & 0x80000000) != 0)
+            {
+                negative = true;
+                try
+                {
+                    a = -a;
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            var quotient = new BigInteger();
+            var remainder = new BigInteger();
+            var biRadix = new BigInteger(radix);
+
+            if (a.dataLength == 1 && a.data[0] == 0)
+            {
+                result = "0";
+            }
+            else
+            {
+                while (a.dataLength > 1 || (a.dataLength == 1 && a.data[0] != 0))
+                {
+                    SingleByteDivide(a, biRadix, quotient, remainder);
+
+                    if (remainder.data[0] < 10)
+                    {
+                        result = remainder.data[0] + result;
+                    }
+                    else
+                    {
+                        result = charSet[(int)remainder.data[0] - 10] + result;
+                    }
+
+                    a = quotient;
+                }
+                if (negative)
+                {
+                    result = "-" + result;
+                }
+            }
+
+            return result;
+        }
+
+        public void UnsetBit(uint bitNum)
+        {
+            uint bytePos = bitNum >> 5;
+
+            if (bytePos < this.dataLength)
+            {
+                var bitPos = (byte)(bitNum & 0x1F);
+
+                uint mask = (uint)1 << bitPos;
+                uint mask2 = 0xFFFFFFFF ^ mask;
+
+                this.data[bytePos] &= mask2;
+
+                if (this.dataLength > 1 && this.data[this.dataLength - 1] == 0)
+                {
+                    this.dataLength--;
+                }
+            }
+        }
+
+        private static BigInteger[] LucasSequenceHelper(BigInteger P, BigInteger Q,
+                                                BigInteger k, BigInteger n,
+                                                BigInteger constant, int s)
+        {
+            var result = new BigInteger[3];
+
+            if ((k.data[0] & 0x00000001) == 0)
+            {
+                throw new ArgumentException("Argument k must be odd.");
+            }
+
+            int numbits = k.BitCount();
+            uint mask = (uint)0x1 << ((numbits & 0x1F) - 1);
+
+            // v = v0, v1 = v1, u1 = u1, Q_k = Q^0
+
+            BigInteger v = 2 % n,
+                       Q_k = 1 % n,
+                       v1 = P % n,
+                       u1 = Q_k;
+            bool flag = true;
+
+            for (int i = k.dataLength - 1; i >= 0; i--) // iterate on the binary expansion of k
+            {
+                //Console.WriteLine("round");
+                while (mask != 0)
+                {
+                    if (i == 0 && mask == 0x00000001) // last bit
+                    {
+                        break;
+                    }
+
+                    if ((k.data[i] & mask) != 0) // bit is set
+                    {
+                        // index doubling with addition
+
+                        u1 = u1 * v1 % n;
+
+                        v = ((v * v1) - (P * Q_k)) % n;
+                        v1 = n.BarrettReduction(v1 * v1, n, constant);
+                        v1 = (v1 - ((Q_k * Q) << 1)) % n;
+
+                        if (flag)
+                        {
+                            flag = false;
+                        }
+                        else
+                        {
+                            Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
+                        }
+
+                        Q_k = Q_k * Q % n;
+                    }
+                    else
+                    {
+                        // index doubling
+                        u1 = ((u1 * v) - Q_k) % n;
+
+                        v1 = ((v * v1) - (P * Q_k)) % n;
+                        v = n.BarrettReduction(v * v, n, constant);
+                        v = (v - (Q_k << 1)) % n;
+
+                        if (flag)
+                        {
+                            Q_k = Q % n;
+                            flag = false;
+                        }
+                        else
+                        {
+                            Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
+                        }
+                    }
+
+                    mask >>= 1;
+                }
+                mask = 0x80000000;
+            }
+
+            // at this point u1 = u(n+1) and v = v(n)
+            // since the last bit always 1, we need to transform u1 to u(2n+1) and v to v(2n+1)
+
+            u1 = ((u1 * v) - Q_k) % n;
+            v = ((v * v1) - (P * Q_k)) % n;
+            if (flag)
+            {
+                flag = false;
+            }
+            else
+            {
+                Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
+            }
+
+            Q_k = Q_k * Q % n;
+
+            for (int i = 0; i < s; i++)
+            {
+                // index doubling
+                u1 = u1 * v % n;
+                v = ((v * v) - (Q_k << 1)) % n;
+
+                if (flag)
+                {
+                    Q_k = Q % n;
+                    flag = false;
+                }
+                else
+                {
+                    Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
+                }
+            }
+
+            result[0] = u1;
+            result[1] = v;
+            result[2] = Q_k;
+
+            return result;
+        }
 
         private static void MultiByteDivide(BigInteger bi1, BigInteger bi2,
                                     BigInteger outQuotient, BigInteger outRemainder)
@@ -1346,6 +2989,101 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
         }
 
+        private static int ShiftLeft(uint[] buffer, int shiftVal)
+        {
+            int shiftAmount = 32;
+            int bufLen = buffer.Length;
+
+            while (bufLen > 1 && buffer[bufLen - 1] == 0)
+            {
+                bufLen--;
+            }
+
+            for (int count = shiftVal; count > 0;)
+            {
+                if (count < shiftAmount)
+                {
+                    shiftAmount = count;
+                }
+
+                //Console.WriteLine("shiftAmount = {0}", shiftAmount);
+
+                ulong carry = 0;
+                for (int i = 0; i < bufLen; i++)
+                {
+                    ulong val = (ulong)buffer[i] << shiftAmount;
+                    val |= carry;
+
+                    buffer[i] = (uint)(val & 0xFFFFFFFF);
+                    carry = val >> 32;
+                }
+
+                if (carry != 0)
+                {
+                    if (bufLen + 1 <= buffer.Length)
+                    {
+                        buffer[bufLen] = (uint)carry;
+                        bufLen++;
+                    }
+                }
+                count -= shiftAmount;
+            }
+            return bufLen;
+        }
+
+        //***********************************************************************
+        // Overloading of unary >> operators
+        //***********************************************************************
+        private static int ShiftRight(uint[] buffer, int shiftVal)
+        {
+            int shiftAmount = 32;
+            int invShift = 0;
+            int bufLen = buffer.Length;
+
+            while (bufLen > 1 && buffer[bufLen - 1] == 0)
+            {
+                bufLen--;
+            }
+
+            //Console.WriteLine("bufLen = " + bufLen + " buffer.Length = " + buffer.Length);
+
+            for (int count = shiftVal; count > 0;)
+            {
+                if (count < shiftAmount)
+                {
+                    shiftAmount = count;
+                    invShift = 32 - shiftAmount;
+                }
+
+                //Console.WriteLine("shiftAmount = {0}", shiftAmount);
+
+                ulong carry = 0;
+                for (int i = bufLen - 1; i >= 0; i--)
+                {
+                    ulong val = (ulong)buffer[i] >> shiftAmount;
+                    val |= carry;
+
+                    carry = (ulong)buffer[i] << invShift;
+                    buffer[i] = (uint)val;
+                }
+
+                count -= shiftAmount;
+            }
+
+            while (bufLen > 1 && buffer[bufLen - 1] == 0)
+            {
+                bufLen--;
+            }
+
+            return bufLen;
+        }
+
+        //***********************************************************************
+        // Private function that supports the division of two numbers with
+        // a divisor that has more than 1 digit.
+        //
+        // Algorithm taken from [1]
+        //***********************************************************************
         //***********************************************************************
         // Private function that supports the division of two numbers with
         // a divisor that has only 1 digit.
@@ -1430,233 +3168,30 @@ namespace Hyperar.OAuthCore.KeyInterop
         //***********************************************************************
         // Overloading of division operator
         //***********************************************************************
-
-        public static BigInteger operator /(BigInteger bi1, BigInteger bi2)
-        {
-            var quotient = new BigInteger();
-            var remainder = new BigInteger();
-
-            int lastPos = maxLength - 1;
-            bool divisorNeg = false, dividendNeg = false;
-
-            if ((bi1.data[lastPos] & 0x80000000) != 0) // bi1 negative
-            {
-                bi1 = -bi1;
-                dividendNeg = true;
-            }
-            if ((bi2.data[lastPos] & 0x80000000) != 0) // bi2 negative
-            {
-                bi2 = -bi2;
-                divisorNeg = true;
-            }
-
-            if (bi1 < bi2)
-            {
-                return quotient;
-            }
-
-            else
-            {
-                if (bi2.dataLength == 1)
-                {
-                    SingleByteDivide(bi1, bi2, quotient, remainder);
-                }
-                else
-                {
-                    MultiByteDivide(bi1, bi2, quotient, remainder);
-                }
-
-                if (dividendNeg != divisorNeg)
-                {
-                    return -quotient;
-                }
-
-                return quotient;
-            }
-        }
-
         //***********************************************************************
         // Overloading of modulus operator
         //***********************************************************************
-
-        public static BigInteger operator %(BigInteger bi1, BigInteger bi2)
-        {
-            var quotient = new BigInteger();
-            var remainder = new BigInteger(bi1);
-
-            int lastPos = maxLength - 1;
-            bool dividendNeg = false;
-
-            if ((bi1.data[lastPos] & 0x80000000) != 0) // bi1 negative
-            {
-                bi1 = -bi1;
-                dividendNeg = true;
-            }
-            if ((bi2.data[lastPos] & 0x80000000) != 0) // bi2 negative
-            {
-                bi2 = -bi2;
-            }
-
-            if (bi1 < bi2)
-            {
-                return remainder;
-            }
-
-            else
-            {
-                if (bi2.dataLength == 1)
-                {
-                    SingleByteDivide(bi1, bi2, quotient, remainder);
-                }
-                else
-                {
-                    MultiByteDivide(bi1, bi2, quotient, remainder);
-                }
-
-                if (dividendNeg)
-                {
-                    return -remainder;
-                }
-
-                return remainder;
-            }
-        }
-
         //***********************************************************************
         // Overloading of bitwise AND operator
         //***********************************************************************
-
-        public static BigInteger operator &(BigInteger bi1, BigInteger bi2)
-        {
-            var result = new BigInteger();
-
-            int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
-
-            for (int i = 0; i < len; i++)
-            {
-                uint sum = bi1.data[i] & bi2.data[i];
-                result.data[i] = sum;
-            }
-
-            result.dataLength = maxLength;
-
-            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
-            {
-                result.dataLength--;
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Overloading of bitwise OR operator
         //***********************************************************************
-
-        public static BigInteger operator |(BigInteger bi1, BigInteger bi2)
-        {
-            var result = new BigInteger();
-
-            int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
-
-            for (int i = 0; i < len; i++)
-            {
-                uint sum = bi1.data[i] | bi2.data[i];
-                result.data[i] = sum;
-            }
-
-            result.dataLength = maxLength;
-
-            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
-            {
-                result.dataLength--;
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Overloading of bitwise XOR operator
         //***********************************************************************
-
-        public static BigInteger operator ^(BigInteger bi1, BigInteger bi2)
-        {
-            var result = new BigInteger();
-
-            int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
-
-            for (int i = 0; i < len; i++)
-            {
-                uint sum = bi1.data[i] ^ bi2.data[i];
-                result.data[i] = sum;
-            }
-
-            result.dataLength = maxLength;
-
-            while (result.dataLength > 1 && result.data[result.dataLength - 1] == 0)
-            {
-                result.dataLength--;
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Returns max(this, bi)
         //***********************************************************************
-
-        public BigInteger Max(BigInteger bi)
-        {
-            if (this > bi)
-            {
-                return new BigInteger(this);
-            }
-            else
-            {
-                return new BigInteger(bi);
-            }
-        }
-
         //***********************************************************************
         // Returns min(this, bi)
         //***********************************************************************
-
-        public BigInteger Min(BigInteger bi)
-        {
-            if (this < bi)
-            {
-                return new BigInteger(this);
-            }
-            else
-            {
-                return new BigInteger(bi);
-            }
-        }
-
         //***********************************************************************
         // Returns the absolute value
         //***********************************************************************
-
-        public BigInteger Abs()
-        {
-            if ((this.data[maxLength - 1] & 0x80000000) != 0)
-            {
-                return -this;
-            }
-            else
-            {
-                return new BigInteger(this);
-            }
-        }
-
         //***********************************************************************
         // Returns a string representing the BigInteger in base 10.
         //***********************************************************************
-
-        public override string ToString()
-        {
-            return this.ToString(10);
-        }
-
         //***********************************************************************
         // Returns a string representing the BigInteger in sign-and-magnitude
         // format in the specified radix.
@@ -1667,66 +3202,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         // ToString(16) returns "-FF"
         //
         //***********************************************************************
-
-        public string ToString(int radix)
-        {
-            if (radix is < 2 or > 36)
-            {
-                throw new ArgumentException("Radix must be >= 2 and <= 36");
-            }
-
-            string charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            string result = "";
-
-            BigInteger a = this;
-
-            bool negative = false;
-            if ((a.data[maxLength - 1] & 0x80000000) != 0)
-            {
-                negative = true;
-                try
-                {
-                    a = -a;
-                }
-                catch (Exception)
-                {
-                }
-            }
-
-            var quotient = new BigInteger();
-            var remainder = new BigInteger();
-            var biRadix = new BigInteger(radix);
-
-            if (a.dataLength == 1 && a.data[0] == 0)
-            {
-                result = "0";
-            }
-            else
-            {
-                while (a.dataLength > 1 || (a.dataLength == 1 && a.data[0] != 0))
-                {
-                    SingleByteDivide(a, biRadix, quotient, remainder);
-
-                    if (remainder.data[0] < 10)
-                    {
-                        result = remainder.data[0] + result;
-                    }
-                    else
-                    {
-                        result = charSet[(int)remainder.data[0] - 10] + result;
-                    }
-
-                    a = quotient;
-                }
-                if (negative)
-                {
-                    result = "-" + result;
-                }
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Returns a hex string showing the contains of the BigInteger
         //
@@ -1740,102 +3215,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         //    which is the 2's complement representation of -255.
         //
         //***********************************************************************
-
-        public string ToHexString()
-        {
-            string result = this.data[this.dataLength - 1].ToString("X");
-
-            for (int i = this.dataLength - 2; i >= 0; i--)
-            {
-                result += this.data[i].ToString("X8");
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Modulo Exponentiation
         //***********************************************************************
-
-        public BigInteger ModPow(BigInteger exp, BigInteger n)
-        {
-            if ((exp.data[maxLength - 1] & 0x80000000) != 0)
-            {
-                throw new ArithmeticException("Positive exponents only.");
-            }
-
-            BigInteger resultNum = 1;
-            BigInteger tempNum;
-            bool thisNegative = false;
-
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative this
-            {
-                tempNum = -this % n;
-                thisNegative = true;
-            }
-            else
-            {
-                tempNum = this % n; // ensures (tempNum * tempNum) < b^(2k)
-            }
-
-            if ((n.data[maxLength - 1] & 0x80000000) != 0) // negative n
-            {
-                n = -n;
-            }
-
-            // calculate constant = b^(2k) / m
-            var constant = new BigInteger();
-
-            int i = n.dataLength << 1;
-            constant.data[i] = 0x00000001;
-            constant.dataLength = i + 1;
-
-            constant /= n;
-            int totalBits = exp.BitCount();
-            int count = 0;
-
-            // perform squaring and multiply exponentiation
-            for (int pos = 0; pos < exp.dataLength; pos++)
-            {
-                uint mask = 0x01;
-                //Console.WriteLine("pos = " + pos);
-
-                for (int index = 0; index < 32; index++)
-                {
-                    if ((exp.data[pos] & mask) != 0)
-                    {
-                        resultNum = this.BarrettReduction(resultNum * tempNum, n, constant);
-                    }
-
-                    mask <<= 1;
-
-                    tempNum = this.BarrettReduction(tempNum * tempNum, n, constant);
-
-                    if (tempNum.dataLength == 1 && tempNum.data[0] == 1)
-                    {
-                        if (thisNegative && (exp.data[0] & 0x1) != 0) //odd exp
-                        {
-                            return -resultNum;
-                        }
-
-                        return resultNum;
-                    }
-                    count++;
-                    if (count == totalBits)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            if (thisNegative && (exp.data[0] & 0x1) != 0) //odd exp
-            {
-                return -resultNum;
-            }
-
-            return resultNum;
-        }
-
         //***********************************************************************
         // Fast calculation of modular reduction using Barrett's reduction.
         // Requires x < b^(2k), where b is the base.  In this case, base is
@@ -1944,92 +3326,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         //***********************************************************************
         // Returns gcd(this, bi)
         //***********************************************************************
-
-        public BigInteger Gcd(BigInteger bi)
-        {
-            BigInteger x;
-            BigInteger y;
-
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                x = -this;
-            }
-            else
-            {
-                x = this;
-            }
-
-            if ((bi.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                y = -bi;
-            }
-            else
-            {
-                y = bi;
-            }
-
-            BigInteger g = y;
-
-            while (x.dataLength > 1 || (x.dataLength == 1 && x.data[0] != 0))
-            {
-                g = x;
-                x = y % x;
-                y = g;
-            }
-
-            return g;
-        }
-
         //***********************************************************************
         // Populates "this" with the specified amount of random bits
         //***********************************************************************
-
-        public void GenRandomBits(int bits, Random rand)
-        {
-            int dwords = bits >> 5;
-            int remBits = bits & 0x1F;
-
-            if (remBits != 0)
-            {
-                dwords++;
-            }
-
-            if (dwords > maxLength)
-            {
-                throw new ArithmeticException("Number of required bits > maxLength.");
-            }
-
-            for (int i = 0; i < dwords; i++)
-            {
-                this.data[i] = (uint)(rand.NextDouble() * 0x100000000);
-            }
-
-            for (int i = dwords; i < maxLength; i++)
-            {
-                this.data[i] = 0;
-            }
-
-            if (remBits != 0)
-            {
-                var mask = (uint)(0x01 << (remBits - 1));
-                this.data[dwords - 1] |= mask;
-
-                mask = 0xFFFFFFFF >> (32 - remBits);
-                this.data[dwords - 1] &= mask;
-            }
-            else
-            {
-                this.data[dwords - 1] |= 0x80000000;
-            }
-
-            this.dataLength = dwords;
-
-            if (this.dataLength == 0)
-            {
-                this.dataLength = 1;
-            }
-        }
-
         //***********************************************************************
         // Returns the position of the most significant bit in the BigInteger.
         //
@@ -2039,28 +3338,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         //      The result is 2, if the value of BigInteger is 0...0000 0011
         //
         //***********************************************************************
-
-        public int BitCount()
-        {
-            while (this.dataLength > 1 && this.data[this.dataLength - 1] == 0)
-            {
-                this.dataLength--;
-            }
-
-            uint value = this.data[this.dataLength - 1];
-            uint mask = 0x80000000;
-            int bits = 32;
-
-            while (bits > 0 && (value & mask) == 0)
-            {
-                bits--;
-                mask >>= 1;
-            }
-            bits += (this.dataLength - 1) << 5;
-
-            return bits;
-        }
-
         //***********************************************************************
         // Probabilistic prime test based on Fermat's little theorem
         //
@@ -2081,91 +3358,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         // when the randomly chosen base is a factor of the number.
         //
         //***********************************************************************
-
-        public bool FermatLittleTest(int confidence)
-        {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
-
-            if (thisVal.dataLength == 1)
-            {
-                // test small numbers
-                if (thisVal.data[0] is 0 or 1)
-                {
-                    return false;
-                }
-                else if (thisVal.data[0] is 2 or 3)
-                {
-                    return true;
-                }
-            }
-
-            if ((thisVal.data[0] & 0x1) == 0) // even numbers
-            {
-                return false;
-            }
-
-            int bits = thisVal.BitCount();
-            var a = new BigInteger();
-            BigInteger p_sub1 = thisVal - new BigInteger(1);
-            var rand = new Random();
-
-            for (int round = 0; round < confidence; round++)
-            {
-                bool done = false;
-
-                while (!done) // generate a < n
-                {
-                    int testBits = 0;
-
-                    // make sure "a" has at least 2 bits
-                    while (testBits < 2)
-                    {
-                        testBits = (int)(rand.NextDouble() * bits);
-                    }
-
-                    a.GenRandomBits(testBits, rand);
-
-                    int byteLen = a.dataLength;
-
-                    // make sure "a" is not 0
-                    if (byteLen > 1 || (byteLen == 1 && a.data[0] != 1))
-                    {
-                        done = true;
-                    }
-                }
-
-                // check whether a factor exists (fix for version 1.03)
-                BigInteger gcdTest = a.Gcd(thisVal);
-                if (gcdTest.dataLength == 1 && gcdTest.data[0] != 1)
-                {
-                    return false;
-                }
-
-                // calculate a^(p-1) mod p
-                BigInteger expResult = a.ModPow(p_sub1, thisVal);
-
-                int resultLen = expResult.dataLength;
-
-                // is NOT prime is a^(p-1) mod p != 1
-
-                if (resultLen > 1 || (resultLen == 1 && expResult.data[0] != 1))
-                {
-                    //Console.WriteLine("a = " + a.ToString());
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         //***********************************************************************
         // Probabilistic prime test based on Rabin-Miller's
         //
@@ -2186,130 +3378,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         // False if "this" is definitely NOT prime.
         //
         //***********************************************************************
-
-        public bool RabinMillerTest(int confidence)
-        {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
-
-            if (thisVal.dataLength == 1)
-            {
-                // test small numbers
-                if (thisVal.data[0] is 0 or 1)
-                {
-                    return false;
-                }
-                else if (thisVal.data[0] is 2 or 3)
-                {
-                    return true;
-                }
-            }
-
-            if ((thisVal.data[0] & 0x1) == 0) // even numbers
-            {
-                return false;
-            }
-
-            // calculate values of s and t
-            BigInteger p_sub1 = thisVal - new BigInteger(1);
-            int s = 0;
-
-            for (int index = 0; index < p_sub1.dataLength; index++)
-            {
-                uint mask = 0x01;
-
-                for (int i = 0; i < 32; i++)
-                {
-                    if ((p_sub1.data[index] & mask) != 0)
-                    {
-                        index = p_sub1.dataLength; // to break the outer loop
-                        break;
-                    }
-                    mask <<= 1;
-                    s++;
-                }
-            }
-
-            BigInteger t = p_sub1 >> s;
-
-            int bits = thisVal.BitCount();
-            var a = new BigInteger();
-            var rand = new Random();
-
-            for (int round = 0; round < confidence; round++)
-            {
-                bool done = false;
-
-                while (!done) // generate a < n
-                {
-                    int testBits = 0;
-
-                    // make sure "a" has at least 2 bits
-                    while (testBits < 2)
-                    {
-                        testBits = (int)(rand.NextDouble() * bits);
-                    }
-
-                    a.GenRandomBits(testBits, rand);
-
-                    int byteLen = a.dataLength;
-
-                    // make sure "a" is not 0
-                    if (byteLen > 1 || (byteLen == 1 && a.data[0] != 1))
-                    {
-                        done = true;
-                    }
-                }
-
-                // check whether a factor exists (fix for version 1.03)
-                BigInteger gcdTest = a.Gcd(thisVal);
-                if (gcdTest.dataLength == 1 && gcdTest.data[0] != 1)
-                {
-                    return false;
-                }
-
-                BigInteger b = a.ModPow(t, thisVal);
-
-                /*
-          Console.WriteLine("a = " + a.ToString(10));
-          Console.WriteLine("b = " + b.ToString(10));
-          Console.WriteLine("t = " + t.ToString(10));
-          Console.WriteLine("s = " + s);
-          */
-
-                bool result = false;
-
-                if (b.dataLength == 1 && b.data[0] == 1) // a^t mod p = 1
-                {
-                    result = true;
-                }
-
-                for (int j = 0; result == false && j < s; j++)
-                {
-                    if (b == p_sub1) // a^((2^j)*t) mod p = p-1 for some 0 <= j <= s-1
-                    {
-                        result = true;
-                        break;
-                    }
-
-                    b = b * b % thisVal;
-                }
-
-                if (result == false)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
         //***********************************************************************
         // Probabilistic prime test based on Solovay-Strassen (Euler Criterion)
         //
@@ -2329,100 +3397,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         // False if "this" is definitely NOT prime.
         //
         //***********************************************************************
-
-        public bool SolovayStrassenTest(int confidence)
-        {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
-
-            if (thisVal.dataLength == 1)
-            {
-                // test small numbers
-                if (thisVal.data[0] is 0 or 1)
-                {
-                    return false;
-                }
-                else if (thisVal.data[0] is 2 or 3)
-                {
-                    return true;
-                }
-            }
-
-            if ((thisVal.data[0] & 0x1) == 0) // even numbers
-            {
-                return false;
-            }
-
-            int bits = thisVal.BitCount();
-            var a = new BigInteger();
-            BigInteger p_sub1 = thisVal - 1;
-            BigInteger p_sub1_shift = p_sub1 >> 1;
-
-            var rand = new Random();
-
-            for (int round = 0; round < confidence; round++)
-            {
-                bool done = false;
-
-                while (!done) // generate a < n
-                {
-                    int testBits = 0;
-
-                    // make sure "a" has at least 2 bits
-                    while (testBits < 2)
-                    {
-                        testBits = (int)(rand.NextDouble() * bits);
-                    }
-
-                    a.GenRandomBits(testBits, rand);
-
-                    int byteLen = a.dataLength;
-
-                    // make sure "a" is not 0
-                    if (byteLen > 1 || (byteLen == 1 && a.data[0] != 1))
-                    {
-                        done = true;
-                    }
-                }
-
-                // check whether a factor exists (fix for version 1.03)
-                BigInteger gcdTest = a.Gcd(thisVal);
-                if (gcdTest.dataLength == 1 && gcdTest.data[0] != 1)
-                {
-                    return false;
-                }
-
-                // calculate a^((p-1)/2) mod p
-
-                BigInteger expResult = a.ModPow(p_sub1_shift, thisVal);
-                if (expResult == p_sub1)
-                {
-                    expResult = -1;
-                }
-
-                // calculate Jacobi symbol
-                BigInteger jacob = Jacobi(a, thisVal);
-
-                //Console.WriteLine("a = " + a.ToString(10) + " b = " + thisVal.ToString(10));
-                //Console.WriteLine("expResult = " + expResult.ToString(10) + " Jacob = " + jacob.ToString(10));
-
-                // if they are different then it is not prime
-                if (expResult != jacob)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         //***********************************************************************
         // Implementation of the Lucas Strong Pseudo Prime test.
         //
@@ -2436,40 +3410,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         // Returns True if number is a strong Lucus pseudo prime.
         // Otherwise, returns False indicating that number is composite.
         //***********************************************************************
-
-        public bool LucasStrongTest()
-        {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
-
-            if (thisVal.dataLength == 1)
-            {
-                // test small numbers
-                if (thisVal.data[0] is 0 or 1)
-                {
-                    return false;
-                }
-                else if (thisVal.data[0] is 2 or 3)
-                {
-                    return true;
-                }
-            }
-
-            if ((thisVal.data[0] & 0x1) == 0) // even numbers
-            {
-                return false;
-            }
-
-            return this.LucasStrongTestHelper(thisVal);
-        }
-
         private bool LucasStrongTestHelper(BigInteger thisVal)
         {
             // Do the test (selects D based on Selfridge)
@@ -2618,51 +3558,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         //
         // Returns true if number is probably prime.
         //***********************************************************************
-
-        public bool IsProbablePrime(int confidence)
-        {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
-
-            // test for divisibility by primes < 2000
-            for (int p = 0; p < primesBelow2000.Length; p++)
-            {
-                BigInteger divisor = primesBelow2000[p];
-
-                if (divisor >= thisVal)
-                {
-                    break;
-                }
-
-                BigInteger resultNum = thisVal % divisor;
-                if (resultNum.IntValue() == 0)
-                {
-                    /*
-    Console.WriteLine("Not prime!  Divisible by {0}\n",
-                              primesBelow2000[p]);
-            */
-                    return false;
-                }
-            }
-
-            if (thisVal.RabinMillerTest(confidence))
-            {
-                return true;
-            }
-            else
-            {
-                //Console.WriteLine("Not prime!  Failed primality test\n");
-                return false;
-            }
-        }
-
         //***********************************************************************
         // Determines whether this BigInteger is probably prime using a
         // combination of base 2 strong pseudoprime test and Lucas strong
@@ -2684,450 +3579,39 @@ namespace Hyperar.OAuthCore.KeyInterop
         // For a detailed discussion of this primality test, see [6].
         //
         //***********************************************************************
-
-        public bool IsProbablePrime()
-        {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
-
-            if (thisVal.dataLength == 1)
-            {
-                // test small numbers
-                if (thisVal.data[0] is 0 or 1)
-                {
-                    return false;
-                }
-                else if (thisVal.data[0] is 2 or 3)
-                {
-                    return true;
-                }
-            }
-
-            if ((thisVal.data[0] & 0x1) == 0) // even numbers
-            {
-                return false;
-            }
-
-            // test for divisibility by primes < 2000
-            for (int p = 0; p < primesBelow2000.Length; p++)
-            {
-                BigInteger divisor = primesBelow2000[p];
-
-                if (divisor >= thisVal)
-                {
-                    break;
-                }
-
-                BigInteger resultNum = thisVal % divisor;
-                if (resultNum.IntValue() == 0)
-                {
-                    //Console.WriteLine("Not prime!  Divisible by {0}\n",
-                    //                  primesBelow2000[p]);
-
-                    return false;
-                }
-            }
-
-            // Perform BASE 2 Rabin-Miller Test
-
-            // calculate values of s and t
-            BigInteger p_sub1 = thisVal - new BigInteger(1);
-            int s = 0;
-
-            for (int index = 0; index < p_sub1.dataLength; index++)
-            {
-                uint mask = 0x01;
-
-                for (int i = 0; i < 32; i++)
-                {
-                    if ((p_sub1.data[index] & mask) != 0)
-                    {
-                        index = p_sub1.dataLength; // to break the outer loop
-                        break;
-                    }
-                    mask <<= 1;
-                    s++;
-                }
-            }
-
-            BigInteger t = p_sub1 >> s;
-
-            int bits = thisVal.BitCount();
-            BigInteger a = 2;
-
-            // b = a^t mod p
-            BigInteger b = a.ModPow(t, thisVal);
-            bool result = false;
-
-            if (b.dataLength == 1 && b.data[0] == 1) // a^t mod p = 1
-            {
-                result = true;
-            }
-
-            for (int j = 0; result == false && j < s; j++)
-            {
-                if (b == p_sub1) // a^((2^j)*t) mod p = p-1 for some 0 <= j <= s-1
-                {
-                    result = true;
-                    break;
-                }
-
-                b = b * b % thisVal;
-            }
-
-            // if number is strong pseudoprime to base 2, then do a strong lucas test
-            if (result)
-            {
-                result = this.LucasStrongTestHelper(thisVal);
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Returns the lowest 4 bytes of the BigInteger as an int.
         //***********************************************************************
-
-        public int IntValue()
-        {
-            return (int)this.data[0];
-        }
-
         //***********************************************************************
         // Returns the lowest 8 bytes of the BigInteger as a long.
         //***********************************************************************
-
-        public long LongValue()
-        {
-            long val = this.data[0];
-            try
-            {
-                // exception if maxLength = 1
-                val |= (long)this.data[1] << 32;
-            }
-            catch (Exception)
-            {
-                if ((this.data[0] & 0x80000000) != 0) // negative
-                {
-                    val = (int)this.data[0];
-                }
-            }
-
-            return val;
-        }
-
         //***********************************************************************
         // Computes the Jacobi Symbol for a and b.
         // Algorithm adapted from [3] and [4] with some optimizations
         //***********************************************************************
-
-        public static int Jacobi(BigInteger a, BigInteger b)
-        {
-            // Jacobi defined only for odd integers
-            if ((b.data[0] & 0x1) == 0)
-            {
-                throw new ArgumentException("Jacobi defined only for odd integers.");
-            }
-
-            if (a >= b)
-            {
-                a %= b;
-            }
-
-            if (a.dataLength == 1 && a.data[0] == 0)
-            {
-                return 0; // a == 0
-            }
-
-            if (a.dataLength == 1 && a.data[0] == 1)
-            {
-                return 1; // a == 1
-            }
-
-            if (a < 0)
-            {
-                if (((b - 1).data[0] & 0x2) == 0) //if( (((b-1) >> 1).data[0] & 0x1) == 0)
-                {
-                    return Jacobi(-a, b);
-                }
-                else
-                {
-                    return -Jacobi(-a, b);
-                }
-            }
-
-            int e = 0;
-            for (int index = 0; index < a.dataLength; index++)
-            {
-                uint mask = 0x01;
-
-                for (int i = 0; i < 32; i++)
-                {
-                    if ((a.data[index] & mask) != 0)
-                    {
-                        index = a.dataLength; // to break the outer loop
-                        break;
-                    }
-                    mask <<= 1;
-                    e++;
-                }
-            }
-
-            BigInteger a1 = a >> e;
-
-            int s = 1;
-            if ((e & 0x1) != 0 && ((b.data[0] & 0x7) == 3 || (b.data[0] & 0x7) == 5))
-            {
-                s = -1;
-            }
-
-            if ((b.data[0] & 0x3) == 3 && (a1.data[0] & 0x3) == 3)
-            {
-                s = -s;
-            }
-
-            if (a1.dataLength == 1 && a1.data[0] == 1)
-            {
-                return s;
-            }
-            else
-            {
-                return s * Jacobi(b % a1, a1);
-            }
-        }
-
         //***********************************************************************
         // Generates a positive BigInteger that is probably prime.
         //***********************************************************************
-
-        public static BigInteger GenPseudoPrime(int bits, int confidence, Random rand)
-        {
-            var result = new BigInteger();
-            bool done = false;
-
-            while (!done)
-            {
-                result.GenRandomBits(bits, rand);
-                result.data[0] |= 0x01; // make it odd
-
-                // prime test
-                done = result.IsProbablePrime(confidence);
-            }
-            return result;
-        }
-
         //***********************************************************************
         // Generates a random number with the specified number of bits such
         // that gcd(number, this) = 1
         //***********************************************************************
-
-        public BigInteger GenCoPrime(int bits, Random rand)
-        {
-            bool done = false;
-            var result = new BigInteger();
-
-            while (!done)
-            {
-                result.GenRandomBits(bits, rand);
-                //Console.WriteLine(result.ToString(16));
-
-                // gcd test
-                BigInteger g = result.Gcd(this);
-                if (g.dataLength == 1 && g.data[0] == 1)
-                {
-                    done = true;
-                }
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Returns the modulo inverse of this.  Throws ArithmeticException if
         // the inverse does not exist.  (i.e. gcd(this, modulus) != 1)
         //***********************************************************************
-
-        public BigInteger ModInverse(BigInteger modulus)
-        {
-            BigInteger[] p = { 0, 1 };
-            var q = new BigInteger[2]; // quotients
-            BigInteger[] r = { 0, 0 }; // remainders
-
-            int step = 0;
-
-            BigInteger a = modulus;
-            BigInteger b = this;
-
-            while (b.dataLength > 1 || (b.dataLength == 1 && b.data[0] != 0))
-            {
-                var quotient = new BigInteger();
-                var remainder = new BigInteger();
-
-                if (step > 1)
-                {
-                    BigInteger pval = (p[0] - (p[1] * q[0])) % modulus;
-                    p[0] = p[1];
-                    p[1] = pval;
-                }
-
-                if (b.dataLength == 1)
-                {
-                    SingleByteDivide(a, b, quotient, remainder);
-                }
-                else
-                {
-                    MultiByteDivide(a, b, quotient, remainder);
-                }
-
-                /*
-          Console.WriteLine(quotient.dataLength);
-          Console.WriteLine("{0} = {1}({2}) + {3}  p = {4}", a.ToString(10),
-                            b.ToString(10), quotient.ToString(10), remainder.ToString(10),
-                            p[1].ToString(10));
-          */
-
-                q[0] = q[1];
-                r[0] = r[1];
-                q[1] = quotient;
-                r[1] = remainder;
-
-                a = b;
-                b = remainder;
-
-                step++;
-            }
-
-            if (r[0].dataLength > 1 || (r[0].dataLength == 1 && r[0].data[0] != 1))
-            {
-                throw new ArithmeticException("No inverse!");
-            }
-
-            BigInteger result = (p[0] - (p[1] * q[0])) % modulus;
-
-            if ((result.data[maxLength - 1] & 0x80000000) != 0)
-            {
-                result += modulus; // get the least positive modulus
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Returns the value of the BigInteger as a byte array.  The lowest
         // index contains the MSB.
         //***********************************************************************
-
-        public byte[] GetBytes()
-        {
-            int numBits = this.BitCount();
-
-            int numBytes = numBits >> 3;
-            if ((numBits & 0x7) != 0)
-            {
-                numBytes++;
-            }
-
-            var result = new byte[numBytes];
-
-            //Console.WriteLine(result.Length);
-
-            int pos = 0;
-            uint tempVal, val = this.data[this.dataLength - 1];
-
-            if ((tempVal = (val >> 24) & 0xFF) != 0)
-            {
-                result[pos++] = (byte)tempVal;
-            }
-
-            if ((tempVal = (val >> 16) & 0xFF) != 0)
-            {
-                result[pos++] = (byte)tempVal;
-            }
-            else if (pos > 0)
-            {
-                pos++;
-            }
-
-            if ((tempVal = (val >> 8) & 0xFF) != 0)
-            {
-                result[pos++] = (byte)tempVal;
-            }
-            else if (pos > 0)
-            {
-                pos++;
-            }
-
-            if ((tempVal = val & 0xFF) != 0)
-            {
-                result[pos++] = (byte)tempVal;
-            }
-
-            for (int i = this.dataLength - 2; i >= 0; i--, pos += 4)
-            {
-                val = this.data[i];
-                result[pos + 3] = (byte)(val & 0xFF);
-                val >>= 8;
-                result[pos + 2] = (byte)(val & 0xFF);
-                val >>= 8;
-                result[pos + 1] = (byte)(val & 0xFF);
-                val >>= 8;
-                result[pos] = (byte)(val & 0xFF);
-            }
-
-            return result;
-        }
-
         //***********************************************************************
         // Sets the value of the specified bit to 1
         // The Least Significant Bit position is 0.
         //***********************************************************************
-
-        public void SetBit(uint bitNum)
-        {
-            uint bytePos = bitNum >> 5; // divide by 32
-            var bitPos = (byte)(bitNum & 0x1F); // get the lowest 5 bits
-
-            uint mask = (uint)1 << bitPos;
-            this.data[bytePos] |= mask;
-
-            if (bytePos >= this.dataLength)
-            {
-                this.dataLength = (int)bytePos + 1;
-            }
-        }
-
         //***********************************************************************
         // Sets the value of the specified bit to 0
         // The Least Significant Bit position is 0.
         //***********************************************************************
-
-        public void UnsetBit(uint bitNum)
-        {
-            uint bytePos = bitNum >> 5;
-
-            if (bytePos < this.dataLength)
-            {
-                var bitPos = (byte)(bitNum & 0x1F);
-
-                uint mask = (uint)1 << bitPos;
-                uint mask2 = 0xFFFFFFFF ^ mask;
-
-                this.data[bytePos] &= mask2;
-
-                if (this.dataLength > 1 && this.data[this.dataLength - 1] == 0)
-                {
-                    this.dataLength--;
-                }
-            }
-        }
-
         //***********************************************************************
         // Returns a value that is equivalent to the integer square root
         // of the BigInteger.
@@ -3136,57 +3620,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         // such that (n * n) <= this
         //
         //***********************************************************************
-
-        public BigInteger Sqrt()
-        {
-            var numBits = (uint)this.BitCount();
-
-            if ((numBits & 0x1) != 0) // odd number of bits
-            {
-                numBits = (numBits >> 1) + 1;
-            }
-            else
-            {
-                numBits >>= 1;
-            }
-
-            uint bytePos = numBits >> 5;
-            var bitPos = (byte)(numBits & 0x1F);
-
-            uint mask;
-
-            var result = new BigInteger();
-            if (bitPos == 0)
-            {
-                mask = 0x80000000;
-            }
-            else
-            {
-                mask = (uint)1 << bitPos;
-                bytePos++;
-            }
-            result.dataLength = (int)bytePos;
-
-            for (int i = (int)bytePos - 1; i >= 0; i--)
-            {
-                while (mask != 0)
-                {
-                    // guess
-                    result.data[i] ^= mask;
-
-                    // undo the guess if its square is larger than this
-                    if (result * result > this)
-                    {
-                        result.data[i] ^= mask;
-                    }
-
-                    mask >>= 1;
-                }
-                mask = 0x80000000;
-            }
-            return result;
-        }
-
         //***********************************************************************
         // Returns the k_th number in the Lucas Sequence reduced modulo n.
         //
@@ -3218,505 +3651,28 @@ namespace Hyperar.OAuthCore.KeyInterop
         // Where U(0) = 0 % n, U(1) = 1 % n
         //       V(0) = 2 % n, V(1) = P % n
         //***********************************************************************
-
-        public static BigInteger[] LucasSequence(BigInteger P, BigInteger Q,
-                                                 BigInteger k, BigInteger n)
-        {
-            if (k.dataLength == 1 && k.data[0] == 0)
-            {
-                var result = new BigInteger[3];
-
-                result[0] = 0;
-                result[1] = 2 % n;
-                result[2] = 1 % n;
-                return result;
-            }
-
-            // calculate constant = b^(2k) / m
-            // for Barrett Reduction
-            var constant = new BigInteger();
-
-            int nLen = n.dataLength << 1;
-            constant.data[nLen] = 0x00000001;
-            constant.dataLength = nLen + 1;
-
-            constant /= n;
-
-            // calculate values of s and t
-            int s = 0;
-
-            for (int index = 0; index < k.dataLength; index++)
-            {
-                uint mask = 0x01;
-
-                for (int i = 0; i < 32; i++)
-                {
-                    if ((k.data[index] & mask) != 0)
-                    {
-                        index = k.dataLength; // to break the outer loop
-                        break;
-                    }
-                    mask <<= 1;
-                    s++;
-                }
-            }
-
-            BigInteger t = k >> s;
-
-            //Console.WriteLine("s = " + s + " t = " + t);
-            return LucasSequenceHelper(P, Q, t, n, constant, s);
-        }
-
         //***********************************************************************
         // Performs the calculation of the kth term in the Lucas Sequence.
         // For details of the algorithm, see reference [9].
         //
         // k must be odd.  i.e LSB == 1
         //***********************************************************************
-
-        private static BigInteger[] LucasSequenceHelper(BigInteger P, BigInteger Q,
-                                                BigInteger k, BigInteger n,
-                                                BigInteger constant, int s)
-        {
-            var result = new BigInteger[3];
-
-            if ((k.data[0] & 0x00000001) == 0)
-            {
-                throw new ArgumentException("Argument k must be odd.");
-            }
-
-            int numbits = k.BitCount();
-            uint mask = (uint)0x1 << ((numbits & 0x1F) - 1);
-
-            // v = v0, v1 = v1, u1 = u1, Q_k = Q^0
-
-            BigInteger v = 2 % n,
-                       Q_k = 1 % n,
-                       v1 = P % n,
-                       u1 = Q_k;
-            bool flag = true;
-
-            for (int i = k.dataLength - 1; i >= 0; i--) // iterate on the binary expansion of k
-            {
-                //Console.WriteLine("round");
-                while (mask != 0)
-                {
-                    if (i == 0 && mask == 0x00000001) // last bit
-                    {
-                        break;
-                    }
-
-                    if ((k.data[i] & mask) != 0) // bit is set
-                    {
-                        // index doubling with addition
-
-                        u1 = u1 * v1 % n;
-
-                        v = ((v * v1) - (P * Q_k)) % n;
-                        v1 = n.BarrettReduction(v1 * v1, n, constant);
-                        v1 = (v1 - ((Q_k * Q) << 1)) % n;
-
-                        if (flag)
-                        {
-                            flag = false;
-                        }
-                        else
-                        {
-                            Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
-                        }
-
-                        Q_k = Q_k * Q % n;
-                    }
-                    else
-                    {
-                        // index doubling
-                        u1 = ((u1 * v) - Q_k) % n;
-
-                        v1 = ((v * v1) - (P * Q_k)) % n;
-                        v = n.BarrettReduction(v * v, n, constant);
-                        v = (v - (Q_k << 1)) % n;
-
-                        if (flag)
-                        {
-                            Q_k = Q % n;
-                            flag = false;
-                        }
-                        else
-                        {
-                            Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
-                        }
-                    }
-
-                    mask >>= 1;
-                }
-                mask = 0x80000000;
-            }
-
-            // at this point u1 = u(n+1) and v = v(n)
-            // since the last bit always 1, we need to transform u1 to u(2n+1) and v to v(2n+1)
-
-            u1 = ((u1 * v) - Q_k) % n;
-            v = ((v * v1) - (P * Q_k)) % n;
-            if (flag)
-            {
-                flag = false;
-            }
-            else
-            {
-                Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
-            }
-
-            Q_k = Q_k * Q % n;
-
-            for (int i = 0; i < s; i++)
-            {
-                // index doubling
-                u1 = u1 * v % n;
-                v = ((v * v) - (Q_k << 1)) % n;
-
-                if (flag)
-                {
-                    Q_k = Q % n;
-                    flag = false;
-                }
-                else
-                {
-                    Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
-                }
-            }
-
-            result[0] = u1;
-            result[1] = v;
-            result[2] = Q_k;
-
-            return result;
-        }
-
         //***********************************************************************
         // Tests the correct implementation of the /, %, * and + operators
         //***********************************************************************
-
-        public static void MulDivTest(int rounds)
-        {
-            var rand = new Random();
-            var val = new byte[64];
-            var val2 = new byte[64];
-
-            for (int count = 0; count < rounds; count++)
-            {
-                // generate 2 numbers of random length
-                int t1 = 0;
-                while (t1 == 0)
-                {
-                    t1 = (int)(rand.NextDouble() * 65);
-                }
-
-                int t2 = 0;
-                while (t2 == 0)
-                {
-                    t2 = (int)(rand.NextDouble() * 65);
-                }
-
-                bool done = false;
-                while (!done)
-                {
-                    for (int i = 0; i < 64; i++)
-                    {
-                        if (i < t1)
-                        {
-                            val[i] = (byte)(rand.NextDouble() * 256);
-                        }
-                        else
-                        {
-                            val[i] = 0;
-                        }
-
-                        if (val[i] != 0)
-                        {
-                            done = true;
-                        }
-                    }
-                }
-
-                done = false;
-                while (!done)
-                {
-                    for (int i = 0; i < 64; i++)
-                    {
-                        if (i < t2)
-                        {
-                            val2[i] = (byte)(rand.NextDouble() * 256);
-                        }
-                        else
-                        {
-                            val2[i] = 0;
-                        }
-
-                        if (val2[i] != 0)
-                        {
-                            done = true;
-                        }
-                    }
-                }
-
-                while (val[0] == 0)
-                {
-                    val[0] = (byte)(rand.NextDouble() * 256);
-                }
-
-                while (val2[0] == 0)
-                {
-                    val2[0] = (byte)(rand.NextDouble() * 256);
-                }
-
-                Console.WriteLine(count);
-                var bn1 = new BigInteger(val, t1);
-                var bn2 = new BigInteger(val2, t2);
-
-                // Determine the quotient and remainder by dividing
-                // the first number by the second.
-
-                BigInteger bn3 = bn1 / bn2;
-                BigInteger bn4 = bn1 % bn2;
-
-                // Recalculate the number
-                BigInteger bn5 = (bn3 * bn2) + bn4;
-
-                // Make sure they're the same
-                if (bn5 != bn1)
-                {
-                    Console.WriteLine("Error at " + count);
-                    Console.WriteLine(bn1 + "\n");
-                    Console.WriteLine(bn2 + "\n");
-                    Console.WriteLine(bn3 + "\n");
-                    Console.WriteLine(bn4 + "\n");
-                    Console.WriteLine(bn5 + "\n");
-                    return;
-                }
-            }
-        }
-
         //***********************************************************************
         // Tests the correct implementation of the modulo exponential function
         // using RSA encryption and decryption (using pre-computed encryption and
         // decryption keys).
         //***********************************************************************
-
-        public static void RSATest(int rounds)
-        {
-            var rand = new Random(1);
-            var val = new byte[64];
-
-            // private and public key
-            var bi_e =
-                new BigInteger(
-                    "a932b948feed4fb2b692609bd22164fc9edb59fae7880cc1eaff7b3c9626b7e5b241c27a974833b2622ebe09beb451917663d47232488f23a117fc97720f1e7",
-                    16);
-            var bi_d =
-                new BigInteger(
-                    "4adf2f7a89da93248509347d2ae506d683dd3a16357e859a980c4f77a4e2f7a01fae289f13a851df6e9db5adaa60bfd2b162bbbe31f7c8f828261a6839311929d2cef4f864dde65e556ce43c89bbbf9f1ac5511315847ce9cc8dc92470a747b8792d6a83b0092d2e5ebaf852c85cacf34278efa99160f2f8aa7ee7214de07b7",
-                    16);
-            var bi_n =
-                new BigInteger(
-                    "e8e77781f36a7b3188d711c2190b560f205a52391b3479cdb99fa010745cbeba5f2adc08e1de6bf38398a0487c4a73610d94ec36f17f3f46ad75e17bc1adfec99839589f45f95ccc94cb2a5c500b477eb3323d8cfab0c8458c96f0147a45d27e45a4d11d54d77684f65d48f15fafcc1ba208e71e921b9bd9017c16a5231af7f",
-                    16);
-
-            Console.WriteLine("e =\n" + bi_e.ToString(10));
-            Console.WriteLine("\nd =\n" + bi_d.ToString(10));
-            Console.WriteLine("\nn =\n" + bi_n.ToString(10) + "\n");
-
-            for (int count = 0; count < rounds; count++)
-            {
-                // generate data of random length
-                int t1 = 0;
-                while (t1 == 0)
-                {
-                    t1 = (int)(rand.NextDouble() * 65);
-                }
-
-                bool done = false;
-                while (!done)
-                {
-                    for (int i = 0; i < 64; i++)
-                    {
-                        if (i < t1)
-                        {
-                            val[i] = (byte)(rand.NextDouble() * 256);
-                        }
-                        else
-                        {
-                            val[i] = 0;
-                        }
-
-                        if (val[i] != 0)
-                        {
-                            done = true;
-                        }
-                    }
-                }
-
-                while (val[0] == 0)
-                {
-                    val[0] = (byte)(rand.NextDouble() * 256);
-                }
-
-                Console.Write("Round = " + count);
-
-                // encrypt and decrypt data
-                var bi_data = new BigInteger(val, t1);
-                BigInteger bi_encrypted = bi_data.ModPow(bi_e, bi_n);
-                BigInteger bi_decrypted = bi_encrypted.ModPow(bi_d, bi_n);
-
-                // compare
-                if (bi_decrypted != bi_data)
-                {
-                    Console.WriteLine("\nError at round " + count);
-                    Console.WriteLine(bi_data + "\n");
-                    return;
-                }
-                Console.WriteLine(" <PASSED>.");
-            }
-        }
-
         //***********************************************************************
         // Tests the correct implementation of the modulo exponential and
         // inverse modulo functions using RSA encryption and decryption.  The two
         // pseudoprimes p and q are fixed, but the two RSA keys are generated
         // for each round of testing.
         //***********************************************************************
-
-        public static void RSATest2(int rounds)
-        {
-            var rand = new Random();
-            var val = new byte[64];
-
-            byte[] pseudoPrime1 = {
-                                  0x85, 0x84, 0x64, 0xFD, 0x70, 0x6A,
-                                  0x9F, 0xF0, 0x94, 0x0C, 0x3E, 0x2C,
-                                  0x74, 0x34, 0x05, 0xC9, 0x55, 0xB3,
-                                  0x85, 0x32, 0x98, 0x71, 0xF9, 0x41,
-                                  0x21, 0x5F, 0x02, 0x9E, 0xEA, 0x56,
-                                  0x8D, 0x8C, 0x44, 0xCC, 0xEE, 0xEE,
-                                  0x3D, 0x2C, 0x9D, 0x2C, 0x12, 0x41,
-                                  0x1E, 0xF1, 0xC5, 0x32, 0xC3, 0xAA,
-                                  0x31, 0x4A, 0x52, 0xD8, 0xE8, 0xAF,
-                                  0x42, 0xF4, 0x72, 0xA1, 0x2A, 0x0D,
-                                  0x97, 0xB1, 0x31, 0xB3,
-                              };
-
-            byte[] pseudoPrime2 = {
-                                  0x99, 0x98, 0xCA, 0xB8, 0x5E, 0xD7,
-                                  0xE5, 0xDC, 0x28, 0x5C, 0x6F, 0x0E,
-                                  0x15, 0x09, 0x59, 0x6E, 0x84, 0xF3,
-                                  0x81, 0xCD, 0xDE, 0x42, 0xDC, 0x93,
-                                  0xC2, 0x7A, 0x62, 0xAC, 0x6C, 0xAF,
-                                  0xDE, 0x74, 0xE3, 0xCB, 0x60, 0x20,
-                                  0x38, 0x9C, 0x21, 0xC3, 0xDC, 0xC8,
-                                  0xA2, 0x4D, 0xC6, 0x2A, 0x35, 0x7F,
-                                  0xF3, 0xA9, 0xE8, 0x1D, 0x7B, 0x2C,
-                                  0x78, 0xFA, 0xB8, 0x02, 0x55, 0x80,
-                                  0x9B, 0xC2, 0xA5, 0xCB,
-                              };
-
-            var bi_p = new BigInteger(pseudoPrime1);
-            var bi_q = new BigInteger(pseudoPrime2);
-            BigInteger bi_pq = (bi_p - 1) * (bi_q - 1);
-            BigInteger bi_n = bi_p * bi_q;
-
-            for (int count = 0; count < rounds; count++)
-            {
-                // generate private and public key
-                BigInteger bi_e = bi_pq.GenCoPrime(512, rand);
-                BigInteger bi_d = bi_e.ModInverse(bi_pq);
-
-                Console.WriteLine("\ne =\n" + bi_e.ToString(10));
-                Console.WriteLine("\nd =\n" + bi_d.ToString(10));
-                Console.WriteLine("\nn =\n" + bi_n.ToString(10) + "\n");
-
-                // generate data of random length
-                int t1 = 0;
-                while (t1 == 0)
-                {
-                    t1 = (int)(rand.NextDouble() * 65);
-                }
-
-                bool done = false;
-                while (!done)
-                {
-                    for (int i = 0; i < 64; i++)
-                    {
-                        if (i < t1)
-                        {
-                            val[i] = (byte)(rand.NextDouble() * 256);
-                        }
-                        else
-                        {
-                            val[i] = 0;
-                        }
-
-                        if (val[i] != 0)
-                        {
-                            done = true;
-                        }
-                    }
-                }
-
-                while (val[0] == 0)
-                {
-                    val[0] = (byte)(rand.NextDouble() * 256);
-                }
-
-                Console.Write("Round = " + count);
-
-                // encrypt and decrypt data
-                var bi_data = new BigInteger(val, t1);
-                BigInteger bi_encrypted = bi_data.ModPow(bi_e, bi_n);
-                BigInteger bi_decrypted = bi_encrypted.ModPow(bi_d, bi_n);
-
-                // compare
-                if (bi_decrypted != bi_data)
-                {
-                    Console.WriteLine("\nError at round " + count);
-                    Console.WriteLine(bi_data + "\n");
-                    return;
-                }
-                Console.WriteLine(" <PASSED>.");
-            }
-        }
-
         //***********************************************************************
         // Tests the correct implementation of sqrt() method.
         //***********************************************************************
-
-        public static void SqrtTest(int rounds)
-        {
-            var rand = new Random();
-            for (int count = 0; count < rounds; count++)
-            {
-                // generate data of random length
-                int t1 = 0;
-                while (t1 == 0)
-                {
-                    t1 = (int)(rand.NextDouble() * 1024);
-                }
-
-                Console.Write("Round = " + count);
-
-                var a = new BigInteger();
-                a.GenRandomBits(t1, rand);
-
-                BigInteger b = a.Sqrt();
-                BigInteger c = (b + 1) * (b + 1);
-
-                // check that b is the largest integer such that b*b <= a
-                if (c <= a)
-                {
-                    Console.WriteLine("\nError at round " + count);
-                    Console.WriteLine(a + "\n");
-                    return;
-                }
-                Console.WriteLine(" <PASSED>.");
-            }
-        }
     }
 }

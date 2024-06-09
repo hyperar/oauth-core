@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Hyperar.OauthCore.Utility
+namespace Hyperar.OAuthCore.Utility
 {
     using System;
     using System.Collections;
@@ -134,6 +134,7 @@ namespace Hyperar.OauthCore.Utility
                 this._properties.TryGetValue(key.ToString(), out value);
                 return value;
             }
+
             set { throw new NotImplementedException(); }
         }
 
