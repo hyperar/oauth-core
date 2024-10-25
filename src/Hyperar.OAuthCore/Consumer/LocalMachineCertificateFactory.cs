@@ -46,7 +46,7 @@ namespace Hyperar.OAuthCore.Consumer
             this._certificateSubject = certificateSubject;
             this._findType = findType;
 
-            ServicePointManager.ServerCertificateValidationCallback = this.RemoteCertificateValidationCallback;
+            ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// <param name="chain">The chain.</param>
         /// <param name="sslPolicyErrors">The SSL policy errors.</param>
         /// <returns></returns>
-        public bool RemoteCertificateValidationCallback(Object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        public static bool RemoteCertificateValidationCallback(Object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }

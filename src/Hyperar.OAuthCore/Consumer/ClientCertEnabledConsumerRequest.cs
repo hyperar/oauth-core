@@ -56,7 +56,7 @@ namespace Hyperar.OAuthCore.Consumer
             // Attach the certificate to the HttpWebRequest
             if (certificate != null)
             {
-                webReqeust.ClientCertificates.Add(certificate);
+                _ = webReqeust.ClientCertificates.Add(certificate);
             }
 
             return webReqeust;

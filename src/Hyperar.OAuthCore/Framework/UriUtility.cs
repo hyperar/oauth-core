@@ -39,6 +39,7 @@ namespace Hyperar.OAuthCore.Framework
         private static readonly string[] QuoteCharacters = new[] { "\"", "'" };
 
         private static readonly string[] UriRfc3986CharsToEscape = new[] { "!", "*", "'", "(", ")" };
+        private static readonly char[] separator = new[] { ',' };
 
         static UriUtility()
         {
@@ -57,10 +58,10 @@ namespace Hyperar.OAuthCore.Framework
             string normalizedRequestParameters = NormalizeRequestParameters(parameters);
 
             var signatureBase = new StringBuilder();
-            signatureBase.AppendFormat("{0}&", httpMethod.ToUpper());
+            _ = signatureBase.AppendFormat("{0}&", httpMethod.ToUpper());
 
-            signatureBase.AppendFormat("{0}&", UrlEncode(NormalizeUri(url)));
-            signatureBase.AppendFormat("{0}", UrlEncode(normalizedRequestParameters));
+            _ = signatureBase.AppendFormat("{0}&", UrlEncode(NormalizeUri(url)));
+            _ = signatureBase.AppendFormat("{0}", UrlEncode(normalizedRequestParameters));
 
             return signatureBase.ToString();
         }
@@ -80,11 +81,11 @@ namespace Hyperar.OAuthCore.Framework
                 {
                     if (builder.Length > 0)
                     {
-                        builder.Append("&");
+                        _ = builder.Append('&');
                     }
 
-                    builder.Append(pair.Key).Append("=");
-                    builder.Append(UrlEncode(pair.Value));
+                    _ = builder.Append(pair.Key).Append('=');
+                    _ = builder.Append(UrlEncode(pair.Value));
                 }
             }
 
@@ -106,11 +107,11 @@ namespace Hyperar.OAuthCore.Framework
                 {
                     if (builder.Length > 0)
                     {
-                        builder.Append("&");
+                        _ = builder.Append('&');
                     }
 
-                    builder.Append(key).Append("=");
-                    builder.Append(UrlEncode(parameters[key]));
+                    _ = builder.Append(key).Append('=');
+                    _ = builder.Append(UrlEncode(parameters[key]));
                 }
             }
 
@@ -121,8 +122,8 @@ namespace Hyperar.OAuthCore.Framework
         {
             var builder = new StringBuilder();
 
-            builder.Append(Parameters.OAuth_Token).Append("=").Append(UrlEncode(token.Token))
-                .Append("&").Append(Parameters.OAuth_Token_Secret).Append("=").Append(UrlEncode(token.TokenSecret));
+            _ = builder.Append(Parameters.OAuth_Token).Append('=').Append(UrlEncode(token.Token))
+                .Append('&').Append(Parameters.OAuth_Token_Secret).Append('=').Append(UrlEncode(token.TokenSecret));
 
             return builder.ToString();
         }
@@ -147,7 +148,7 @@ namespace Hyperar.OAuthCore.Framework
 
             if (!string.IsNullOrEmpty(parameters))
             {
-                string[] p = parameters.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] p = parameters.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 
                 foreach (string s in p)
                 {
@@ -171,7 +172,7 @@ namespace Hyperar.OAuthCore.Framework
         /// <returns></returns>
         public static List<QueryParameter> GetQueryParameters(string parameters)
         {
-            if (parameters.StartsWith("?"))
+            if (parameters.StartsWith('?'))
             {
                 parameters = parameters.Remove(0, 1);
             }
@@ -220,10 +221,10 @@ namespace Hyperar.OAuthCore.Framework
             {
                 if (builder.Length > 0)
                 {
-                    builder.Append("&");
+                    _ = builder.Append('&');
                 }
 
-                builder.Append(parameter.Key).Append("=").Append(parameter.Value);
+                _ = builder.Append(parameter.Key).Append('=').Append(parameter.Value);
             }
 
             return builder.ToString();
@@ -314,12 +315,12 @@ namespace Hyperar.OAuthCore.Framework
             for (int i = 0; i <= value.Length; i += maxChunkSize)
             {
                 string substring = value.Substring(i, Math.Min(value.Length - i, maxChunkSize));
-                escaped.Append(Uri.EscapeDataString(substring));
+                _ = escaped.Append(Uri.EscapeDataString(substring));
             }
 
             for (int i = 0; i < UriRfc3986CharsToEscape.Length; i++)
             {
-                escaped.Replace(UriRfc3986CharsToEscape[i], HexEscapedUriRfc3986CharsToEscape[i]);
+                _ = escaped.Replace(UriRfc3986CharsToEscape[i], HexEscapedUriRfc3986CharsToEscape[i]);
             }
 
             return escaped.ToString();

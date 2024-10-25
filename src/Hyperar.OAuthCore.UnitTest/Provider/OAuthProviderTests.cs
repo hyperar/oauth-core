@@ -50,10 +50,10 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
                                          new NonceStoreInspector(nonceStore),
                                          new TimestampRangeInspector(new TimeSpan(1, 0, 0)),
                                          new ConsumerValidationInspector(consumerStore),
-                                   new XAuthValidationInspector(this.ValidateXAuthMode, this.AuthenticateXAuthUsernameAndPassword));
+                                   new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword));
         }
 
-        private static IOAuthSession CreateConsumer(string signatureMethod)
+        private static OAuthSession CreateConsumer(string signatureMethod)
         {
             var consumerContext = new OAuthConsumerContext
             {
@@ -70,7 +70,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             return session;
         }
 
-        public bool AuthenticateXAuthUsernameAndPassword(string username, string password)
+        public static bool AuthenticateXAuthUsernameAndPassword(string username, string password)
         {
             return username == "username" && password == "password";
         }
@@ -83,7 +83,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             Assert.AreEqual("The oauth_token_secret must not be transmitted to the provider.", ex.Message);
         }
 
-        public bool ValidateXAuthMode(string authMode)
+        public static bool ValidateXAuthMode(string authMode)
         {
             return authMode == "client_auth";
         }
@@ -91,7 +91,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void AccessProtectedResource()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             session.AccessToken = new TokenBase { ConsumerKey = "key", Token = "accesskey", TokenSecret = "accesssecret" };
             IOAuthContext context = session.Request().Get().ForUrl("http://localhost/protected.rails").SignWithToken().Context;
             context.TokenSecret = null;
@@ -101,7 +101,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void AccessProtectedResourceWithPlainText()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.PlainText);
+            OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
             session.AccessToken = new TokenBase { ConsumerKey = "key", Token = "accesskey", TokenSecret = "accesssecret" };
             IOAuthContext context = session.Request().Get().ForUrl("http://localhost/protected.rails").SignWithToken().Context;
             context.TokenSecret = null;
@@ -111,7 +111,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void ExchangeRequestTokenForAccessToken()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context =
                 session.BuildExchangeRequestTokenForAccessTokenContext(
                     new TokenBase { ConsumerKey = "key", Token = "requestkey", TokenSecret = "requestsecret" }, "GET", null).Context;
@@ -124,7 +124,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void ExchangeRequestTokenForAccessTokenPlainText()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.PlainText);
+            OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
             IOAuthContext context =
                 session.BuildExchangeRequestTokenForAccessTokenContext(
                     new TokenBase { ConsumerKey = "key", Token = "requestkey", TokenSecret = "requestsecret" }, "GET", null).Context;
@@ -137,16 +137,16 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void ExchangeTokensWhenVerifierIsMatchDoesNotThrowException()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(
                 new TokenBase { ConsumerKey = "key", Token = "requestkey" }, "GET", "GzvVb5WjWfHKa/0JuFupaMyn").Context;
-            this.provider.ExchangeRequestTokenForAccessToken(context);
+            _ = this.provider.ExchangeRequestTokenForAccessToken(context);
         }
 
         [TestMethod]
         public void RequestTokenWithHmacSha1()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             IToken token = this.provider.GrantRequestToken(context);
             Assert.AreEqual("requestkey", token.Token);
@@ -156,7 +156,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void RequestTokenWithHmacSha1WithInvalidSignatureThrows()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             context.Signature = "wrong";
             var ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
@@ -166,7 +166,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void RequestTokenWithInvalidConsumerKeyThrowsException()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.PlainText);
+            OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
             session.ConsumerContext.ConsumerKey = "invalid";
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             var ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
@@ -176,7 +176,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void RequestTokenWithPlainText()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.PlainText);
+            OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             IToken token = this.provider.GrantRequestToken(context);
             Assert.AreEqual("requestkey", token.Token);
@@ -186,7 +186,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void RequestTokenWithRsaSha1()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             IToken token = this.provider.GrantRequestToken(context);
             Assert.AreEqual("requestkey", token.Token);
@@ -196,7 +196,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void RequestTokenWithRsaSha1WithInvalidSignatureThrows()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             context.Signature =
                 "eeh8hLNIlNNq1Xrp7BOCc+xgY/K8AmjxKNM7UdLqqcvNSmJqcPcf7yQIOvu8oj5R/mDvBpSb3+CEhxDoW23gggsddPIxNdOcDuEOenugoCifEY6nRz8sbtYt3GHXsDS2esEse/N8bWgDdOm2FRDKuy9OOluQuKXLjx5wkD/KYMY=";
@@ -206,7 +206,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void AccessTokenWithHmacSha1()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
             IOAuthContext context = session.BuildAccessTokenContext("GET", "client_auth", "username", "password").Context;
             context.TokenSecret = null;
             IToken accessToken = this.provider.CreateAccessToken(context);

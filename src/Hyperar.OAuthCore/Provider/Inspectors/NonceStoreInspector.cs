@@ -32,10 +32,7 @@ namespace Hyperar.OAuthCore.Provider.Inspectors
 
         public NonceStoreInspector(INonceStore nonceStore)
         {
-            if (nonceStore == null)
-            {
-                throw new ArgumentNullException("nonceStore");
-            }
+            ArgumentNullException.ThrowIfNull(nonceStore);
 
             this._nonceStore = nonceStore;
         }

@@ -54,9 +54,10 @@ namespace Hyperar.OAuthCore.Testing
 
         private List<string> GetNonceListForConsumer(string consumerKey)
         {
-            var list = new List<string>();
+            _ = new List<string>();
 
-            if (!this._nonces.TryGetValue(consumerKey, out list))
+
+            if (!this._nonces.TryGetValue(consumerKey, out List<string>? list))
             {
                 lock (this._nonces)
                 {

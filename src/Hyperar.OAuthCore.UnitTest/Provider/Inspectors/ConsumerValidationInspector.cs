@@ -41,7 +41,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 
             var context = new OAuthContext { ConsumerKey = "key" };
 
-            consumerStore.Stub(stub => stub.IsConsumer(context)).Return(false);
+            _ = consumerStore.Stub(stub => stub.IsConsumer(context)).Return(false);
 
             var inspector = new OAuthCore.Provider.Inspectors.ConsumerValidationInspector(consumerStore);
 
@@ -60,7 +60,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 
             using (repository.Record())
             {
-                Expect.Call(consumerStore.IsConsumer(context)).Return(true);
+                _ = Expect.Call(consumerStore.IsConsumer(context)).Return(true);
             }
             using (repository.Playback())
             {

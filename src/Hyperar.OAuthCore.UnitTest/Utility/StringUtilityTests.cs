@@ -44,12 +44,12 @@
 
             long[] rangesOfTime = Enumerable.Range(0, 100)
                 .Select(range => GenerateTestString(range / 100.0, length)).ToArray()
-                .Select(other => this.TimeCompareValuesOverIterationsConstantTime(value, other, numberOfTimestoCompare))
+                .Select(other => TimeCompareValuesOverIterationsConstantTime(value, other, numberOfTimestoCompare))
                 .ToArray();
 
             long[] stringEqualsRangesOfTime = Enumerable.Range(0, 100)
                 .Select(range => GenerateTestString(range / 100.0, length)).ToArray()
-                .Select(other => this.TimeCompareValuesOverIterationsStringEquals(value, other, numberOfTimestoCompare))
+                .Select(other => TimeCompareValuesOverIterationsStringEquals(value, other, numberOfTimestoCompare))
                 .ToArray();
 
             decimal percentDifference = CalculatePercentageDifference(rangesOfTime);
@@ -89,25 +89,25 @@
             Assert.AreEqual(expected, value.EqualsInConstantTime(other));
         }
 
-        public long TimeCompareValuesOverIterationsConstantTime(string value, string other, int iterations)
+        public static long TimeCompareValuesOverIterationsConstantTime(string value, string other, int iterations)
         {
             Stopwatch stopWatch = Stopwatch.StartNew();
 
             for (int i = 0; i < iterations; i++)
             {
-                value.EqualsInConstantTime(other);
+                _ = value.EqualsInConstantTime(other);
             }
 
             return stopWatch.ElapsedTicks;
         }
 
-        public long TimeCompareValuesOverIterationsStringEquals(string value, string other, int iterations)
+        public static long TimeCompareValuesOverIterationsStringEquals(string value, string other, int iterations)
         {
             Stopwatch stopWatch = Stopwatch.StartNew();
 
             for (int i = 0; i < iterations; i++)
             {
-                value.Equals(other);
+                _ = value.Equals(other);
             }
 
             return stopWatch.ElapsedTicks;
@@ -119,7 +119,7 @@
 
             long minTime = rangesOfTime.Min();
 
-            return 1.0m - 1.0m / maxTime * minTime;
+            return 1.0m - (1.0m / maxTime * minTime);
         }
 
         private static string GenerateTestString(double percentMatch, int length)

@@ -42,7 +42,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 
             var context = new OAuthContext { Nonce = "1" };
 
-            nonceStore.Stub(stub => stub.RecordNonceAndCheckIsUnique(context, "1")).Return(false);
+            _ = nonceStore.Stub(stub => stub.RecordNonceAndCheckIsUnique(context, "1")).Return(false);
 
             var inspector = new NonceStoreInspector(nonceStore);
 
@@ -58,7 +58,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 
             var context = new OAuthContext { Nonce = "2" };
 
-            nonceStore.Stub(stub => stub.RecordNonceAndCheckIsUnique(context, "2")).Return(true);
+            _ = nonceStore.Stub(stub => stub.RecordNonceAndCheckIsUnique(context, "2")).Return(true);
 
             var inspector = new NonceStoreInspector(nonceStore);
 

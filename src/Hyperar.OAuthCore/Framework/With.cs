@@ -50,10 +50,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public DisposableAction(Action action)
         {
-            if (action == null)
-            {
-                throw new ArgumentNullException("action");
-            }
+            ArgumentNullException.ThrowIfNull(action);
 
             this._action = action;
         }
@@ -61,6 +58,8 @@ namespace Hyperar.OAuthCore.Framework
         public void Dispose()
         {
             this._action();
+
+            GC.SuppressFinalize(this);
         }
     }
 }

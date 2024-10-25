@@ -37,32 +37,26 @@ namespace Hyperar.OAuthCore.Consumer
 
         public ConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
-            if (consumerContext == null)
-            {
-                throw new ArgumentNullException(nameof(consumerContext));
-            }
+            ArgumentNullException.ThrowIfNull(consumerContext);
 
             this.Context = context;
             this.ConsumerContext = consumerContext;
             this._token = token;
         }
 
-        public string AcceptsType { get; set; }
+        public string? AcceptsType { get; set; }
 
         public IOAuthConsumerContext ConsumerContext { get; }
 
         public IOAuthContext Context { get; }
 
-        public Uri ProxyServerUri { get; set; }
+        public Uri? ProxyServerUri { get; set; }
 
-        public string RequestBody { get; set; }
+        public string? RequestBody { get; set; }
 
-        public Action<string> ResponseBodyAction { get; set; }
+        public Action<string>? ResponseBodyAction { get; set; }
 
         /// <summary>
         /// Override the default request timeout in milliseconds.
@@ -70,7 +64,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// </summary>
         public int? Timeout { get; set; }
 
-        private string ResponseBody { get; set; }
+        private string? ResponseBody { get; set; }
 
         public RequestDescription GetRequestDescription()
         {

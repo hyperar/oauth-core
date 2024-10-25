@@ -35,10 +35,9 @@ namespace Hyperar.OAuthCore.Utility
 
         public void Dispose()
         {
-            if (this._action != null)
-            {
-                this._action();
-            }
+            this._action?.Invoke();
+
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -46,14 +46,11 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
         private static string ComputeHash(HashAlgorithm hashAlgorithm, string data)
         {
-            if (hashAlgorithm == null)
-            {
-                throw new ArgumentNullException("hashAlgorithm");
-            }
+            ArgumentNullException.ThrowIfNull(hashAlgorithm);
 
             if (string.IsNullOrEmpty(data))
             {
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
             }
 
             byte[] dataBuffer = Encoding.ASCII.GetBytes(data);

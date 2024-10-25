@@ -212,10 +212,7 @@ namespace Hyperar.OAuthCore.Consumer
 
         private static void ApplyParameters(NameValueCollection destination, IDictionary additions)
         {
-            if (additions == null)
-            {
-                throw new ArgumentNullException("additions");
-            }
+            ArgumentNullException.ThrowIfNull(additions);
 
             foreach (string parameter in additions.Keys)
             {

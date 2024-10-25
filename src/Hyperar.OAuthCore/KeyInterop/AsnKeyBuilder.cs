@@ -30,9 +30,10 @@ namespace Hyperar.OAuthCore.KeyInterop
 
     internal class AsnKeyBuilder
     {
-        private static readonly byte[] EMPTY = new byte[] { };
+        private static readonly byte[] EMPTY = Array.Empty<byte>();
 
         private static readonly byte[] ZERO = new byte[] { 0 };
+        internal static readonly char[] separatorSpaceAndDot = new char[] { ' ', '.' };
 
         /// <summary>
         /// <para>An ordered sequence of zero, one or more bits. Returns
@@ -178,7 +179,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // Any unused bits?
             int lstrlen = value.Length;
-            int unusedBits = 8 - lstrlen % 8;
+            int unusedBits = 8 - (lstrlen % 8);
             if (8 == unusedBits)
             { unusedBits = 0; }
 
@@ -192,8 +193,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             for (int i = 0; i < loctlen; i++)
             {
                 string s = value.Substring(i * 8, 8);
-                byte b = 0x00;
-
+                byte b;
                 try
                 { b = Convert.ToByte(s, 2); }
                 catch (FormatException /*e*/) { unusedBits = 0; break; }
@@ -338,11 +338,12 @@ namespace Hyperar.OAuthCore.KeyInterop
         /// <seealso cref="CreateIntegerNeg"/>
         public static AsnType CreateIntegerPos(byte[] value)
         {
-            byte[] i = null, d = Duplicate(value);
+            byte[] d = Duplicate(value);
 
             if (IsEmpty(d))
             { d = ZERO; }
 
+            byte[] i;
             // Mediate the 2's compliment representation.
             // If the first byte has its high bit set, we will
             // add the additional byte of 0x00
@@ -487,8 +488,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             for (int i = 0; i < len; i++)
             {
                 string s = value.Substring(i * 2, 2);
-                byte b = 0x00;
-
+                byte b;
                 try
                 { b = Convert.ToByte(s, 16); }
                 catch (FormatException /*e*/) { break; }
@@ -524,7 +524,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 return null;
             }
 
-            string[] tokens = value.Split(new char[] { ' ', '.' });
+            string[] tokens = value.Split(separatorSpaceAndDot);
 
             // Punt?
             if (IsEmpty(tokens))
@@ -585,7 +585,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     // Each entry is formed from the low 7 bits (0x7F).
                     // Set high bit of all entries (0x80) per X.680. We
                     // will unset the high bit of the final byte later.
-                    temp.Add((byte)(0x80 | arc & 0x7F));
+                    temp.Add((byte)(0x80 | (arc & 0x7F)));
                     arc >>= 7;
                 } while (0 != arc);
 
@@ -1004,7 +1004,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         public static byte[] TrimStart(byte[] octets)
         {
             if (IsEmpty(octets) || IsZero(octets))
-            { return new byte[] { }; }
+            { return Array.Empty<byte>(); }
 
             byte[] d = Duplicate(octets);
 
@@ -1028,23 +1028,6 @@ namespace Hyperar.OAuthCore.KeyInterop
             Array.Copy(d, pos, t, 0, t.Length);
 
             return t;
-        }
-
-        private static byte[] Compliment1s(byte[] value)
-        {
-            if (IsEmpty(value))
-            { return EMPTY; }
-
-            // Make a copy of octet array
-            byte[] c = Duplicate(value);
-
-            for (int i = c.Length - 1; i >= 0; i--)
-            {
-                // Compliment
-                c[i] = (byte)~c[i];
-            }
-
-            return c;
         }
 
         private static byte[] Compliment2s(byte[] value)
@@ -1072,14 +1055,11 @@ namespace Hyperar.OAuthCore.KeyInterop
                 d[i] = (byte)(j & 0xFF);
 
                 // Determine Next Carry
-                if (0x100 == (j & 0x100))
-                { carry = 1; }
-                else
-                { carry = 0; }
+                carry = 0x100 == (j & 0x100) ? 1 : 0;
             }
 
             // Carry Array (we may need to carry out of 'd'
-            byte[] c = null;
+            byte[] c;
             if (1 == carry)
             {
                 c = new byte[d.Length + 1];
@@ -1102,7 +1082,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Nothing in, nothing out
             if (IsEmpty(values))
             {
-                return new byte[] { };
+                return Array.Empty<byte>();
             }
 
             int length = 0;
@@ -1139,7 +1119,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Nothing in, nothing out
             if (IsEmpty(values))
             {
-                return new byte[] { };
+                return Array.Empty<byte>();
             }
 
             int length = 0;
@@ -1270,7 +1250,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             public byte[] GetBytes()
             {
                 if (null == this.m_octets)
-                { return new byte[] { }; }
+                { return Array.Empty<byte>(); }
 
                 return this.m_octets;
             }
@@ -1291,25 +1271,23 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             private byte[] m_octets;
 
-            private bool m_raw;
-
             public AsnType(byte tag, byte octet)
             {
-                this.m_raw = false;
+                this.Raw = false;
                 this.m_tag = new byte[] { tag };
                 this.m_octets = new byte[] { octet };
             }
 
             public AsnType(byte tag, byte[] octets)
             {
-                this.m_raw = false;
+                this.Raw = false;
                 this.m_tag = new byte[] { tag };
                 this.m_octets = octets;
             }
 
             public AsnType(byte tag, byte[] length, byte[] octets)
             {
-                this.m_raw = true;
+                this.Raw = true;
                 this.m_tag = new byte[] { tag };
                 this.m_length = length;
                 this.m_octets = octets;
@@ -1358,20 +1336,16 @@ namespace Hyperar.OAuthCore.KeyInterop
                 // set { m_tag = value; }
             }
 
-            private bool Raw
-            {
-                get { return this.m_raw; }
-                set { this.m_raw = value; }
-            }
+            private bool Raw { get; set; }
 
             // Methods
             public byte[] GetBytes()
             {
                 // Created raw by user
                 // return the bytes....
-                if (true == this.m_raw)
+                if (true == this.Raw)
                 {
-                    return this.Concatenate(
+                    return Concatenate(
                         new byte[][] { this.m_tag, this.m_length, this.m_octets }
                         );
                 }
@@ -1382,22 +1356,22 @@ namespace Hyperar.OAuthCore.KeyInterop
                 // Null does not use length
                 if (0x05 == this.m_tag[0])
                 {
-                    return this.Concatenate(
+                    return Concatenate(
                         new byte[][] { this.m_tag, this.m_octets }
                         );
                 }
 
-                return this.Concatenate(
+                return Concatenate(
                     new byte[][] { this.m_tag, this.m_length, this.m_octets }
                     );
             }
 
-            private byte[] Concatenate(byte[][] values)
+            private static byte[] Concatenate(byte[][] values)
             {
                 // Nothing in, nothing out
                 if (IsEmpty(values))
                 {
-                    return new byte[] { };
+                    return Array.Empty<byte>();
                 }
 
                 int length = 0;
@@ -1440,7 +1414,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     return;
                 }
 
-                byte[] length = null;
+                byte[] length;
 
                 // Length: 0 <= l < 0x80
                 if (this.m_octets.Length < 0x80)

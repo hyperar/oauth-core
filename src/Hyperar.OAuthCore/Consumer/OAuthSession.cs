@@ -99,7 +99,7 @@ namespace Hyperar.OAuthCore.Consumer
             {
                 if (this._consumerRequestFactory == null)
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
 
                 this._consumerRequestFactory = value;
@@ -398,7 +398,7 @@ namespace Hyperar.OAuthCore.Consumer
         private static bool WasCallbackConfimed(NameValueCollection parameters)
         {
             string value = ParseResponseParameter(parameters, Parameters.OAuth_Callback_Confirmed);
-            return (value == "true");
+            return value == "true";
         }
 
         private OAuthSession AddItems(NameValueCollection destination, object anonymousClass)

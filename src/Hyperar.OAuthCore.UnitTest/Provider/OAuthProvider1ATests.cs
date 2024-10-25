@@ -53,7 +53,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
                                          new OAuth10AInspector(tokenStore));
         }
 
-        private static IOAuthSession CreateConsumer(string signatureMethod)
+        private static OAuthSession CreateConsumer(string signatureMethod)
         {
             var consumerContext = new OAuthConsumerContext
             {
@@ -73,10 +73,10 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void ExchangeTokensWhenVerifierIsMatchDoesNotThrowException()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(
                 new TokenBase { ConsumerKey = "key", Token = "requestkey" }, "GET", "GzvVb5WjWfHKa/0JuFupaMyn").Context;
-            this.provider.ExchangeRequestTokenForAccessToken(context);
+            _ = this.provider.ExchangeRequestTokenForAccessToken(context);
         }
 
         [TestMethod]
@@ -84,7 +84,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         {
             string verifier = null;
 
-            IOAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(
                 new TokenBase { ConsumerKey = "key", Token = "requestkey" }, "GET", verifier).Context;
             var ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
@@ -94,7 +94,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void ExchangeTokensWhenVerifierIsWrongThrowsException()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
+            OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(
                 new TokenBase { ConsumerKey = "key", Token = "requestkey" }, "GET", "wrong").Context;
             var ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
@@ -104,15 +104,15 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void RequestTokenWithCallbackDoesNotThrowException()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.PlainText);
+            OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
-            this.provider.GrantRequestToken(context);
+            _ = this.provider.GrantRequestToken(context);
         }
 
         [TestMethod]
         public void RequestTokenWithoutCallbackWillThrowException()
         {
-            IOAuthSession session = CreateConsumer(SignatureMethod.PlainText);
+            OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             context.CallbackUrl = null; // clear parameter, as it will default to "oob"
             var ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));

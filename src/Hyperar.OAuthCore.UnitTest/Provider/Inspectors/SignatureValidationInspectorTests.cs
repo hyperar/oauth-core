@@ -49,7 +49,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 
             using (repository.Record())
             {
-                Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(false);
+                _ = Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(false);
             }
             using (repository.Playback())
             {
@@ -71,7 +71,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 
             using (repository.Record())
             {
-                Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(true);
+                _ = Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(true);
             }
             using (repository.Playback())
             {
@@ -92,9 +92,9 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 
             using (repository.Record())
             {
-                Expect.Call(consumerStore.GetConsumerPublicKey(context)).Return(
+                _ = Expect.Call(consumerStore.GetConsumerPublicKey(context)).Return(
                     TestCertificates.OAuthTestCertificate().GetRSAPublicKey() ?? throw new NullReferenceException("GetRSAPubclicKey"));
-                Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(true);
+                _ = Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(true);
             }
             using (repository.Playback())
             {

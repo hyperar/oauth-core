@@ -36,7 +36,7 @@ namespace Hyperar.OAuthCore.Utility
 
             if (stream.CanSeek)
             {
-                stream.Seek(0, 0);
+                _ = stream.Seek(0, 0);
             }
 
             var reader = new StreamReader(stream);

@@ -74,7 +74,7 @@ namespace Hyperar.OAuthCore.Testing
             return new TokenBase { ConsumerKey = "key", Realm = null, Token = "accesskey", TokenSecret = AccessSecret, SessionHandle = "sessionHandle" };
         }
 
-        public IToken CreateAccessTokenForRequestToken(IOAuthContext requestContext)
+        public static IToken CreateAccessTokenForRequestToken(IOAuthContext requestContext)
         {
             EnsureTestConsumer(requestContext);
             return new TokenBase { ConsumerKey = "key", Realm = null, Token = "accesskey", TokenSecret = AccessSecret, SessionHandle = "sessionHandle" };
@@ -137,10 +137,7 @@ namespace Hyperar.OAuthCore.Testing
 
         private static void EnsureTestConsumer(IConsumer consumer)
         {
-            if (consumer == null)
-            {
-                throw new ArgumentNullException("consumer");
-            }
+            ArgumentNullException.ThrowIfNull(consumer);
 
             if (consumer.Realm != null)
             {

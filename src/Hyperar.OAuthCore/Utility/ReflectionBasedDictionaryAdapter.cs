@@ -32,10 +32,7 @@ namespace Hyperar.OAuthCore.Utility
         /// <param name="target">The target.</param>
         public ReflectionBasedDictionaryAdapter(object target)
         {
-            if (target == null)
-            {
-                throw new ArgumentNullException("target");
-            }
+            ArgumentNullException.ThrowIfNull(target);
 
             Type targetType = target.GetType();
 
@@ -126,12 +123,12 @@ namespace Hyperar.OAuthCore.Utility
         /// Gets or sets the <see cref="System.Object"/> with the specified key.
         /// </summary>
         /// <value></value>
-        public object this[object key]
+        public object? this[object key]
         {
             get
             {
-                object value;
-                this._properties.TryGetValue(key.ToString(), out value);
+                _ = this._properties.TryGetValue(key.ToString() ?? string.Empty, out object? value);
+
                 return value;
             }
 

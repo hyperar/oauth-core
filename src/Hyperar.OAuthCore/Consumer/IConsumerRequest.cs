@@ -30,17 +30,17 @@ namespace Hyperar.OAuthCore.Consumer
 
     public interface IConsumerRequest
     {
-        string AcceptsType { get; set; }
+        string? AcceptsType { get; set; }
 
         IOAuthConsumerContext ConsumerContext { get; }
 
         IOAuthContext Context { get; }
 
-        Uri ProxyServerUri { get; set; }
+        Uri? ProxyServerUri { get; set; }
 
-        string RequestBody { get; set; }
+        string? RequestBody { get; set; }
 
-        Action<string> ResponseBodyAction { get; set; }
+        Action<string>? ResponseBodyAction { get; set; }
 
         int? Timeout { get; set; }
 

@@ -26,8 +26,8 @@ namespace Hyperar.OAuthCore.Framework
     {
         string SessionHandle { get; set; }
 
-        string Token { get; set; }
+        string? Token { get; set; }
 
-        string TokenSecret { get; set; }
+        string? TokenSecret { get; set; }
     }
 }

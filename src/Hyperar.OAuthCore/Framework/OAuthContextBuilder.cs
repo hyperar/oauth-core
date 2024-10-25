@@ -62,13 +62,13 @@ namespace Hyperar.OAuthCore.Framework
 
                 // TODO: Find out where the hell the form data is.
                 //FormEncodedParameters = GetCleanedNameValueCollection(request.Form),
-                QueryParameters = this.GetCleanedNameValueCollection(this.GetQueryNameValueCollectionFromUri(request.RequestUri)),
+                QueryParameters = this.GetCleanedNameValueCollection(GetQueryNameValueCollectionFromUri(request.RequestUri)),
             };
 
             if (request.GetRequestStream().Length > 0)
             {
                 context.RawContent = new byte[request.GetRequestStream().Length];
-                request.GetRequestStream().Read(context.RawContent, 0, context.RawContent.Length);
+                _ = request.GetRequestStream().Read(context.RawContent, 0, context.RawContent.Length);
                 request.GetRequestStream().Position = 0;
             }
 
@@ -81,15 +81,9 @@ namespace Hyperar.OAuthCore.Framework
         {
             uri = this.CleanUri(uri);
 
-            if (httpMethod == null)
-            {
-                throw new ArgumentNullException(nameof(httpMethod));
-            }
+            ArgumentNullException.ThrowIfNull(httpMethod);
 
-            if (uri == null)
-            {
-                throw new ArgumentNullException(nameof(uri));
-            }
+            ArgumentNullException.ThrowIfNull(uri);
 
             return new OAuthContext
             {
@@ -105,9 +99,8 @@ namespace Hyperar.OAuthCore.Framework
                 throw new ArgumentNullException(nameof(url));
             }
 
-            Uri uri;
 
-            if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out uri))
+            if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri? uri))
             {
                 throw new ArgumentException(string.Format("Failed to parse url: {0} into a valid Uri instance", url));
             }
@@ -135,7 +128,7 @@ namespace Hyperar.OAuthCore.Framework
 
             string contentType = request.Headers[HttpRequestHeader.ContentType] ?? string.Empty;
 
-            if (contentType.ToLower().Contains("application/x-www-form-urlencoded"))
+            if (contentType.Contains("application/x-www-form-urlencoded", StringComparison.CurrentCultureIgnoreCase))
             {
                 context.FormEncodedParameters = HttpUtility.ParseQueryString(body);
             }
@@ -174,6 +167,7 @@ namespace Hyperar.OAuthCore.Framework
                     string strCookie = cookie.Trim();
 
                     var reg = new Regex(@"^(\S*)=(\S*)$");
+
                     if (reg.IsMatch(strCookie))
                     {
                         Match match = reg.Match(strCookie);
@@ -216,10 +210,10 @@ namespace Hyperar.OAuthCore.Framework
             // to their url.
 
             string originalUrl = adjustedUri.OriginalString;
-            return originalUrl.EndsWith("&") ? new Uri(originalUrl.Substring(0, originalUrl.Length - 1)) : adjustedUri;
+            return originalUrl.EndsWith('&') ? new Uri(originalUrl.Substring(0, originalUrl.Length - 1)) : adjustedUri;
         }
 
-        private NameValueCollection GetQueryNameValueCollectionFromUri(Uri uri)
+        private static NameValueCollection GetQueryNameValueCollectionFromUri(Uri uri)
         {
             var result = new NameValueCollection();
 

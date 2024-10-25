@@ -34,15 +34,9 @@ namespace Hyperar.OAuthCore.Storage.Basic
 
         public SimpleTokenStore(ITokenRepository<AccessToken> accessTokenRepository, ITokenRepository<RequestToken> requestTokenRepository)
         {
-            if (accessTokenRepository == null)
-            {
-                throw new ArgumentNullException("accessTokenRepository");
-            }
+            ArgumentNullException.ThrowIfNull(accessTokenRepository);
 
-            if (requestTokenRepository == null)
-            {
-                throw new ArgumentNullException("requestTokenRepository");
-            }
+            ArgumentNullException.ThrowIfNull(requestTokenRepository);
 
             this._accessTokenRepository = accessTokenRepository;
             this._requestTokenRepository = requestTokenRepository;
@@ -60,10 +54,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
 
         public void ConsumeRequestToken(IOAuthContext requestContext)
         {
-            if (requestContext == null)
-            {
-                throw new ArgumentNullException("requestContext");
-            }
+            ArgumentNullException.ThrowIfNull(requestContext);
 
             RequestToken requestToken = this.GetRequestToken(requestContext);
 
@@ -79,10 +70,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
         /// <returns></returns>
         public IToken CreateAccessToken(IOAuthContext context)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException("context");
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
             var accessToken = new AccessToken
             {
@@ -101,10 +89,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
 
         public IToken CreateRequestToken(IOAuthContext context)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException("context");
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
             var token = new RequestToken
             {

@@ -38,10 +38,7 @@ namespace Hyperar.OAuthCore.Provider
         {
             this.RequiresCallbackUrlInRequest = true;
 
-            if (tokenStore == null)
-            {
-                throw new ArgumentNullException("tokenStore");
-            }
+            ArgumentNullException.ThrowIfNull(tokenStore);
 
             this._tokenStore = tokenStore;
 
@@ -94,7 +91,7 @@ namespace Hyperar.OAuthCore.Provider
 
         public virtual IToken GrantRequestToken(IOAuthContext context)
         {
-            this.AssertContextDoesNotIncludeToken(context);
+            AssertContextDoesNotIncludeToken(context);
 
             this.InspectRequest(ProviderPhase.GrantRequestToken, context);
 
@@ -148,7 +145,7 @@ namespace Hyperar.OAuthCore.Provider
             }
         }
 
-        private void AssertContextDoesNotIncludeToken(IOAuthContext context)
+        private static void AssertContextDoesNotIncludeToken(IOAuthContext context)
         {
             if (context.Token != null)
             {

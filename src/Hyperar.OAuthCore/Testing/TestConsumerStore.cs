@@ -46,7 +46,7 @@ namespace Hyperar.OAuthCore.Testing
 
         public bool IsConsumer(IConsumer consumer)
         {
-            return (consumer.ConsumerKey == "key" && string.IsNullOrEmpty(consumer.Realm));
+            return consumer.ConsumerKey == "key" && string.IsNullOrEmpty(consumer.Realm);
         }
 
         public void SetConsumerCertificate(IConsumer consumer, X509Certificate2 certificate)

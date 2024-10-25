@@ -107,10 +107,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             get
             {
-                if (this._authorizationHeaderParameters == null)
-                {
-                    this._authorizationHeaderParameters = new NameValueCollection();
-                }
+                this._authorizationHeaderParameters ??= new NameValueCollection();
 
                 return this._authorizationHeaderParameters;
             }
@@ -140,10 +137,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             get
             {
-                if (this._cookies == null)
-                {
-                    this._cookies = new NameValueCollection();
-                }
+                this._cookies ??= new NameValueCollection();
 
                 return this._cookies;
             }
@@ -155,10 +149,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             get
             {
-                if (this._formEncodedParameters == null)
-                {
-                    this._formEncodedParameters = new NameValueCollection();
-                }
+                this._formEncodedParameters ??= new NameValueCollection();
 
                 return this._formEncodedParameters;
             }
@@ -170,10 +161,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             get
             {
-                if (this._headers == null)
-                {
-                    this._headers = new NameValueCollection();
-                }
+                this._headers ??= new NameValueCollection();
 
                 return this._headers;
             }
@@ -198,10 +186,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             get
             {
-                if (this._queryParameters == null)
-                {
-                    this._queryParameters = new NameValueCollection();
-                }
+                this._queryParameters ??= new NameValueCollection();
 
                 return this._queryParameters;
             }
@@ -317,7 +302,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public string GenerateBodyHash()
         {
-            byte[] hash = SHA1.Create().ComputeHash((this.RawContent ?? new byte[0]));
+            byte[] hash = SHA1.HashData(this.RawContent ?? Array.Empty<byte>());
             return Convert.ToBase64String(hash);
         }
 
@@ -327,7 +312,7 @@ namespace Hyperar.OAuthCore.Framework
 
             if (this.Realm != null)
             {
-                builder.Append("realm=\"").Append(this.Realm).Append("\"");
+                _ = builder.Append("realm=\"").Append(this.Realm).Append('"');
             }
 
             IEnumerable<QueryParameter> parameters = this.AuthorizationHeaderParameters.ToQueryParametersExcludingTokenSecret();
@@ -338,14 +323,14 @@ namespace Hyperar.OAuthCore.Framework
             {
                 if (builder.Length > 0)
                 {
-                    builder.Append(",");
+                    _ = builder.Append(',');
                 }
 
-                builder.Append(UriUtility.UrlEncode(parameter.Key)).Append("=\"").Append(
-                    UriUtility.UrlEncode(parameter.Value)).Append("\"");
+                _ = builder.Append(UriUtility.UrlEncode(parameter.Key)).Append("=\"").Append(
+                    UriUtility.UrlEncode(parameter.Value)).Append('"');
             }
 
-            builder.Insert(0, "OAuth ");
+            _ = builder.Insert(0, "OAuth ");
 
             return builder.ToString();
         }
@@ -395,7 +380,7 @@ namespace Hyperar.OAuthCore.Framework
                 allParameters.AddRange(this.AuthorizationHeaderParameters.ToQueryParametersExcludingTokenSecret().Where(q => q.Key != Parameters.Realm));
             }
 
-            allParameters.RemoveAll(param => param.Key == Parameters.OAuth_Signature);
+            _ = allParameters.RemoveAll(param => param.Key == Parameters.OAuth_Signature);
 
             string signatureBase = UriUtility.FormatParameters(this.RequestMethod, new Uri(this.NormalizedRequestUrl), allParameters);
 
@@ -427,9 +412,10 @@ namespace Hyperar.OAuthCore.Framework
 
         public string GenerateUrl()
         {
-            var builder = new UriBuilder(this.NormalizedRequestUrl);
-
-            builder.Query = "";
+            var builder = new UriBuilder(this.NormalizedRequestUrl)
+            {
+                Query = ""
+            };
 
             return builder.Uri + "?" + UriUtility.FormatQueryString(this.QueryParameters);
         }

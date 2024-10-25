@@ -31,15 +31,9 @@ namespace Hyperar.OAuthCore.Consumer
 
         public IConsumerRequest CreateConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException("context");
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
-            if (consumerContext == null)
-            {
-                throw new ArgumentNullException("consumerContext");
-            }
+            ArgumentNullException.ThrowIfNull(consumerContext);
 
             return new ConsumerRequest(context, consumerContext, token);
         }

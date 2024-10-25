@@ -36,7 +36,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
         public void SignContext(IOAuthContext authContext, SigningContext signingContext)
         {
-            authContext.Signature = this.GenerateSignature(authContext, signingContext);
+            authContext.Signature = GenerateSignature(signingContext);
         }
 
         public bool ValidateSignature(IOAuthContext authContext, SigningContext signingContext)
@@ -46,7 +46,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
                 throw Error.AlgorithmPropertyNotSetOnSigningContext();
             }
 
-            SHA1CryptoServiceProvider sha1 = this.GenerateHash(signingContext);
+            SHA1 sha1 = GenerateHash(signingContext);
 
             var deformatter = new RSAPKCS1SignatureDeformatter(signingContext.Algorithm);
             deformatter.SetHashAlgorithm("MD5");
@@ -56,26 +56,27 @@ namespace Hyperar.OAuthCore.Framework.Signing
             return deformatter.VerifySignature(sha1, signature);
         }
 
-        private SHA1CryptoServiceProvider GenerateHash(SigningContext signingContext)
+        private static SHA1 GenerateHash(SigningContext signingContext)
         {
-            var sha1 = new SHA1CryptoServiceProvider();
+            var sha1 = SHA1.Create();
 
             byte[] dataBuffer = Encoding.ASCII.GetBytes(signingContext.SignatureBase);
 
             var cs = new CryptoStream(Stream.Null, sha1, CryptoStreamMode.Write);
             cs.Write(dataBuffer, 0, dataBuffer.Length);
             cs.Close();
+
             return sha1;
         }
 
-        private string GenerateSignature(IOAuthContext authContext, SigningContext signingContext)
+        private static string GenerateSignature(SigningContext signingContext)
         {
             if (signingContext.Algorithm == null)
             {
                 throw Error.AlgorithmPropertyNotSetOnSigningContext();
             }
 
-            SHA1CryptoServiceProvider sha1 = this.GenerateHash(signingContext);
+            SHA1 sha1 = GenerateHash(signingContext);
 
             var formatter = new RSAPKCS1SignatureFormatter(signingContext.Algorithm);
             formatter.SetHashAlgorithm("MD5");

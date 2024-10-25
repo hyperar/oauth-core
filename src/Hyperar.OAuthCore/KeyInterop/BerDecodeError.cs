@@ -70,7 +70,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 var sb = new StringBuilder(base.Message);
 
-                sb.AppendFormat(" (Position {0}){1}",
+                _ = sb.AppendFormat(" (Position {0}){1}",
                                 this.m_position, Environment.NewLine);
 
                 return sb.ToString();

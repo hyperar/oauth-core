@@ -7,7 +7,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
     [TestClass]
     public class XAuthValidationInspectorTests
     {
-        public bool AuthenticateXAuthUsernameAndPassword(string username, string password)
+        public static bool AuthenticateXAuthUsernameAndPassword(string username, string password)
         {
             return username == "username" && password == "password";
         }
@@ -17,7 +17,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         {
             var context = new OAuthContext { XAuthMode = "client_auth", XAuthUsername = "Joe", XAuthPassword = "Bloggs" };
 
-            var inspector = new XAuthValidationInspector(this.ValidateXAuthMode, this.AuthenticateXAuthUsernameAndPassword);
+            var inspector = new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword);
             var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.CreateAccessToken, context));
             Assert.AreEqual("Authentication failed with the specified username and password", ex.Message);
         }
@@ -27,7 +27,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         {
             var context = new OAuthContext { XAuthMode = "client_auth", XAuthUsername = "username", XAuthPassword = "password" };
 
-            var inspector = new XAuthValidationInspector(this.ValidateXAuthMode, this.AuthenticateXAuthUsernameAndPassword);
+            var inspector = new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword);
 
             var exception = Record.Exception(() => inspector.InspectContext(ProviderPhase.CreateAccessToken, context));
 
@@ -39,7 +39,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         {
             var context = new OAuthContext { XAuthMode = string.Empty };
 
-            var inspector = new XAuthValidationInspector(this.ValidateXAuthMode, this.AuthenticateXAuthUsernameAndPassword);
+            var inspector = new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword);
             var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.CreateAccessToken, context));
             Assert.AreEqual("The x_auth_mode parameter must be present", ex.Message);
         }
@@ -49,7 +49,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         {
             var context = new OAuthContext { XAuthMode = "client_auth", XAuthUsername = "username" };
 
-            var inspector = new XAuthValidationInspector(this.ValidateXAuthMode, this.AuthenticateXAuthUsernameAndPassword);
+            var inspector = new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword);
             var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.CreateAccessToken, context));
             Assert.AreEqual("The x_auth_password parameter must be present", ex.Message);
         }
@@ -59,7 +59,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         {
             var context = new OAuthContext { XAuthMode = "client_auth" };
 
-            var inspector = new XAuthValidationInspector(this.ValidateXAuthMode, this.AuthenticateXAuthUsernameAndPassword);
+            var inspector = new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword);
             var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.CreateAccessToken, context));
             Assert.AreEqual("The x_auth_username parameter must be present", ex.Message);
         }
@@ -69,12 +69,12 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         {
             var context = new OAuthContext { XAuthMode = "test_mode" };
 
-            var inspector = new XAuthValidationInspector(this.ValidateXAuthMode, this.AuthenticateXAuthUsernameAndPassword);
+            var inspector = new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword);
             var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.CreateAccessToken, context));
             Assert.AreEqual("The x_auth_mode parameter is invalid", ex.Message);
         }
 
-        public bool ValidateXAuthMode(string authMode)
+        public static bool ValidateXAuthMode(string authMode)
         {
             return authMode == "client_auth";
         }

@@ -43,10 +43,7 @@ namespace Hyperar.OAuthCore.Consumer
             {
                 string content = webEx.Response.ReadToEnd();
 
-                if (responseBodyAction != null)
-                {
-                    responseBodyAction(content);
-                }
+                responseBodyAction?.Invoke(content);
 
                 if (content.Contains(Parameters.OAuth_Problem))
                 {

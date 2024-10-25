@@ -35,10 +35,7 @@ namespace Hyperar.OAuthCore.Provider.Inspectors
 
         public OAuth10AInspector(ITokenStore tokenStore)
         {
-            if (tokenStore == null)
-            {
-                throw new ArgumentNullException("tokenStore");
-            }
+            ArgumentNullException.ThrowIfNull(tokenStore);
 
             this._tokenStore = tokenStore;
         }
