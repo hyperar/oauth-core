@@ -103,7 +103,7 @@ A1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADQQCXFtEZswNcPcOTT78oeTuslgmu
 
             IOAuthContext context = new OAuthContextBuilder().FromUri("GET", uri);
             var signer = new OAuthContextSigner();
-            var signingContext = new SigningContext { Algorithm = FriendsterCertificate.PublicKey.Key };
+            var signingContext = new SigningContext { Algorithm = FriendsterCertificate.GetRSAPublicKey() ?? throw new NullReferenceException("GetRSAPubclicKey") };
 
             Assert.IsTrue(signer.ValidateSignature(context, signingContext));
         }
@@ -116,7 +116,7 @@ A1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADQQCXFtEZswNcPcOTT78oeTuslgmu
 
             IOAuthContext context = new OAuthContextBuilder().FromUrl("GET", url);
             var signer = new OAuthContextSigner();
-            var signingContext = new SigningContext { Algorithm = FriendsterCertificate.PublicKey.Key };
+            var signingContext = new SigningContext { Algorithm = FriendsterCertificate.GetRSAPublicKey() ?? throw new NullReferenceException("GetRSAPubclicKey") };
 
             Assert.IsTrue(signer.ValidateSignature(context, signingContext));
         }

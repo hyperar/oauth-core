@@ -1,5 +1,6 @@
 namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 {
+    using System.Security.Cryptography.X509Certificates;
     #region License
 
     // The MIT License
@@ -30,6 +31,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
     using Hyperar.OAuthCore.Framework.Signing;
     using Hyperar.OAuthCore.Provider.Inspectors;
     using Hyperar.OAuthCore.Storage;
+    using Hyperar.OAuthCore.Testing;
     using Rhino.Mocks;
 
     [TestClass]
@@ -78,27 +80,27 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
             }
         }
 
-        //[TestMethod]
-        //public void RsaSha1SignatureMethodFetchesCertificate()
-        //{
-        //    var repository = new MockRepository();
+        [TestMethod]
+        public void RsaSha1SignatureMethodFetchesCertificate()
+        {
+            var repository = new MockRepository();
 
-        //    var consumerStore = repository.DynamicMock<IConsumerStore>();
-        //    var signer = repository.StrictMock<IOAuthContextSigner>();
+            var consumerStore = repository.DynamicMock<IConsumerStore>();
+            var signer = repository.StrictMock<IOAuthContextSigner>();
 
-        //    var context = new OAuthContext { ConsumerKey = "key", SignatureMethod = SignatureMethod.RsaSha1 };
+            var context = new OAuthContext { ConsumerKey = "key", SignatureMethod = SignatureMethod.RsaSha1 };
 
-        //    using (repository.Record())
-        //    {
-        //        Expect.Call(consumerStore.GetConsumerPublicKey(context)).Return(
-        //            TestCertificates.OAuthTestCertificate().PublicKey.Key);
-        //        Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(true);
-        //    }
-        //    using (repository.Playback())
-        //    {
-        //        var inspector = new SignatureValidationInspector(consumerStore, signer);
-        //        inspector.InspectContext(ProviderPhase.GrantRequestToken, context);
-        //    }
-        //}
+            using (repository.Record())
+            {
+                Expect.Call(consumerStore.GetConsumerPublicKey(context)).Return(
+                    TestCertificates.OAuthTestCertificate().GetRSAPublicKey() ?? throw new NullReferenceException("GetRSAPubclicKey"));
+                Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(true);
+            }
+            using (repository.Playback())
+            {
+                var inspector = new SignatureValidationInspector(consumerStore, signer);
+                inspector.InspectContext(ProviderPhase.GrantRequestToken, context);
+            }
+        }
     }
 }
