@@ -49,10 +49,6 @@ namespace Hyperar.OAuthCore.Framework
             this.Report = new OAuthProblemReport { Problem = problem, ProblemAdvice = advice };
         }
 
-        public OAuthException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
-
         public IOAuthContext Context { get; set; }
 
         public OAuthProblemReport Report { get; set; }

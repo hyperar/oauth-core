@@ -58,12 +58,6 @@ namespace Hyperar.OAuthCore.KeyInterop
             this.m_position = position;
         }
 
-        private BerDecodeException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-            this.m_position = info.GetInt32("Position");
-        }
-
         public override string Message
         {
             get
@@ -80,13 +74,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         public int Position
         {
             get { return this.m_position; }
-        }
-
-        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            base.GetObjectData(info, context);
-            info.AddValue("Position", this.m_position);
         }
     }
 }
