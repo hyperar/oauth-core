@@ -39,12 +39,15 @@ namespace Hyperar.OAuthCore.Framework.Signing
             authContext.Signature = GenerateSignature(authContext, signingContext);
         }
 
-        public bool ValidateSignature(IOAuthContext authContext, SigningContext signingContext)
+        public bool ValidateSignature(IOAuthContext? authContext, SigningContext? signingContext)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(authContext?.Signature);
+            ArgumentException.ThrowIfNullOrWhiteSpace(signingContext?.SignatureBase);
+
             return authContext.Signature.EqualsInConstantTime(GenerateSignature(authContext, signingContext));
         }
 
-        private static string ComputeHash(HashAlgorithm hashAlgorithm, string data)
+        private static string ComputeHash(HashAlgorithm hashAlgorithm, string? data)
         {
             ArgumentNullException.ThrowIfNull(hashAlgorithm);
 
@@ -64,9 +67,10 @@ namespace Hyperar.OAuthCore.Framework.Signing
             string consumerSecret = (signingContext.ConsumerSecret != null)
                                         ? UriUtility.UrlEncode(signingContext.ConsumerSecret)
                                         : "";
-            string tokenSecret = (authContext.TokenSecret != null)
-                                     ? UriUtility.UrlEncode(authContext.TokenSecret)
-                                     : null;
+            string? tokenSecret = (authContext.TokenSecret != null)
+                                ? UriUtility.UrlEncode(authContext.TokenSecret)
+                                : null;
+
             string hashSource = string.Format("{0}&{1}", consumerSecret, tokenSecret);
 
             var hashAlgorithm = new HMACSHA1 { Key = Encoding.ASCII.GetBytes(hashSource) };

@@ -51,16 +51,18 @@ namespace Hyperar.OAuthCore.Framework
 
             if (parameters.AllKeys.Any(key => key == Parameters.OAuth_Acceptable_Timestamps))
             {
-                string[] timeStamps = parameters[Parameters.OAuth_Acceptable_Timestamps].Split(separatorHyphen);
-                this.AcceptableTimeStampsFrom = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps[0]));
-                this.AcceptableTimeStampsTo = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps[1]));
+                var timeStamps = parameters[Parameters.OAuth_Acceptable_Timestamps]?.Split(separatorHyphen);
+
+                this.AcceptableTimeStampsFrom = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps?.ElementAtOrDefault(0)));
+                this.AcceptableTimeStampsTo = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps?.ElementAtOrDefault(1)));
             }
 
             if (parameters.AllKeys.Any(key => key == Parameters.OAuth_Acceptable_Versions))
             {
-                string[] versions = parameters[Parameters.OAuth_Acceptable_Versions].Split(separatorHyphen);
-                this.AcceptableVersionFrom = versions[0];
-                this.AcceptableVersionTo = versions[1];
+                var versions = parameters[Parameters.OAuth_Acceptable_Versions]?.Split(separatorHyphen);
+
+                this.AcceptableVersionFrom = versions?.ElementAtOrDefault(0);
+                this.AcceptableVersionTo = versions?.ElementAtOrDefault(1);
             }
         }
 
@@ -73,17 +75,17 @@ namespace Hyperar.OAuthCore.Framework
 
         public DateTime? AcceptableTimeStampsTo { get; set; }
 
-        public string AcceptableVersionFrom { get; set; }
+        public string? AcceptableVersionFrom { get; set; }
 
-        public string AcceptableVersionTo { get; set; }
+        public string? AcceptableVersionTo { get; set; }
 
-        public List<string> ParametersAbsent { get; set; }
+        public List<string>? ParametersAbsent { get; set; }
 
-        public List<string> ParametersRejected { get; set; }
+        public List<string>? ParametersRejected { get; set; }
 
-        public string Problem { get; set; }
+        public string? Problem { get; set; }
 
-        public string ProblemAdvice { get; set; }
+        public string? ProblemAdvice { get; set; }
 
         private static readonly char[] separatorHyphen = new[] { '-' };
         private static readonly char[] separatorAmpersand = new[] { '&' };
@@ -105,12 +107,12 @@ namespace Hyperar.OAuthCore.Framework
                 response[Parameters.OAuth_Problem_Advice] = this.ProblemAdvice.Replace("\r\n", "\n").Replace("\r", "\n");
             }
 
-            if (this.ParametersAbsent.Count > 0)
+            if (this.ParametersAbsent?.Count > 0)
             {
                 response[Parameters.OAuth_Parameters_Absent] = FormatParameterNames(this.ParametersAbsent);
             }
 
-            if (this.ParametersRejected.Count > 0)
+            if (this.ParametersRejected?.Count > 0)
             {
                 response[Parameters.OAuth_Parameters_Rejected] = FormatParameterNames(this.ParametersRejected);
             }
@@ -148,9 +150,9 @@ namespace Hyperar.OAuthCore.Framework
             return builder.ToString();
         }
 
-        private static List<string> ParseFormattedParameters(string formattedList)
+        private static List<string>? ParseFormattedParameters(string? formattedList)
         {
-            return formattedList.Split(separatorAmpersand, StringSplitOptions.RemoveEmptyEntries).ToList();
+            return formattedList?.Split(separatorAmpersand, StringSplitOptions.RemoveEmptyEntries).ToList();
         }
     }
 }

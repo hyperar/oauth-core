@@ -53,8 +53,10 @@ namespace Hyperar.OAuthCore.Framework
         /// <param name="url"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        public static string FormatParameters(string httpMethod, Uri url, List<QueryParameter> parameters)
+        public static string FormatParameters(string httpMethod, Uri? url, List<QueryParameter> parameters)
         {
+            ArgumentNullException.ThrowIfNull(url);
+
             string normalizedRequestParameters = NormalizeRequestParameters(parameters);
 
             var signatureBase = new StringBuilder();
@@ -133,8 +135,13 @@ namespace Hyperar.OAuthCore.Framework
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        public static List<QueryParameter> GetHeaderParameters(string parameters)
+        public static List<QueryParameter>? GetHeaderParameters(string? parameters)
         {
+            if (parameters == null)
+            {
+                return null;
+            }
+
             parameters = parameters.Trim();
 
             var result = new List<QueryParameter>();
@@ -283,35 +290,42 @@ namespace Hyperar.OAuthCore.Framework
 
         public static IEnumerable<QueryParameter> ToQueryParameters(this NameValueCollection source)
         {
-            foreach (string key in source.AllKeys)
+            foreach (string key in source)
             {
-                yield return new QueryParameter(key, source[key]);
+                yield return new QueryParameter(key, source[key] ?? string.Empty);
             }
         }
 
         public static IEnumerable<QueryParameter> ToQueryParametersExcludingTokenSecret(this NameValueCollection source)
         {
-            foreach (string key in source.AllKeys)
+            foreach (string key in source)
             {
                 if (key != Parameters.OAuth_Token_Secret)
                 {
-                    yield return new QueryParameter(key, source[key]);
+                    yield return new QueryParameter(key, source[key] ?? string.Empty);
                 }
             }
         }
 
-        public static string UrlEncode(string value)
+        public static string UrlEncode(string? value)
         {
             return EscapeUriDataStringRfc3986(value);
         }
 
         // see http://stackoverflow.com/questions/846487/how-to-get-uri-escapedatastring-to-comply-with-rfc-3986 for details
-        private static string EscapeUriDataStringRfc3986(string value)
+        private static string EscapeUriDataStringRfc3986(string? value)
         {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
             // Fix for the exception Uri.EscapeDataString throws when the string is longer than 32766
             // Microsoft documentation http://msdn.microsoft.com/en-us/library/system.uri.escapedatastring.aspx
             var escaped = new StringBuilder();
+
             const int maxChunkSize = 32766;
+
             for (int i = 0; i <= value.Length; i += maxChunkSize)
             {
                 string substring = value.Substring(i, Math.Min(value.Length - i, maxChunkSize));

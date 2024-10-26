@@ -29,7 +29,7 @@ namespace Hyperar.OAuthCore.Framework
     using System.Security.Cryptography;
     using System.Text;
     using System.Web;
-    using QueryParameter = System.Collections.Generic.KeyValuePair<string, string>;
+    using QueryParameter = KeyValuePair<string, string>;
 
     [Serializable]
     public class OAuthContext : IOAuthContext
@@ -64,19 +64,19 @@ namespace Hyperar.OAuthCore.Framework
 
         private readonly BoundParameter _xAuthUsername;
 
-        private NameValueCollection _authorizationHeaderParameters;
+        private NameValueCollection? _authorizationHeaderParameters;
 
-        private NameValueCollection _cookies;
+        private NameValueCollection? _cookies;
 
-        private NameValueCollection _formEncodedParameters;
+        private NameValueCollection? _formEncodedParameters;
 
-        private NameValueCollection _headers;
+        private NameValueCollection? _headers;
 
-        private string _normalizedRequestUrl;
+        private string? _normalizedRequestUrl;
 
-        private NameValueCollection _queryParameters;
+        private NameValueCollection? _queryParameters;
 
-        private Uri _rawUri;
+        private Uri? _rawUri;
 
         public OAuthContext()
         {
@@ -103,7 +103,7 @@ namespace Hyperar.OAuthCore.Framework
             this.AuthorizationHeaderParameters = new NameValueCollection();
         }
 
-        public NameValueCollection AuthorizationHeaderParameters
+        public NameValueCollection? AuthorizationHeaderParameters
         {
             get
             {
@@ -115,19 +115,19 @@ namespace Hyperar.OAuthCore.Framework
             set { this._authorizationHeaderParameters = value; }
         }
 
-        public string BodyHash
+        public string? BodyHash
         {
             get { return this._bodyHash.Value; }
             set { this._bodyHash.Value = value; }
         }
 
-        public string CallbackUrl
+        public string? CallbackUrl
         {
             get { return this._callbackUrl.Value; }
             set { this._callbackUrl.Value = value; }
         }
 
-        public string ConsumerKey
+        public string? ConsumerKey
         {
             get { return this._consumerKey.Value; }
             set { this._consumerKey.Value = value; }
@@ -171,13 +171,13 @@ namespace Hyperar.OAuthCore.Framework
 
         public bool IncludeOAuthRequestBodyHashInSignature { get; set; }
 
-        public string Nonce
+        public string? Nonce
         {
             get { return this._nonce.Value; }
             set { this._nonce.Value = value; }
         }
 
-        public string NormalizedRequestUrl
+        public string? NormalizedRequestUrl
         {
             get { return this._normalizedRequestUrl; }
         }
@@ -194,11 +194,11 @@ namespace Hyperar.OAuthCore.Framework
             set { this._queryParameters = value; }
         }
 
-        public byte[] RawContent { get; set; }
+        public byte[]? RawContent { get; set; }
 
-        public string RawContentType { get; set; }
+        public string? RawContentType { get; set; }
 
-        public Uri RawUri
+        public Uri? RawUri
         {
             get { return this._rawUri; }
 
@@ -206,7 +206,7 @@ namespace Hyperar.OAuthCore.Framework
             {
                 this._rawUri = value;
 
-                NameValueCollection newParameters = HttpUtility.ParseQueryString(this._rawUri.Query);
+                NameValueCollection newParameters = HttpUtility.ParseQueryString(this._rawUri?.Query ?? string.Empty);
 
                 // TODO: tidy this up, bit clunky
 
@@ -215,49 +215,54 @@ namespace Hyperar.OAuthCore.Framework
                     this.QueryParameters[parameter] = newParameters[parameter];
                 }
 
-                this._normalizedRequestUrl = UriUtility.NormalizeUri(this._rawUri);
+                this._normalizedRequestUrl = this._rawUri != null ? UriUtility.NormalizeUri(this._rawUri) : string.Empty;
             }
         }
 
-        public string Realm
+        public string? Realm
         {
-            get { return this.AuthorizationHeaderParameters[Parameters.Realm]; }
-            set { this.AuthorizationHeaderParameters[Parameters.Realm] = value; }
+            get { return this.AuthorizationHeaderParameters?[Parameters.Realm]; }
+            set
+            {
+                this.AuthorizationHeaderParameters ??= new NameValueCollection();
+
+                this.AuthorizationHeaderParameters[Parameters.Realm] = value;
+            }
         }
 
-        public string RequestMethod { get; set; }
+        public string? RequestMethod { get; set; }
 
-        public string SessionHandle
+        public string? SessionHandle
         {
             get { return this._sessionHandle.Value; }
             set { this._sessionHandle.Value = value; }
         }
 
-        public string Signature
+        public string? Signature
         {
             get { return this._signature.Value; }
             set { this._signature.Value = value; }
         }
 
-        public string SignatureMethod
+        public string? SignatureMethod
         {
             get { return this._signatureMethod.Value; }
             set { this._signatureMethod.Value = value; }
         }
 
-        public string Timestamp
+        public string? Timestamp
         {
             get { return this._timestamp.Value; }
             set { this._timestamp.Value = value; }
         }
 
-        public string Token
+        public string? Token
         {
             get { return this._token.Value; }
             set { this._token.Value = value; }
         }
 
-        public string TokenSecret
+        public string? TokenSecret
         {
             get { return this._tokenSecret.Value; }
             set { this._tokenSecret.Value = value; }
@@ -265,31 +270,31 @@ namespace Hyperar.OAuthCore.Framework
 
         public bool UseAuthorizationHeader { get; set; }
 
-        public string Verifier
+        public string? Verifier
         {
             get { return this._verifier.Value; }
             set { this._verifier.Value = value; }
         }
 
-        public string Version
+        public string? Version
         {
             get { return this._version.Value; }
             set { this._version.Value = value; }
         }
 
-        public string XAuthMode
+        public string? XAuthMode
         {
             get { return this._xAuthMode.Value; }
             set { this._xAuthMode.Value = value; }
         }
 
-        public string XAuthPassword
+        public string? XAuthPassword
         {
             get { return this._xAuthPassword.Value; }
             set { this._xAuthPassword.Value = value; }
         }
 
-        public string XAuthUsername
+        public string? XAuthUsername
         {
             get { return this._xAuthUsername.Value; }
             set { this._xAuthUsername.Value = value; }
@@ -315,19 +320,20 @@ namespace Hyperar.OAuthCore.Framework
                 _ = builder.Append("realm=\"").Append(this.Realm).Append('"');
             }
 
-            IEnumerable<QueryParameter> parameters = this.AuthorizationHeaderParameters.ToQueryParametersExcludingTokenSecret();
+            IEnumerable<QueryParameter>? parameters = this.AuthorizationHeaderParameters?.ToQueryParametersExcludingTokenSecret();
 
-            foreach (
-                var parameter in parameters.Where(p => p.Key != Parameters.Realm)
-                )
+            if (parameters != null)
             {
-                if (builder.Length > 0)
+                foreach (var parameter in parameters.Where(p => p.Key != Parameters.Realm))
                 {
-                    _ = builder.Append(',');
-                }
+                    if (builder.Length > 0)
+                    {
+                        _ = builder.Append(',');
+                    }
 
-                _ = builder.Append(UriUtility.UrlEncode(parameter.Key)).Append("=\"").Append(
-                    UriUtility.UrlEncode(parameter.Value)).Append('"');
+                    _ = builder.Append(UriUtility.UrlEncode(parameter.Key)).Append("=\"").Append(
+                        UriUtility.UrlEncode(parameter.Value)).Append('"');
+                }
             }
 
             _ = builder.Insert(0, "OAuth ");
@@ -382,6 +388,8 @@ namespace Hyperar.OAuthCore.Framework
 
             _ = allParameters.RemoveAll(param => param.Key == Parameters.OAuth_Signature);
 
+            ArgumentException.ThrowIfNullOrWhiteSpace(this.NormalizedRequestUrl);
+
             string signatureBase = UriUtility.FormatParameters(this.RequestMethod, new Uri(this.NormalizedRequestUrl), allParameters);
 
             return signatureBase;
@@ -389,6 +397,8 @@ namespace Hyperar.OAuthCore.Framework
 
         public Uri GenerateUri()
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(this.NormalizedRequestUrl);
+
             var builder = new UriBuilder(this.NormalizedRequestUrl);
 
             IEnumerable<QueryParameter> parameters = this.QueryParameters.ToQueryParametersExcludingTokenSecret();
@@ -400,6 +410,8 @@ namespace Hyperar.OAuthCore.Framework
 
         public Uri GenerateUriWithoutOAuthParameters()
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(this.NormalizedRequestUrl);
+
             var builder = new UriBuilder(this.NormalizedRequestUrl);
 
             IEnumerable<QueryParameter> parameters = this.QueryParameters.ToQueryParameters()
@@ -412,6 +424,8 @@ namespace Hyperar.OAuthCore.Framework
 
         public string GenerateUrl()
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(this.NormalizedRequestUrl);
+
             var builder = new UriBuilder(this.NormalizedRequestUrl)
             {
                 Query = ""

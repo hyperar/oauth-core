@@ -39,8 +39,11 @@ namespace Hyperar.OAuthCore.Framework.Signing
             authContext.Signature = GenerateSignature(signingContext);
         }
 
-        public bool ValidateSignature(IOAuthContext authContext, SigningContext signingContext)
+        public bool ValidateSignature(IOAuthContext? authContext, SigningContext? signingContext)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(authContext?.Signature);
+            ArgumentException.ThrowIfNullOrWhiteSpace(signingContext?.SignatureBase);
+
             if (signingContext.Algorithm == null)
             {
                 throw Error.AlgorithmPropertyNotSetOnSigningContext();
@@ -58,6 +61,8 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
         private static SHA1 GenerateHash(SigningContext signingContext)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(signingContext.SignatureBase);
+
             var sha1 = SHA1.Create();
 
             byte[] dataBuffer = Encoding.ASCII.GetBytes(signingContext.SignatureBase);

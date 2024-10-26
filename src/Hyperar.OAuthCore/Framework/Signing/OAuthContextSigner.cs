@@ -38,9 +38,9 @@ namespace Hyperar.OAuthCore.Framework.Signing
             }
         }
 
-        public OAuthContextSigner()
-            : this(
-                new RsaSha1SignatureImplementation(), new HmacSha1SignatureImplementation(),
+        public OAuthContextSigner() : this(
+                new RsaSha1SignatureImplementation(),
+                new HmacSha1SignatureImplementation(),
                 new PlainTextSignatureImplementation())
         {
         }
@@ -51,23 +51,28 @@ namespace Hyperar.OAuthCore.Framework.Signing
             this.FindImplementationForAuthContext(authContext).SignContext(authContext, signingContext);
         }
 
-        public bool ValidateSignature(IOAuthContext authContext, SigningContext signingContext)
+        public bool ValidateSignature(IOAuthContext? authContext, SigningContext? signingContext)
         {
-            signingContext.SignatureBase = authContext.GenerateSignatureBase();
+            if (signingContext != null)
+            {
+                signingContext.SignatureBase = authContext?.GenerateSignatureBase();
+            }
+
             return this.FindImplementationForAuthContext(authContext).ValidateSignature(authContext, signingContext);
         }
 
-        private IContextSignatureImplementation FindImplementationForAuthContext(IOAuthContext authContext)
+        private IContextSignatureImplementation FindImplementationForAuthContext(IOAuthContext? authContext)
         {
-            IContextSignatureImplementation impl =
-                this._implementations.FirstOrDefault(i => i.MethodName == authContext.SignatureMethod);
+            ArgumentNullException.ThrowIfNull(authContext);
+
+            IContextSignatureImplementation? impl = this._implementations.FirstOrDefault(i => i.MethodName == authContext.SignatureMethod);
 
             if (impl != null)
             {
                 return impl;
             }
 
-            throw Error.UnknownSignatureMethod(authContext.SignatureMethod);
+            throw Error.UnknownSignatureMethod(authContext.SignatureMethod ?? string.Empty);
         }
     }
 }

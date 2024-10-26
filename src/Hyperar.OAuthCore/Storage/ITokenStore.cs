@@ -57,28 +57,28 @@ namespace Hyperar.OAuthCore.Storage
         /// </summary>
         /// <param name="requestContext"></param>
         /// <returns></returns>
-        IToken GetAccessTokenAssociatedWithRequestToken(IOAuthContext requestContext);
+        IToken? GetAccessTokenAssociatedWithRequestToken(IOAuthContext requestContext);
 
         /// <summary>
         ///     Gets the token secret for the supplied access token
         /// </summary>
         /// <param name="context"></param>
         /// <returns>token secret</returns>
-        string GetAccessTokenSecret(IOAuthContext context);
+        string? GetAccessTokenSecret(IOAuthContext context);
 
         /// <summary>
         ///     Returns the callback url that is stored against this token.
         /// </summary>
         /// <param name="requestContext"></param>
         /// <returns></returns>
-        string GetCallbackUrlForToken(IOAuthContext requestContext);
+        string? GetCallbackUrlForToken(IOAuthContext requestContext);
 
         /// <summary>
         ///     Gets the token secret for the supplied request token
         /// </summary>
         /// <param name="context"></param>
         /// <returns>token secret</returns>
-        string GetRequestTokenSecret(IOAuthContext context);
+        string? GetRequestTokenSecret(IOAuthContext context);
 
         /// <summary>
         ///     Returns the status for a request to access a consumers resources.
@@ -92,7 +92,7 @@ namespace Hyperar.OAuthCore.Storage
         /// </summary>
         /// <param name="requestContext"></param>
         /// <returns>verification code</returns>
-        string GetVerificationCodeForRequestToken(IOAuthContext requestContext);
+        string? GetVerificationCodeForRequestToken(IOAuthContext requestContext);
 
         /// <summary>
         ///     Renews the access token.

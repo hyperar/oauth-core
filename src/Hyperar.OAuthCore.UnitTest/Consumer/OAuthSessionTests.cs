@@ -62,7 +62,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
 
             Assert.AreEqual(rawContents, description.RawBody);
 
-            Assert.IsTrue(description.Headers[Parameters.OAuth_Authorization_Header].Contains("oauth_body_hash=\"Lve95gjOVATpfV8EL5X4nxwjKHE%3D\""));
+            Assert.IsTrue(description.Headers[Parameters.OAuth_Authorization_Header]?.Contains("oauth_body_hash=\"Lve95gjOVATpfV8EL5X4nxwjKHE%3D\""));
         }
 
         [TestMethod]
@@ -75,7 +75,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
 
             RequestDescription description = session.BuildRequestTokenContext("POST").GetRequestDescription();
 
-            Assert.IsTrue(description.Body.Contains("oauth_callback=http%3A%2F%2Flocalhost%2Fcallback"));
+            Assert.IsTrue(description.Body?.Contains("oauth_callback=http%3A%2F%2Flocalhost%2Fcallback"));
         }
 
         [TestMethod]
@@ -87,7 +87,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
 
             RequestDescription description = session.BuildRequestTokenContext("POST").GetRequestDescription();
 
-            Assert.IsTrue(description.Body.Contains("oauth_callback=oob"));
+            Assert.IsTrue(description.Body?.Contains("oauth_callback=oob"));
         }
 
         [TestMethod]
@@ -140,7 +140,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
                 .SignWithToken()
                 .GetRequestDescription();
 
-            Assert.IsFalse(description.Headers["Authorization"].Contains(Parameters.OAuth_Token_Secret));
+            Assert.IsFalse(description.Headers["Authorization"]?.Contains(Parameters.OAuth_Token_Secret));
         }
 
         [TestMethod]
@@ -158,7 +158,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
                 .SignWithToken()
                 .GetRequestDescription();
 
-            Assert.IsFalse(description.Body.Contains(Parameters.OAuth_Token_Secret));
+            Assert.IsFalse(description.Body?.Contains(Parameters.OAuth_Token_Secret));
         }
 
         [TestMethod]
@@ -176,7 +176,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
                 .SignWithToken()
                 .GetRequestDescription();
 
-            Assert.IsFalse(description.Url.ToString().Contains(Parameters.OAuth_Token_Secret));
+            Assert.IsFalse(description.Url?.ToString().Contains(Parameters.OAuth_Token_Secret));
         }
     }
 }

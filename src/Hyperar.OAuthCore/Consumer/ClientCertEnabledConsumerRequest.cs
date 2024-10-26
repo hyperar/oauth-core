@@ -37,7 +37,11 @@ namespace Hyperar.OAuthCore.Consumer
         /// <param name="context">The context.</param>
         /// <param name="consumerContext">The consumer context.</param>
         /// <param name="token">The token.</param>
-        public ClientCertEnabledConsumerRequest(ICertificateFactory certificateFactory, IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token)
+        public ClientCertEnabledConsumerRequest(
+            ICertificateFactory certificateFactory,
+            IOAuthContext context,
+            IOAuthConsumerContext consumerContext,
+            IToken? token)
             : base(context, consumerContext, token)
         {
             this._certificateFactory = certificateFactory;
@@ -51,7 +55,7 @@ namespace Hyperar.OAuthCore.Consumer
         {
             HttpWebRequest webReqeust = base.ToWebRequest();
 
-            X509Certificate2 certificate = this._certificateFactory.CreateCertificate();
+            X509Certificate2? certificate = this._certificateFactory.CreateCertificate();
 
             // Attach the certificate to the HttpWebRequest
             if (certificate != null)

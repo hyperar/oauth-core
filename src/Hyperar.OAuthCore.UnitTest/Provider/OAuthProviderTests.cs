@@ -112,26 +112,42 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         public void ExchangeRequestTokenForAccessToken()
         {
             OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
-            IOAuthContext context =
-                session.BuildExchangeRequestTokenForAccessTokenContext(
-                    new TokenBase { ConsumerKey = "key", Token = "requestkey", TokenSecret = "requestsecret" }, "GET", null).Context;
+            IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(
+                    new TokenBase
+                    {
+                        ConsumerKey = "key",
+                        Token = "requestkey",
+                        TokenSecret = "requestsecret"
+                    }, "GET", null).Context;
+
             context.TokenSecret = null;
-            IToken accessToken = this.provider.ExchangeRequestTokenForAccessToken(context);
-            Assert.AreEqual("accesskey", accessToken.Token);
-            Assert.AreEqual("accesssecret", accessToken.TokenSecret);
+
+            IToken? accessToken = this.provider.ExchangeRequestTokenForAccessToken(context);
+
+            Assert.AreEqual("accesskey", accessToken?.Token);
+            Assert.AreEqual("accesssecret", accessToken?.TokenSecret);
         }
 
         [TestMethod]
         public void ExchangeRequestTokenForAccessTokenPlainText()
         {
             OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
-            IOAuthContext context =
-                session.BuildExchangeRequestTokenForAccessTokenContext(
-                    new TokenBase { ConsumerKey = "key", Token = "requestkey", TokenSecret = "requestsecret" }, "GET", null).Context;
+
+            IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(
+                new TokenBase
+                {
+                    ConsumerKey = "key",
+                    Token = "requestkey",
+                    TokenSecret = "requestsecret"
+                }, "GET", null).Context;
+
             context.TokenSecret = null;
-            IToken accessToken = this.provider.ExchangeRequestTokenForAccessToken(context);
-            Assert.AreEqual("accesskey", accessToken.Token);
-            Assert.AreEqual("accesssecret", accessToken.TokenSecret);
+
+            IToken? accessToken = this.provider.ExchangeRequestTokenForAccessToken(context);
+
+            Assert.AreEqual("accesskey", accessToken?.Token);
+
+            Assert.AreEqual("accesssecret", accessToken?.TokenSecret);
         }
 
         [TestMethod]

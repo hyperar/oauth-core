@@ -38,30 +38,30 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         [TestMethod]
         public void GetHeaderParameters_ReturnsAllParameters()
         {
-            List<QueryParameter> parameters =
+            List<QueryParameter>? parameters =
                 UriUtility.GetHeaderParameters("OAuth realm=\"http:\\\\somerealm.com\", oauth_consumer_key=\"consumerKey\"");
 
-            Assert.AreEqual(2, parameters.Count);
-            Assert.AreEqual("consumerKey", parameters.Single(p => p.Key == "oauth_consumer_key").Value);
-            Assert.AreEqual(@"http:\\somerealm.com", parameters.Single(p => p.Key == "realm").Value);
+            Assert.AreEqual(2, parameters?.Count);
+            Assert.AreEqual("consumerKey", parameters?.Single(p => p.Key == "oauth_consumer_key").Value);
+            Assert.AreEqual(@"http:\\somerealm.com", parameters?.Single(p => p.Key == "realm").Value);
         }
 
         [TestMethod]
         public void GetHeaderParametersWhenAuthorizationHeaderDoesNotContainOAuthReturnsEmptyCollection()
         {
-            List<QueryParameter> parameters =
+            List<QueryParameter>? parameters =
                 UriUtility.GetHeaderParameters("realm=\"http:\\somerealm.com\", oauth_consumer_key=\"\"");
 
-            Assert.AreEqual(0, parameters.Count);
+            Assert.AreEqual(0, parameters?.Count);
         }
 
         [TestMethod]
         public void GetHeaderParametersWhenKeysValueIsEmpty()
         {
-            List<QueryParameter> parameters =
+            List<QueryParameter>? parameters =
                 UriUtility.GetHeaderParameters("OAuth realm=\"http:\\somerealm.com\", oauth_consumer_key=\"\"");
 
-            Assert.AreEqual("", parameters.Single(p => p.Key == "oauth_consumer_key").Value);
+            Assert.AreEqual("", parameters?.Single(p => p.Key == "oauth_consumer_key").Value);
         }
 
         [TestMethod]

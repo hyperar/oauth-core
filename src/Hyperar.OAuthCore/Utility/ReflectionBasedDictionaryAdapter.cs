@@ -43,9 +43,12 @@ namespace Hyperar.OAuthCore.Utility
                     continue;
                 }
 
-                object value = property.GetValue(target, null);
+                object? value = property.GetValue(target, null);
 
-                this._properties[property.Name] = value;
+                if (value != null)
+                {
+                    this._properties[property.Name] = value;
+                }
             }
         }
 
@@ -144,7 +147,7 @@ namespace Hyperar.OAuthCore.Utility
         /// 	<paramref name="key"/> is null. </exception>
         /// <exception cref="T:System.ArgumentException">An element with the same key already exists in the <see cref="T:System.Collections.IDictionary"/> object. </exception>
         /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.IDictionary"/> is read-only.-or- The <see cref="T:System.Collections.IDictionary"/> has a fixed size. </exception>
-        public void Add(object key, object value)
+        public void Add(object key, object? value)
         {
             throw new NotImplementedException();
         }
@@ -169,7 +172,12 @@ namespace Hyperar.OAuthCore.Utility
         /// 	<paramref name="key"/> is null. </exception>
         public bool Contains(object key)
         {
-            return this._properties.ContainsKey(key.ToString());
+            if (key is string value)
+            {
+                return this._properties.ContainsKey(value);
+            }
+
+            throw new ArgumentException(nameof(key));
         }
 
         /// <summary>

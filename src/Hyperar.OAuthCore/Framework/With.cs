@@ -31,14 +31,22 @@ namespace Hyperar.OAuthCore.Framework
     {
         public static IDisposable NoCertificateValidation()
         {
-            RemoteCertificateValidationCallback oldCallback = ServicePointManager.ServerCertificateValidationCallback;
+            RemoteCertificateValidationCallback? oldCallback = ServicePointManager.ServerCertificateValidationCallback;
+
             ServicePointManager.ServerCertificateValidationCallback = CertificateAlwaysValidCallback;
-            return new DisposableAction(delegate
-            { ServicePointManager.ServerCertificateValidationCallback = oldCallback; });
+
+            return new DisposableAction(
+                delegate
+                {
+                    ServicePointManager.ServerCertificateValidationCallback = oldCallback;
+                });
         }
 
-        private static bool CertificateAlwaysValidCallback(object sender, X509Certificate certificate, X509Chain chain,
-                                                   SslPolicyErrors sslPolicyErrors)
+        private static bool CertificateAlwaysValidCallback(
+            object sender,
+            X509Certificate? certificate,
+            X509Chain? chain,
+            SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }

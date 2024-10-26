@@ -38,7 +38,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
             var report = new OAuthProblemReport
             {
                 Problem = OAuthProblems.ParameterAbsent,
-                ParametersAbsent = { Parameters.OAuth_Nonce }
+                ParametersAbsent = new List<string> { Parameters.OAuth_Nonce }
             };
 
             Assert.AreEqual("oauth_problem=parameter_absent&oauth_parameters_absent=oauth_nonce", report.ToString());
@@ -50,7 +50,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
             var report = new OAuthProblemReport
             {
                 Problem = OAuthProblems.ParameterRejected,
-                ParametersRejected = { Parameters.OAuth_Timestamp }
+                ParametersRejected = new List<string> { Parameters.OAuth_Timestamp }
             };
 
             Assert.AreEqual("oauth_problem=parameter_rejected&oauth_parameters_rejected=oauth_timestamp",
@@ -106,7 +106,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
             var report = new OAuthProblemReport(formatted);
 
             Assert.AreEqual(OAuthProblems.ParameterAbsent, report.Problem);
-            Assert.IsTrue(report.ParametersAbsent.Contains(Parameters.OAuth_Nonce));
+            Assert.IsTrue(report.ParametersAbsent?.Contains(Parameters.OAuth_Nonce));
         }
 
         [TestMethod]
@@ -117,7 +117,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
             var report = new OAuthProblemReport(formatted);
 
             Assert.AreEqual(OAuthProblems.ParameterRejected, report.Problem);
-            Assert.IsTrue(report.ParametersRejected.Contains(Parameters.OAuth_Timestamp));
+            Assert.IsTrue(report.ParametersRejected?.Contains(Parameters.OAuth_Timestamp));
         }
 
         [TestMethod]

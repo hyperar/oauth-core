@@ -82,7 +82,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         [TestMethod]
         public void ExchangeTokensWhenVerifierIsMissingThrowsException()
         {
-            string verifier = null;
+            string? verifier = null;
 
             OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(

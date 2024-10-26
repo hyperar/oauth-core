@@ -23,7 +23,6 @@
 namespace Hyperar.OAuthCore.Framework
 {
     using System;
-    using System.Runtime.Serialization;
 
     public class OAuthException : Exception
     {
@@ -49,8 +48,8 @@ namespace Hyperar.OAuthCore.Framework
             this.Report = new OAuthProblemReport { Problem = problem, ProblemAdvice = advice };
         }
 
-        public IOAuthContext Context { get; set; }
+        public IOAuthContext? Context { get; set; }
 
-        public OAuthProblemReport Report { get; set; }
+        public OAuthProblemReport? Report { get; set; }
     }
 }

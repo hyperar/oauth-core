@@ -30,7 +30,7 @@ namespace Hyperar.OAuthCore.Provider
 
         IToken CreateAccessToken(IOAuthContext context);
 
-        IToken ExchangeRequestTokenForAccessToken(IOAuthContext context);
+        IToken? ExchangeRequestTokenForAccessToken(IOAuthContext context);
 
         IToken GrantRequestToken(IOAuthContext context);
 

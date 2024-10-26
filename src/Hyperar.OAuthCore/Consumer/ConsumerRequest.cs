@@ -33,9 +33,9 @@ namespace Hyperar.OAuthCore.Consumer
 
     public class ConsumerRequest : IConsumerRequest
     {
-        private readonly IToken _token;
+        private readonly IToken? _token;
 
-        public ConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token)
+        public ConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken? token)
         {
             ArgumentNullException.ThrowIfNull(context);
 
@@ -128,8 +128,10 @@ namespace Hyperar.OAuthCore.Consumer
             return this.SignWithToken(this._token);
         }
 
-        public IConsumerRequest SignWithToken(IToken token)
+        public IConsumerRequest SignWithToken(IToken? token)
         {
+            ArgumentNullException.ThrowIfNull(token);
+
             this.EnsureRequestHasNotBeenSignedYet();
             this.ConsumerContext.SignContextWithToken(this.Context, token);
             return this;
@@ -182,6 +184,9 @@ namespace Hyperar.OAuthCore.Consumer
         {
             RequestDescription description = this.GetRequestDescription();
 
+            ArgumentNullException.ThrowIfNull(description.Url);
+            ArgumentException.ThrowIfNullOrWhiteSpace(description.Method);
+
             var request = (HttpWebRequest)WebRequest.Create(description.Url);
             request.Method = description.Method;
             request.UserAgent = this.ConsumerContext.UserAgent;
@@ -198,9 +203,10 @@ namespace Hyperar.OAuthCore.Consumer
 
             try
             {
-                if (this.Context.Headers["If-Modified-Since"] != null)
+                var modifiedDateString = this.Context.Headers["If-Modified-Since"];
+
+                if (modifiedDateString != null)
                 {
-                    string modifiedDateString = this.Context.Headers["If-Modified-Since"];
                     request.IfModifiedSince = DateTime.Parse(modifiedDateString);
                 }
             }
@@ -216,7 +222,7 @@ namespace Hyperar.OAuthCore.Consumer
 
             if (description.Headers.Count > 0)
             {
-                foreach (string key in description.Headers.AllKeys)
+                foreach (string key in description.Headers)
                 {
                     request.Headers[key] = description.Headers[key];
                 }

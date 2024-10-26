@@ -33,13 +33,13 @@ namespace Hyperar.OAuthCore.Storage.Basic
     {
         public bool AccessDenied { get; set; }
 
-        public AccessToken AccessToken { get; set; }
+        public AccessToken? AccessToken { get; set; }
 
-        public string CallbackUrl { get; set; }
+        public string? CallbackUrl { get; set; }
 
         public bool UsedUp { get; set; }
 
-        public string Verifier { get; set; }
+        public string? Verifier { get; set; }
 
         public override string ToString()
         {

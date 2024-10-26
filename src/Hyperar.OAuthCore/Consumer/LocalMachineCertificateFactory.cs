@@ -22,7 +22,6 @@
 
 namespace Hyperar.OAuthCore.Consumer
 {
-    using System;
     using System.Net;
     using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
@@ -53,7 +52,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// Creates the certificate.
         /// </summary>
         /// <returns></returns>
-        public X509Certificate2 CreateCertificate()
+        public X509Certificate2? CreateCertificate()
         {
             X509Certificate2Collection certificateCollection = this.GetCertificateCollection();
             return certificateCollection.Count > 0 ? certificateCollection[0] : null;
@@ -76,7 +75,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// <param name="chain">The chain.</param>
         /// <param name="sslPolicyErrors">The SSL policy errors.</param>
         /// <returns></returns>
-        public static bool RemoteCertificateValidationCallback(Object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        public static bool RemoteCertificateValidationCallback(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }

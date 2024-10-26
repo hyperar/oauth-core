@@ -27,12 +27,7 @@ namespace Hyperar.OAuthCore.Framework
 
     public class AccessDeniedException : Exception
     {
-        public AccessDeniedException(AccessOutcome outcome)
-            : this(outcome, null)
-        {
-        }
-
-        public AccessDeniedException(AccessOutcome outcome, string message) : base(message)
+        public AccessDeniedException(AccessOutcome outcome, string? message) : base(message)
         {
             this.Outcome = outcome;
         }

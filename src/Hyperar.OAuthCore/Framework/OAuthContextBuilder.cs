@@ -36,7 +36,7 @@ namespace Hyperar.OAuthCore.Framework
 
         private readonly Func<Uri, Uri> _uriAdjuster;
 
-        public OAuthContextBuilder(Func<Uri, Uri> uriAdjuster)
+        public OAuthContextBuilder(Func<Uri, Uri>? uriAdjuster)
         {
             this._uriAdjuster = uriAdjuster ?? this._emptyUriAdjuster;
         }
@@ -199,7 +199,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             if (headers.AllKeys.Contains("Authorization"))
             {
-                context.AuthorizationHeaderParameters = UriUtility.GetHeaderParameters(headers["Authorization"]).ToNameValueCollection();
+                context.AuthorizationHeaderParameters = UriUtility.GetHeaderParameters(headers["Authorization"])?.ToNameValueCollection();
                 context.UseAuthorizationHeader = true;
             }
         }

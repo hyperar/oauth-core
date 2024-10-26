@@ -36,7 +36,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        T GetToken(string token);
+        T GetToken(string? token);
 
         /// <summary>
         /// Saves the token in the underlying store

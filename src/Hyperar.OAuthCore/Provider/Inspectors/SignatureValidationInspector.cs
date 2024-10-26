@@ -65,7 +65,7 @@ namespace Hyperar.OAuthCore.Provider.Inspectors
             return signingContext;
         }
 
-        protected virtual bool SignatureMethodRequiresCertificate(string signatureMethod)
+        protected virtual bool SignatureMethodRequiresCertificate(string? signatureMethod)
         {
             return signatureMethod is not SignatureMethod.HmacSha1 and not SignatureMethod.PlainText;
         }

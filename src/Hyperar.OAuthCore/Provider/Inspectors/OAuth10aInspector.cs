@@ -62,14 +62,14 @@ namespace Hyperar.OAuthCore.Provider.Inspectors
 
         private void ValidateVerifierMatchesStoredVerifier(IOAuthContext context)
         {
-            string actual = context.Verifier;
+            string? actual = context.Verifier;
 
             if (string.IsNullOrEmpty(actual))
             {
                 throw Error.MissingRequiredOAuthParameter(context, Parameters.OAuth_Verifier);
             }
 
-            string expected = this._tokenStore.GetVerificationCodeForRequestToken(context);
+            string? expected = this._tokenStore.GetVerificationCodeForRequestToken(context);
 
             if (expected != actual.Trim())
             {

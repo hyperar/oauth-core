@@ -26,7 +26,7 @@ namespace Hyperar.OAuthCore.Consumer
 
     public interface ICertificateFactory
     {
-        X509Certificate2 CreateCertificate();
+        X509Certificate2? CreateCertificate();
 
         int GetMatchingCertificateCount();
     }

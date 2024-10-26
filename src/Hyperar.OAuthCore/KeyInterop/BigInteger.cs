@@ -1667,23 +1667,30 @@ namespace Hyperar.OAuthCore.KeyInterop
         //***********************************************************************
         // Overloading of equality operator
         //***********************************************************************
-        public override bool Equals(object o)
+        public override bool Equals(object? o)
         {
-            var bi = (BigInteger)o;
-
-            if (this.dataLength != bi.dataLength)
+            if (o is BigInteger bi)
             {
-                return false;
-            }
 
-            for (int i = 0; i < this.dataLength; i++)
-            {
-                if (this.data[i] != bi.data[i])
+                if (this.dataLength != bi.dataLength)
                 {
                     return false;
                 }
+
+                for (int i = 0; i < this.dataLength; i++)
+                {
+                    if (this.data[i] != bi.data[i])
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             }
-            return true;
+            else
+            {
+                return false;
+            }
         }
 
         public bool FermatLittleTest(int confidence)

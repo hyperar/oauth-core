@@ -33,8 +33,8 @@ namespace Hyperar.OAuthCore.Storage.Basic
     {
         public DateTime ExpiryDate { get; set; }
 
-        public string[] Roles { get; set; }
+        public string[]? Roles { get; set; }
 
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
     }
 }

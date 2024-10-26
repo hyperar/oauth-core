@@ -102,7 +102,7 @@ namespace Hyperar.OAuthCore.Consumer
                     throw Error.ExperiencingIssueWithCreatingUriDueToMissingAppConfig(argumentException);
                 }
 
-                throw Error.FailedToParseResponse(request.ToString());
+                throw Error.FailedToParseResponse(request?.ToString());
             }
         }
 

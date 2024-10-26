@@ -45,11 +45,11 @@ namespace Hyperar.OAuthCore.Framework
         /// Gets or sets the value.
         /// </summary>
         /// <value>The value.</value>
-        public string Value
+        public string? Value
         {
             get
             {
-                if (this._context.AuthorizationHeaderParameters[this._name] != null)
+                if (this._context.AuthorizationHeaderParameters?[this._name] != null)
                 {
                     return this._context.AuthorizationHeaderParameters[this._name];
                 }
@@ -90,7 +90,7 @@ namespace Hyperar.OAuthCore.Framework
             {
                 if (this._context.UseAuthorizationHeader)
                 {
-                    return this._context.AuthorizationHeaderParameters;
+                    return this._context.AuthorizationHeaderParameters ?? new NameValueCollection();
                 }
 
                 if (this._context.RequestMethod == "GET")

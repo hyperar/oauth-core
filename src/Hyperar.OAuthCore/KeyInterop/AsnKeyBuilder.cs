@@ -516,7 +516,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         /// <code>AsnType oid = CreateOid("1.2.840.113549.1.1.1")</code>
         /// </example>
         /// <seealso cref="CreateOid(byte[])"/>
-        public static AsnType CreateOid(string value)
+        public static AsnType? CreateOid(string value)
         {
             // Punt?
             if (IsEmpty(value))
@@ -625,7 +625,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         /// AsnType = CreateOid(rsa)</code>
         /// </example>
         /// <seealso cref="CreateOid(string)"/>
-        public static AsnType CreateOid(byte[] value)
+        public static AsnType? CreateOid(byte[] value)
         {
             // Punt...
             if (IsEmpty(value))
@@ -771,20 +771,24 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Debug.Assert(null != privateKey);
 
             /* *
-      * SEQUENCE              // PrivateKeyInfo
-      * +- INTEGER(0)         // Version (v1998)
-      * +- SEQUENCE           // AlgorithmIdentifier
-      * |  +- OID             // 1.2.840.10040.4.1
-      * |  +- SEQUENCE        // DSS-Params (Optional Parameters)
-      * |    +- INTEGER (P)
-      * |    +- INTEGER (Q)
-      * |    +- INTEGER (G)
-      * +- OCTETSTRING        // PrivateKey
-      *    +- INTEGER(X)   // DSAPrivateKey X
-      * */
+            * SEQUENCE              // PrivateKeyInfo
+            * +- INTEGER(0)         // Version (v1998)
+            * +- SEQUENCE           // AlgorithmIdentifier
+            * |  +- OID             // 1.2.840.10040.4.1
+            * |  +- SEQUENCE        // DSS-Params (Optional Parameters)
+            * |    +- INTEGER (P)
+            * |    +- INTEGER (Q)
+            * |    +- INTEGER (G)
+            * +- OCTETSTRING        // PrivateKey
+            *    +- INTEGER(X)   // DSAPrivateKey X
+            * */
 
             // Version - 0 (v1998)
             AsnType version = CreateInteger(ZERO);
+
+            ArgumentNullException.ThrowIfNull(privateKey.P);
+            ArgumentNullException.ThrowIfNull(privateKey.Q);
+            ArgumentNullException.ThrowIfNull(privateKey.G);
 
             // Domain Parameters
             AsnType p = CreateIntegerPos(privateKey.P);
@@ -795,10 +799,19 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // OID - packed 1.2.840.10040.4.1
             //   { 0x2A, 0x86, 0x48, 0xCE, 0x38, 0x04, 0x01 }
-            AsnType oid = CreateOid("1.2.840.10040.4.1");
+            AsnType? oid = CreateOid("1.2.840.10040.4.1");
+
+            ArgumentNullException.ThrowIfNull(oid);
 
             // AlgorithmIdentifier
-            AsnType algorithmID = CreateSequence(new AsnType[] { oid, dssParams });
+            AsnType algorithmID = CreateSequence(
+                new AsnType[]
+                {
+                    oid,
+                    dssParams
+                });
+
+            ArgumentNullException.ThrowIfNull(privateKey.X);
 
             // Private Key X
             AsnType x = CreateIntegerPos(privateKey.X);
@@ -829,23 +842,32 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Debug.Assert(null != privateKey);
 
             /* *
-      * SEQUENCE                  // PublicKeyInfo
-      * +- INTEGER(0)             // Version - 0 (v1998)
-      * +- SEQUENCE               // AlgorithmIdentifier
-      *    +- OID                 // 1.2.840.113549.1.1.1
-      *    +- NULL                // Optional Parameters
-      * +- OCTETSTRING            // PrivateKey
-      *    +- SEQUENCE            // RSAPrivateKey
-      *       +- INTEGER(0)       // Version - 0 (v1998)
-      *       +- INTEGER(N)
-      *       +- INTEGER(E)
-      *       +- INTEGER(D)
-      *       +- INTEGER(P)
-      *       +- INTEGER(Q)
-      *       +- INTEGER(DP)
-      *       +- INTEGER(DQ)
-      *       +- INTEGER(Inv Q)
-      * */
+            * SEQUENCE                  // PublicKeyInfo
+            * +- INTEGER(0)             // Version - 0 (v1998)
+            * +- SEQUENCE               // AlgorithmIdentifier
+            *    +- OID                 // 1.2.840.113549.1.1.1
+            *    +- NULL                // Optional Parameters
+            * +- OCTETSTRING            // PrivateKey
+            *    +- SEQUENCE            // RSAPrivateKey
+            *       +- INTEGER(0)       // Version - 0 (v1998)
+            *       +- INTEGER(N)
+            *       +- INTEGER(E)
+            *       +- INTEGER(D)
+            *       +- INTEGER(P)
+            *       +- INTEGER(Q)
+            *       +- INTEGER(DP)
+            *       +- INTEGER(DQ)
+            *       +- INTEGER(Inv Q)
+            * */
+
+            ArgumentNullException.ThrowIfNull(privateKey.Modulus);
+            ArgumentNullException.ThrowIfNull(privateKey.Exponent);
+            ArgumentNullException.ThrowIfNull(privateKey.D);
+            ArgumentNullException.ThrowIfNull(privateKey.P);
+            ArgumentNullException.ThrowIfNull(privateKey.Q);
+            ArgumentNullException.ThrowIfNull(privateKey.DP);
+            ArgumentNullException.ThrowIfNull(privateKey.DQ);
+            ArgumentNullException.ThrowIfNull(privateKey.InverseQ);
 
             AsnType n = CreateIntegerPos(privateKey.Modulus);
             AsnType e = CreateIntegerPos(privateKey.Exponent);
@@ -861,12 +883,27 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // octstring = OCTETSTRING(SEQUENCE(INTEGER(0)INTEGER(N)...))
             AsnType key = CreateOctetString(
-                CreateSequence(new AsnType[] { version, n, e, d, p, q, dp, dq, iq })
-                );
+                CreateSequence(
+                    new AsnType[]
+                    {
+                        version,
+                        n,
+                        e,
+                        d,
+                        p,
+                        q,
+                        dp,
+                        dq,
+                        iq
+                    }));
 
             // OID - packed 1.2.840.113549.1.1.1
             //   { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 }
-            AsnType algorithmID = CreateSequence(new AsnType[] { CreateOid("1.2.840.113549.1.1.1"), CreateNull() }
+            AsnType algorithmID = CreateSequence(
+                new AsnType[]
+                {
+                    CreateOid("1.2.840.113549.1.1.1") ?? throw new NullReferenceException("Oid"),
+                    CreateNull() }
                 );
 
             // PrivateKeyInfo
@@ -892,16 +929,20 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Debug.Assert(null != publicKey);
 
             /* *
-      * SEQUENCE              // PrivateKeyInfo
-      * +- SEQUENCE           // AlgorithmIdentifier
-      * |  +- OID             // 1.2.840.10040.4.1
-      * |  +- SEQUENCE        // DSS-Params (Optional Parameters)
-      * |    +- INTEGER (P)
-      * |    +- INTEGER (Q)
-      * |    +- INTEGER (G)
-      * +- BITSTRING          // PublicKey
-      *    +- INTEGER(Y)      // DSAPublicKey Y
-      * */
+            * SEQUENCE              // PrivateKeyInfo
+            * +- SEQUENCE           // AlgorithmIdentifier
+            * |  +- OID             // 1.2.840.10040.4.1
+            * |  +- SEQUENCE        // DSS-Params (Optional Parameters)
+            * |    +- INTEGER (P)
+            * |    +- INTEGER (Q)
+            * |    +- INTEGER (G)
+            * +- BITSTRING          // PublicKey
+            *    +- INTEGER(Y)      // DSAPublicKey Y
+            * */
+
+            ArgumentNullException.ThrowIfNull(publicKey.P);
+            ArgumentNullException.ThrowIfNull(publicKey.Q);
+            ArgumentNullException.ThrowIfNull(publicKey.G);
 
             // DSA Parameters
             AsnType p = CreateIntegerPos(publicKey.P);
@@ -913,10 +954,14 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // OID - packed 1.2.840.10040.4.1
             //   { 0x2A, 0x86, 0x48, 0xCE, 0x38, 0x04, 0x01 }
-            AsnType oid = CreateOid("1.2.840.10040.4.1");
+            AsnType? oid = CreateOid("1.2.840.10040.4.1");
+
+            ArgumentNullException.ThrowIfNull(oid);
 
             // Sequence
             AsnType algorithmID = CreateSequence(new AsnType[] { oid, dssParams });
+
+            ArgumentNullException.ThrowIfNull(publicKey.Y);
 
             // Public Key Y
             AsnType y = CreateIntegerPos(publicKey.Y);
@@ -945,30 +990,32 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Debug.Assert(null != publicKey);
 
             /* *
-      * SEQUENCE              // PrivateKeyInfo
-      * +- SEQUENCE           // AlgorithmIdentifier
-      *    +- OID             // 1.2.840.113549.1.1.1
-      *    +- Null            // Optional Parameters
-      * +- BITSTRING          // PrivateKey
-      *    +- SEQUENCE        // RSAPrivateKey
-      *       +- INTEGER(N)   // N
-      *       +- INTEGER(E)   // E
-      * */
+            * SEQUENCE              // PrivateKeyInfo
+            * +- SEQUENCE           // AlgorithmIdentifier
+            *    +- OID             // 1.2.840.113549.1.1.1
+            *    +- Null            // Optional Parameters
+            * +- BITSTRING          // PrivateKey
+            *    +- SEQUENCE        // RSAPrivateKey
+            *       +- INTEGER(N)   // N
+            *       +- INTEGER(E)   // E
+            * */
 
             // OID - packed 1.2.840.113549.1.1.1
             //   { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 }
-            AsnType oid = CreateOid("1.2.840.113549.1.1.1");
-            AsnType algorithmID =
-                CreateSequence(new AsnType[] { oid, CreateNull() });
+            AsnType? oid = CreateOid("1.2.840.113549.1.1.1");
+
+            ArgumentNullException.ThrowIfNull(oid);
+
+            AsnType algorithmID = CreateSequence(new AsnType[] { oid, CreateNull() });
+
+            ArgumentNullException.ThrowIfNull(publicKey.Modulus);
+            ArgumentNullException.ThrowIfNull(publicKey.Exponent);
 
             AsnType n = CreateIntegerPos(publicKey.Modulus);
             AsnType e = CreateIntegerPos(publicKey.Exponent);
-            AsnType key = CreateBitString(
-                CreateSequence(new AsnType[] { n, e })
-                );
+            AsnType key = CreateBitString(CreateSequence(new AsnType[] { n, e }));
 
-            AsnType publicKeyInfo =
-                CreateSequence(new AsnType[] { algorithmID, key });
+            AsnType publicKeyInfo = CreateSequence(new AsnType[] { algorithmID, key });
 
             return new AsnMessage(publicKeyInfo.GetBytes(), "X.509");
         }
@@ -1267,7 +1314,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Setters and Getters
             private readonly byte[] m_tag;
 
-            private byte[] m_length;
+            private byte[]? m_length;
 
             private byte[] m_octets;
 
@@ -1341,6 +1388,8 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Methods
             public byte[] GetBytes()
             {
+                ArgumentNullException.ThrowIfNull(this.m_length);
+
                 // Created raw by user
                 // return the bytes....
                 if (true == this.Raw)

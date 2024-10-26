@@ -34,13 +34,17 @@ namespace Hyperar.OAuthCore.Storage.Basic
     {
         private readonly Dictionary<string, T> _tokens = new Dictionary<string, T>();
 
-        public T GetToken(string token)
+        public T GetToken(string? token)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(token);
+
             return this._tokens[token];
         }
 
         public void SaveToken(T token)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(token.Token);
+
             this._tokens[token.Token] = token;
         }
     }
