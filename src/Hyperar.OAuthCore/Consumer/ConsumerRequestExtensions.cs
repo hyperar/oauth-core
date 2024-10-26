@@ -25,7 +25,6 @@ namespace Hyperar.OAuthCore.Consumer
     using System;
     using System.Collections;
     using System.Collections.Specialized;
-    using System.Net;
     using System.Text;
     using Hyperar.OAuthCore.Framework;
     using Hyperar.OAuthCore.Utility;
@@ -84,16 +83,23 @@ namespace Hyperar.OAuthCore.Consumer
 
         public static string ReadBody(this IConsumerRequest request)
         {
-            HttpWebResponse response = request.ToWebResponse();
+            HttpResponseMessage response = request.ToResponseMessageAsync()
+                .GetAwaiter()
+                .GetResult();
 
-            return response.ReadToEnd();
+            return response.Content.ReadAsStringAsync()
+                .GetAwaiter()
+                .GetResult();
         }
 
         public static T Select<T>(this IConsumerRequest request, Func<NameValueCollection, T> selectFunc)
         {
             try
             {
-                return selectFunc(request.ToBodyParameters());
+                return selectFunc(
+                    request.ToBodyParametersAsync()
+                        .GetAwaiter()
+                        .GetResult());
             }
             catch (ArgumentNullException argumentException)
             {

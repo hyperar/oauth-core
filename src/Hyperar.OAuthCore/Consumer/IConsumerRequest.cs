@@ -24,7 +24,6 @@ namespace Hyperar.OAuthCore.Consumer
 {
     using System;
     using System.Collections.Specialized;
-    using System.Net;
     using System.Xml.Linq;
     using Hyperar.OAuthCore.Framework;
 
@@ -52,14 +51,16 @@ namespace Hyperar.OAuthCore.Consumer
 
         IConsumerRequest SignWithToken(IToken token);
 
-        NameValueCollection ToBodyParameters();
+        Task<NameValueCollection> ToBodyParametersAsync();
 
-        byte[] ToBytes();
+        Task<byte[]> ToBytesAsync();
 
-        XDocument ToDocument();
+        Task<string> ToStringAsync();
 
-        HttpWebRequest ToWebRequest();
+        Task<XDocument> ToXDocumentAsync();
 
-        HttpWebResponse ToWebResponse();
+        HttpRequestMessage ToRequestMessage();
+
+        Task<HttpResponseMessage> ToResponseMessageAsync();
     }
 }

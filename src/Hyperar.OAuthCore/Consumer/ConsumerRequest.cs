@@ -24,8 +24,9 @@ namespace Hyperar.OAuthCore.Consumer
 {
     using System;
     using System.Collections.Specialized;
-    using System.IO;
     using System.Net;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Web;
     using System.Xml.Linq;
     using Hyperar.OAuthCore.Framework;
@@ -137,11 +138,11 @@ namespace Hyperar.OAuthCore.Consumer
             return this;
         }
 
-        public NameValueCollection ToBodyParameters()
+        public async Task<NameValueCollection> ToBodyParametersAsync()
         {
             try
             {
-                string encodedFormParameters = this.ToString();
+                string encodedFormParameters = await this.ToStringAsync();
 
                 this.ResponseBodyAction?.Invoke(encodedFormParameters);
 
@@ -160,45 +161,45 @@ namespace Hyperar.OAuthCore.Consumer
             }
         }
 
-        public byte[] ToBytes()
+        public async Task<byte[]> ToBytesAsync()
         {
-            return Convert.FromBase64String(this.ToString());
+            return Convert.FromBase64String(await this.ToStringAsync());
         }
 
-        public XDocument ToDocument()
+        public async Task<XDocument> ToXDocumentAsync()
         {
-            return XDocument.Parse(this.ToString());
+            return XDocument.Parse(await this.ToStringAsync());
         }
 
-        public override string ToString()
+        public async Task<string> ToStringAsync()
         {
             if (string.IsNullOrEmpty(this.ResponseBody))
             {
-                this.ResponseBody = this.ToWebResponse().ReadToEnd();
+                var responseMessage = await this.ToResponseMessageAsync();
+
+                this.ResponseBody = await responseMessage.Content
+                    .ReadAsStringAsync();
             }
 
             return this.ResponseBody;
         }
 
-        public virtual HttpWebRequest ToWebRequest()
+        public HttpRequestMessage ToRequestMessage()
         {
             RequestDescription description = this.GetRequestDescription();
 
             ArgumentNullException.ThrowIfNull(description.Url);
             ArgumentException.ThrowIfNullOrWhiteSpace(description.Method);
 
-            var request = (HttpWebRequest)WebRequest.Create(description.Url);
-            request.Method = description.Method;
-            request.UserAgent = this.ConsumerContext.UserAgent;
-
-            if (this.Timeout.HasValue)
-            {
-                request.Timeout = this.Timeout.Value;
-            }
+            var requestMessage = new HttpRequestMessage(
+                description.Method.ToHttpMethod(),
+                description.Url);
 
             if (!string.IsNullOrEmpty(this.AcceptsType))
             {
-                request.Accept = this.AcceptsType;
+                requestMessage.Headers.Accept.Add(
+                    MediaTypeWithQualityHeaderValue.Parse(
+                        this.AcceptsType));
             }
 
             try
@@ -207,7 +208,7 @@ namespace Hyperar.OAuthCore.Consumer
 
                 if (modifiedDateString != null)
                 {
-                    request.IfModifiedSince = DateTime.Parse(modifiedDateString);
+                    requestMessage.Headers.IfModifiedSince = DateTime.Parse(modifiedDateString);
                 }
             }
             catch (Exception ex)
@@ -215,47 +216,61 @@ namespace Hyperar.OAuthCore.Consumer
                 throw new ApplicationException("If-Modified-Since header could not be parsed as a datetime", ex);
             }
 
-            if (this.ProxyServerUri != null)
-            {
-                request.Proxy = new WebProxy(this.ProxyServerUri, false);
-            }
-
             if (description.Headers.Count > 0)
             {
                 foreach (string key in description.Headers)
                 {
-                    request.Headers[key] = description.Headers[key];
+                    requestMessage.Headers.Add(key, description.Headers[key]);
                 }
             }
 
             if (!string.IsNullOrEmpty(description.Body))
             {
-                request.ContentType = description.ContentType;
-
-                using (var writer = new StreamWriter(request.GetRequestStream()))
-                {
-                    writer.Write(description.Body);
-                }
+                requestMessage.Content = new StringContent(description.Body);
             }
             else if (description.RawBody != null && description.RawBody.Length > 0)
             {
-                request.ContentType = description.ContentType;
-
-                using (var writer = new BinaryWriter(request.GetRequestStream()))
-                {
-                    writer.Write(description.RawBody);
-                }
+                requestMessage.Content = new ByteArrayContent(description.RawBody);
             }
 
-            return request;
+            return requestMessage;
         }
 
-        public HttpWebResponse ToWebResponse()
+        protected virtual HttpClientHandler GetHttpClientHandler()
+        {
+            HttpClientHandler httpClientHandler = new HttpClientHandler();
+
+            if (this.ProxyServerUri != null)
+            {
+                httpClientHandler.Proxy = new WebProxy(this.ProxyServerUri, false);
+            }
+
+            return httpClientHandler;
+        }
+
+        private HttpClient GetHttpClient()
+        {
+            HttpClient httpClient = new HttpClient(
+                this.GetHttpClientHandler());
+
+            if (this.Timeout.HasValue)
+            {
+                httpClient.Timeout = new TimeSpan(0, 0, 0, 0, this.Timeout.Value);
+            }
+
+            return httpClient;
+        }
+
+        public async Task<HttpResponseMessage> ToResponseMessageAsync()
         {
             try
             {
-                HttpWebRequest request = this.ToWebRequest();
-                return (HttpWebResponse)request.GetResponse();
+                using (var httpClient = this.GetHttpClient())
+                {
+                    var requestMessage = this.ToRequestMessage();
+
+                    return await httpClient.SendAsync(requestMessage);
+                }
             }
             catch (WebException webEx)
             {
