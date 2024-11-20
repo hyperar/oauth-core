@@ -38,30 +38,30 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         [TestMethod]
         public void GetHeaderParameters_ReturnsAllParameters()
         {
-            List<QueryParameter> parameters =
+            List<QueryParameter>? parameters =
                 UriUtility.GetHeaderParameters("OAuth realm=\"http:\\\\somerealm.com\", oauth_consumer_key=\"consumerKey\"");
 
-            Assert.AreEqual(2, parameters.Count);
-            Assert.AreEqual("consumerKey", parameters.Single(p => p.Key == "oauth_consumer_key").Value);
-            Assert.AreEqual(@"http:\\somerealm.com", parameters.Single(p => p.Key == "realm").Value);
+            Assert.AreEqual(2, parameters?.Count);
+            Assert.AreEqual("consumerKey", parameters?.Single(p => p.Key == "oauth_consumer_key").Value);
+            Assert.AreEqual(@"http:\\somerealm.com", parameters?.Single(p => p.Key == "realm").Value);
         }
 
         [TestMethod]
         public void GetHeaderParametersWhenAuthorizationHeaderDoesNotContainOAuthReturnsEmptyCollection()
         {
-            List<QueryParameter> parameters =
+            List<QueryParameter>? parameters =
                 UriUtility.GetHeaderParameters("realm=\"http:\\somerealm.com\", oauth_consumer_key=\"\"");
 
-            Assert.AreEqual(0, parameters.Count);
+            Assert.AreEqual(0, parameters?.Count);
         }
 
         [TestMethod]
         public void GetHeaderParametersWhenKeysValueIsEmpty()
         {
-            List<QueryParameter> parameters =
+            List<QueryParameter>? parameters =
                 UriUtility.GetHeaderParameters("OAuth realm=\"http:\\somerealm.com\", oauth_consumer_key=\"\"");
 
-            Assert.AreEqual("", parameters.Single(p => p.Key == "oauth_consumer_key").Value);
+            Assert.AreEqual("", parameters?.Single(p => p.Key == "oauth_consumer_key").Value);
         }
 
         [TestMethod]
@@ -87,16 +87,16 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         {
             string signatureInHeader = "auth_signature=\"uZF3aYQFtyK0F1FFHY+w7/Be+m4=\"";
 
-            var paramter = UriUtility.ParseAuthorizationHeaderKeyValuePair(signatureInHeader);
+            QueryParameter parameter = UriUtility.ParseAuthorizationHeaderKeyValuePair(signatureInHeader);
 
-            Assert.AreEqual("auth_signature", paramter.Key);
-            Assert.AreEqual("uZF3aYQFtyK0F1FFHY w7/Be m4=", paramter.Value);
+            Assert.AreEqual("auth_signature", parameter.Key);
+            Assert.AreEqual("uZF3aYQFtyK0F1FFHY w7/Be m4=", parameter.Value);
         }
 
         [TestMethod]
         public void NormalizeRequestParameters_ReturnsParametersInOrdinalOrder()
         {
-            var parameters = new Dictionary<string, string> { { "ZIP", "123" }, { "CVV", "123" }, { "ccid", "123" } };
+            Dictionary<string, string> parameters = new Dictionary<string, string> { { "ZIP", "123" }, { "CVV", "123" }, { "ccid", "123" } };
 
             Assert.AreEqual("CVV=123&ZIP=123&ccid=123", UriUtility.NormalizeRequestParameters(parameters));
         }

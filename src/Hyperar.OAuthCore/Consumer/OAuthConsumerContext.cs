@@ -40,11 +40,11 @@ namespace Hyperar.OAuthCore.Consumer
             this.SignatureMethod = Framework.SignatureMethod.PlainText;
         }
 
-        public string ConsumerKey { get; set; }
+        public string? ConsumerKey { get; set; }
 
-        public string ConsumerSecret { get; set; }
+        public string? ConsumerSecret { get; set; }
 
-        public AsymmetricAlgorithm Key { get; set; }
+        public AsymmetricAlgorithm? Key { get; set; }
 
         public INonceGenerator NonceGenerator
         {
@@ -52,7 +52,7 @@ namespace Hyperar.OAuthCore.Consumer
             set { this._nonceGenerator = value; }
         }
 
-        public string Realm { get; set; }
+        public string? Realm { get; set; }
 
         public string SignatureMethod { get; set; }
 
@@ -64,7 +64,7 @@ namespace Hyperar.OAuthCore.Consumer
 
         public bool UseHeaderForOAuthParameters { get; set; }
 
-        public string UserAgent { get; set; }
+        public string? UserAgent { get; set; }
 
         public void SignContext(IOAuthContext context)
         {

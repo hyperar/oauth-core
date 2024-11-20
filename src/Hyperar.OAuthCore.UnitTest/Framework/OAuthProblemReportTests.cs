@@ -35,10 +35,10 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         [TestMethod]
         public void FormatMissingParameterReport()
         {
-            var report = new OAuthProblemReport
+            OAuthProblemReport report = new OAuthProblemReport
             {
                 Problem = OAuthProblems.ParameterAbsent,
-                ParametersAbsent = { Parameters.OAuth_Nonce }
+                ParametersAbsent = new List<string> { Parameters.OAuth_Nonce }
             };
 
             Assert.AreEqual("oauth_problem=parameter_absent&oauth_parameters_absent=oauth_nonce", report.ToString());
@@ -47,10 +47,10 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         [TestMethod]
         public void FormatRejectedParameterReport()
         {
-            var report = new OAuthProblemReport
+            OAuthProblemReport report = new OAuthProblemReport
             {
                 Problem = OAuthProblems.ParameterRejected,
-                ParametersRejected = { Parameters.OAuth_Timestamp }
+                ParametersRejected = new List<string> { Parameters.OAuth_Timestamp }
             };
 
             Assert.AreEqual("oauth_problem=parameter_rejected&oauth_parameters_rejected=oauth_timestamp",
@@ -60,7 +60,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         [TestMethod]
         public void FormatReportWithAdvice()
         {
-            var report = new OAuthProblemReport
+            OAuthProblemReport report = new OAuthProblemReport
             {
                 Problem = OAuthProblems.ConsumerKeyRefused,
                 ProblemAdvice = "The supplied consumer key has been black-listed due to complaints."
@@ -74,7 +74,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         [TestMethod]
         public void FormatTimestampRangeReport()
         {
-            var report = new OAuthProblemReport
+            OAuthProblemReport report = new OAuthProblemReport
             {
                 Problem = OAuthProblems.TimestampRefused,
                 AcceptableTimeStampsFrom = new DateTime(2008, 1, 1),
@@ -88,7 +88,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         [TestMethod]
         public void FormatVersionRangeReport()
         {
-            var report = new OAuthProblemReport
+            OAuthProblemReport report = new OAuthProblemReport
             {
                 Problem = OAuthProblems.VersionRejected,
                 AcceptableVersionFrom = "1.0",
@@ -103,10 +103,10 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         {
             string formatted = "oauth_problem=parameter_absent&oauth_parameters_absent=oauth_nonce";
 
-            var report = new OAuthProblemReport(formatted);
+            OAuthProblemReport report = new OAuthProblemReport(formatted);
 
             Assert.AreEqual(OAuthProblems.ParameterAbsent, report.Problem);
-            Assert.IsTrue(report.ParametersAbsent.Contains(Parameters.OAuth_Nonce));
+            Assert.IsTrue(report.ParametersAbsent?.Contains(Parameters.OAuth_Nonce));
         }
 
         [TestMethod]
@@ -114,10 +114,10 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         {
             string formatted = "oauth_problem=parameter_rejected&oauth_parameters_rejected=oauth_timestamp";
 
-            var report = new OAuthProblemReport(formatted);
+            OAuthProblemReport report = new OAuthProblemReport(formatted);
 
             Assert.AreEqual(OAuthProblems.ParameterRejected, report.Problem);
-            Assert.IsTrue(report.ParametersRejected.Contains(Parameters.OAuth_Timestamp));
+            Assert.IsTrue(report.ParametersRejected?.Contains(Parameters.OAuth_Timestamp));
         }
 
         [TestMethod]
@@ -126,7 +126,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
             string formatted =
                 "oauth_problem=consumer_key_refused&oauth_problem_advice=The%20supplied%20consumer%20key%20has%20been%20black-listed%20due%20to%20complaints.";
 
-            var report = new OAuthProblemReport(formatted);
+            OAuthProblemReport report = new OAuthProblemReport(formatted);
 
             Assert.AreEqual(report.Problem, OAuthProblems.ConsumerKeyRefused);
             Assert.AreEqual("The supplied consumer key has been black-listed due to complaints.", report.ProblemAdvice);
@@ -137,7 +137,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         {
             string formatted = "oauth_problem=timestamp_refused&oauth_acceptable_timestamps=1199142000-1230764400";
 
-            var report = new OAuthProblemReport(formatted);
+            OAuthProblemReport report = new OAuthProblemReport(formatted);
 
             Assert.AreEqual(OAuthProblems.TimestampRefused, report.Problem);
             Assert.AreEqual(new DateTime(2008, 1, 1), report.AcceptableTimeStampsFrom);
@@ -149,7 +149,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         {
             string formatted = "oauth_problem=version_rejected&oauth_acceptable_versions=1.0-2.0";
 
-            var report = new OAuthProblemReport(formatted);
+            OAuthProblemReport report = new OAuthProblemReport(formatted);
 
             Assert.AreEqual(OAuthProblems.VersionRejected, report.Problem);
             Assert.AreEqual("1.0", report.AcceptableVersionFrom);

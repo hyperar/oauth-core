@@ -31,7 +31,9 @@ namespace Hyperar.OAuthCore.Framework
     {
         public static Exception AccessDeniedToProtectedResource(AccessOutcome outcome)
         {
-            Uri uri = outcome.Context.GenerateUri();
+            Uri? uri = outcome.Context?.GenerateUri();
+
+            ArgumentNullException.ThrowIfNull(uri);
 
             if (string.IsNullOrEmpty(outcome.AdditionalInfo))
             {
@@ -105,7 +107,7 @@ namespace Hyperar.OAuthCore.Framework
                     argumentException);
         }
 
-        public static Exception FailedToParseResponse(string parameters)
+        public static Exception FailedToParseResponse(string? parameters)
         {
             return new Exception(string.Format("Failed to parse response string \"{0}\"", parameters));
         }
@@ -139,10 +141,10 @@ namespace Hyperar.OAuthCore.Framework
 
         public static Exception MissingRequiredOAuthParameter(IOAuthContext context, string parameterName)
         {
-            var exception = new OAuthException(context, OAuthProblems.ParameterAbsent,
+            OAuthException exception = new OAuthException(context, OAuthProblems.ParameterAbsent,
                                                string.Format("Missing required parameter : {0}", parameterName));
 
-            exception.Report.ParametersAbsent.Add(parameterName);
+            exception.Report?.ParametersAbsent?.Add(parameterName);
 
             return exception;
         }
@@ -167,7 +169,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             if (innerException.Response is HttpWebResponse response)
             {
-                using (var reader = new StreamReader(innerException.Response.GetResponseStream()))
+                using (StreamReader reader = new StreamReader(innerException.Response.GetResponseStream()))
                 {
                     string body = reader.ReadToEnd();
 

@@ -44,7 +44,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// <param name="consumerContext">The consumer context.</param>
         /// <param name="token">The token.</param>
         /// <returns></returns>
-        public IConsumerRequest CreateConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token)
+        public IConsumerRequest CreateConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken? token)
         {
             return new ClientCertEnabledConsumerRequest(this._certificateFactory, context, consumerContext, token);
         }

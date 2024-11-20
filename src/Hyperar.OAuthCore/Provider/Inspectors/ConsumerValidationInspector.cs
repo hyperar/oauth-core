@@ -32,10 +32,7 @@ namespace Hyperar.OAuthCore.Provider.Inspectors
 
         public ConsumerValidationInspector(IConsumerStore consumerStore)
         {
-            if (consumerStore == null)
-            {
-                throw new ArgumentNullException("consumerStore");
-            }
+            ArgumentNullException.ThrowIfNull(consumerStore);
 
             this._consumerStore = consumerStore;
         }

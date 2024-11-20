@@ -59,7 +59,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// Creates the certificate.
         /// </summary>
         /// <returns></returns>
-        public X509Certificate2 CreateCertificate()
+        public X509Certificate2? CreateCertificate()
         {
             if (!File.Exists(this._filename))
             {
@@ -68,7 +68,7 @@ namespace Hyperar.OAuthCore.Consumer
 
             try
             {
-                var certificate = new X509Certificate2(this._filename, this._password);
+                X509Certificate2 certificate = new X509Certificate2(this._filename, this._password);
                 Debug.Assert(certificate.Subject != string.Empty);
                 return certificate;
             }

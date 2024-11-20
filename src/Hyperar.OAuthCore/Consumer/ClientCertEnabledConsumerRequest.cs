@@ -22,7 +22,6 @@
 
 namespace Hyperar.OAuthCore.Consumer
 {
-    using System.Net;
     using System.Security.Cryptography.X509Certificates;
     using Hyperar.OAuthCore.Framework;
 
@@ -37,29 +36,28 @@ namespace Hyperar.OAuthCore.Consumer
         /// <param name="context">The context.</param>
         /// <param name="consumerContext">The consumer context.</param>
         /// <param name="token">The token.</param>
-        public ClientCertEnabledConsumerRequest(ICertificateFactory certificateFactory, IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token)
+        public ClientCertEnabledConsumerRequest(
+            ICertificateFactory certificateFactory,
+            IOAuthContext context,
+            IOAuthConsumerContext consumerContext,
+            IToken? token)
             : base(context, consumerContext, token)
         {
             this._certificateFactory = certificateFactory;
         }
 
-        /// <summary>
-        /// Converts the current ConsumerRequest to an HttpWebRequest
-        /// </summary>
-        /// <returns>Return an HttpWebRequest with a client certificate attached.</returns>
-        public override HttpWebRequest ToWebRequest()
+        protected override HttpClientHandler GetHttpClientHandler()
         {
-            HttpWebRequest webReqeust = base.ToWebRequest();
+            HttpClientHandler httpClientHandler = base.GetHttpClientHandler();
 
-            X509Certificate2 certificate = this._certificateFactory.CreateCertificate();
+            X509Certificate2? certificate = this._certificateFactory.CreateCertificate();
 
-            // Attach the certificate to the HttpWebRequest
             if (certificate != null)
             {
-                webReqeust.ClientCertificates.Add(certificate);
+                _ = httpClientHandler.ClientCertificates.Add(certificate);
             }
 
-            return webReqeust;
+            return httpClientHandler;
         }
     }
 }

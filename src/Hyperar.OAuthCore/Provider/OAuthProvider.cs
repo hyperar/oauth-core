@@ -38,10 +38,7 @@ namespace Hyperar.OAuthCore.Provider
         {
             this.RequiresCallbackUrlInRequest = true;
 
-            if (tokenStore == null)
-            {
-                throw new ArgumentNullException("tokenStore");
-            }
+            ArgumentNullException.ThrowIfNull(tokenStore);
 
             this._tokenStore = tokenStore;
 
@@ -72,7 +69,7 @@ namespace Hyperar.OAuthCore.Provider
             return this._tokenStore.CreateAccessToken(context);
         }
 
-        public virtual IToken ExchangeRequestTokenForAccessToken(IOAuthContext context)
+        public virtual IToken? ExchangeRequestTokenForAccessToken(IOAuthContext context)
         {
             this.InspectRequest(ProviderPhase.ExchangeRequestTokenForAccessToken, context);
 
@@ -94,7 +91,7 @@ namespace Hyperar.OAuthCore.Provider
 
         public virtual IToken GrantRequestToken(IOAuthContext context)
         {
-            this.AssertContextDoesNotIncludeToken(context);
+            AssertContextDoesNotIncludeToken(context);
 
             this.InspectRequest(ProviderPhase.GrantRequestToken, context);
 
@@ -129,12 +126,13 @@ namespace Hyperar.OAuthCore.Provider
         {
             if (phase == ProviderPhase.ExchangeRequestTokenForAccessToken)
             {
-                string secret = this._tokenStore.GetRequestTokenSecret(context);
+                string? secret = this._tokenStore.GetRequestTokenSecret(context);
+
                 context.TokenSecret = secret;
             }
             else if (phase is ProviderPhase.AccessProtectedResourceRequest or ProviderPhase.RenewAccessToken)
             {
-                string secret = this._tokenStore.GetAccessTokenSecret(context);
+                string? secret = this._tokenStore.GetAccessTokenSecret(context);
 
                 context.TokenSecret = secret;
             }
@@ -148,7 +146,7 @@ namespace Hyperar.OAuthCore.Provider
             }
         }
 
-        private void AssertContextDoesNotIncludeToken(IOAuthContext context)
+        private static void AssertContextDoesNotIncludeToken(IOAuthContext context)
         {
             if (context.Token != null)
             {

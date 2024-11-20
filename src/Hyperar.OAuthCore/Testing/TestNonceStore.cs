@@ -37,9 +37,13 @@ namespace Hyperar.OAuthCore.Testing
     {
         private readonly Dictionary<string, List<string>> _nonces = new Dictionary<string, List<string>>();
 
-        public bool RecordNonceAndCheckIsUnique(IConsumer consumer, string nonce)
+        public bool RecordNonceAndCheckIsUnique(IConsumer consumer, string? nonce)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(nonce);
+            ArgumentException.ThrowIfNullOrWhiteSpace(consumer.ConsumerKey);
+
             List<string> list = this.GetNonceListForConsumer(consumer.ConsumerKey);
+
             lock (list)
             {
                 if (list.Contains(nonce))
@@ -54,9 +58,9 @@ namespace Hyperar.OAuthCore.Testing
 
         private List<string> GetNonceListForConsumer(string consumerKey)
         {
-            var list = new List<string>();
+            _ = new List<string>();
 
-            if (!this._nonces.TryGetValue(consumerKey, out list))
+            if (!this._nonces.TryGetValue(consumerKey, out List<string>? list))
             {
                 lock (this._nonces)
                 {

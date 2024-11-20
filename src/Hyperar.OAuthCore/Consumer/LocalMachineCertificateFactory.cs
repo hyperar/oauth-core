@@ -22,7 +22,6 @@
 
 namespace Hyperar.OAuthCore.Consumer
 {
-    using System;
     using System.Net;
     using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
@@ -46,14 +45,14 @@ namespace Hyperar.OAuthCore.Consumer
             this._certificateSubject = certificateSubject;
             this._findType = findType;
 
-            ServicePointManager.ServerCertificateValidationCallback = this.RemoteCertificateValidationCallback;
+            ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
         }
 
         /// <summary>
         /// Creates the certificate.
         /// </summary>
         /// <returns></returns>
-        public X509Certificate2 CreateCertificate()
+        public X509Certificate2? CreateCertificate()
         {
             X509Certificate2Collection certificateCollection = this.GetCertificateCollection();
             return certificateCollection.Count > 0 ? certificateCollection[0] : null;
@@ -76,7 +75,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// <param name="chain">The chain.</param>
         /// <param name="sslPolicyErrors">The SSL policy errors.</param>
         /// <returns></returns>
-        public bool RemoteCertificateValidationCallback(Object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        public static bool RemoteCertificateValidationCallback(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
@@ -87,7 +86,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// <returns></returns>
         private X509Certificate2Collection GetCertificateCollection()
         {
-            var certStore = new X509Store("My", StoreLocation.LocalMachine);
+            X509Store certStore = new X509Store("My", StoreLocation.LocalMachine);
             certStore.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
             X509Certificate2Collection certificateCollection = certStore.Certificates.Find(this._findType, this._certificateSubject, false);
             certStore.Close();

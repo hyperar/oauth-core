@@ -24,10 +24,10 @@ namespace Hyperar.OAuthCore.Framework
 {
     public interface IToken : IConsumer
     {
-        string SessionHandle { get; set; }
+        string? SessionHandle { get; set; }
 
-        string Token { get; set; }
+        string? Token { get; set; }
 
-        string TokenSecret { get; set; }
+        string? TokenSecret { get; set; }
     }
 }

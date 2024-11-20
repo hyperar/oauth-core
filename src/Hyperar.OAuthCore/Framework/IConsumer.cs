@@ -24,8 +24,8 @@ namespace Hyperar.OAuthCore.Framework
 {
     public interface IConsumer
     {
-        string ConsumerKey { get; set; }
+        string? ConsumerKey { get; set; }
 
-        string Realm { get; set; }
+        string? Realm { get; set; }
     }
 }

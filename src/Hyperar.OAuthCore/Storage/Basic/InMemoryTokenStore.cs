@@ -34,15 +34,9 @@ namespace Hyperar.OAuthCore.Storage.Basic
 
         public SimpleTokenStore(ITokenRepository<AccessToken> accessTokenRepository, ITokenRepository<RequestToken> requestTokenRepository)
         {
-            if (accessTokenRepository == null)
-            {
-                throw new ArgumentNullException("accessTokenRepository");
-            }
+            ArgumentNullException.ThrowIfNull(accessTokenRepository);
 
-            if (requestTokenRepository == null)
-            {
-                throw new ArgumentNullException("requestTokenRepository");
-            }
+            ArgumentNullException.ThrowIfNull(requestTokenRepository);
 
             this._accessTokenRepository = accessTokenRepository;
             this._requestTokenRepository = requestTokenRepository;
@@ -60,10 +54,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
 
         public void ConsumeRequestToken(IOAuthContext requestContext)
         {
-            if (requestContext == null)
-            {
-                throw new ArgumentNullException("requestContext");
-            }
+            ArgumentNullException.ThrowIfNull(requestContext);
 
             RequestToken requestToken = this.GetRequestToken(requestContext);
 
@@ -79,12 +70,9 @@ namespace Hyperar.OAuthCore.Storage.Basic
         /// <returns></returns>
         public IToken CreateAccessToken(IOAuthContext context)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException("context");
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
-            var accessToken = new AccessToken
+            AccessToken accessToken = new AccessToken
             {
                 ConsumerKey = context.ConsumerKey,
                 ExpiryDate = DateTime.UtcNow.AddDays(20),
@@ -101,12 +89,9 @@ namespace Hyperar.OAuthCore.Storage.Basic
 
         public IToken CreateRequestToken(IOAuthContext context)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException("context");
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
-            var token = new RequestToken
+            RequestToken token = new RequestToken
             {
                 ConsumerKey = context.ConsumerKey,
                 Realm = context.Realm,
@@ -120,26 +105,27 @@ namespace Hyperar.OAuthCore.Storage.Basic
             return token;
         }
 
-        public IToken GetAccessTokenAssociatedWithRequestToken(IOAuthContext requestContext)
+        public IToken? GetAccessTokenAssociatedWithRequestToken(IOAuthContext requestContext)
         {
             RequestToken requestToken = this.GetRequestToken(requestContext);
+
             return requestToken.AccessToken;
         }
 
-        public string GetAccessTokenSecret(IOAuthContext context)
+        public string? GetAccessTokenSecret(IOAuthContext context)
         {
             AccessToken token = this.GetAccessToken(context);
 
             return token.TokenSecret;
         }
 
-        public string GetCallbackUrlForToken(IOAuthContext requestContext)
+        public string? GetCallbackUrlForToken(IOAuthContext requestContext)
         {
             RequestToken requestToken = this.GetRequestToken(requestContext);
             return requestToken.CallbackUrl;
         }
 
-        public string GetRequestTokenSecret(IOAuthContext context)
+        public string? GetRequestTokenSecret(IOAuthContext context)
         {
             RequestToken requestToken = this.GetRequestToken(context);
 
@@ -163,9 +149,10 @@ namespace Hyperar.OAuthCore.Storage.Basic
             return RequestForAccessStatus.Granted;
         }
 
-        public IToken GetToken(IOAuthContext context)
+        public IToken? GetToken(IOAuthContext context)
         {
-            var token = (IToken)null;
+            IToken? token = null;
+
             if (!string.IsNullOrEmpty(context.Token))
             {
                 try
@@ -179,10 +166,11 @@ namespace Hyperar.OAuthCore.Storage.Basic
                     throw Error.UnknownToken(context, context.Token, ex);
                 }
             }
+
             return token;
         }
 
-        public string GetVerificationCodeForRequestToken(IOAuthContext requestContext)
+        public string? GetVerificationCodeForRequestToken(IOAuthContext requestContext)
         {
             RequestToken requestToken = this.GetRequestToken(requestContext);
 
@@ -214,7 +202,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
             catch (Exception exception)
             {
                 // TODO: log exception
-                throw Error.UnknownToken(context, context.Token, exception);
+                throw Error.UnknownToken(context, context.Token ?? string.Empty, exception);
             }
         }
 
@@ -227,7 +215,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
             catch (Exception exception)
             {
                 // TODO: log exception
-                throw Error.UnknownToken(context, context.Token, exception);
+                throw Error.UnknownToken(context, context.Token ?? string.Empty, exception);
             }
         }
     }

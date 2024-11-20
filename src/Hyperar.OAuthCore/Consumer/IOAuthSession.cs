@@ -28,21 +28,21 @@ namespace Hyperar.OAuthCore.Consumer
 
     public interface IOAuthSession
     {
-        IToken AccessToken { get; set; }
+        IToken? AccessToken { get; set; }
 
-        Uri AccessTokenUri { get; set; }
+        Uri? AccessTokenUri { get; set; }
 
-        Uri CallbackUri { get; set; }
+        Uri? CallbackUri { get; set; }
 
         IOAuthConsumerContext ConsumerContext { get; set; }
 
-        Uri ProxyServerUri { get; set; }
+        Uri? ProxyServerUri { get; set; }
 
-        Uri RequestTokenUri { get; set; }
+        Uri? RequestTokenUri { get; set; }
 
-        Action<string> ResponseBodyAction { get; set; }
+        Action<string>? ResponseBodyAction { get; set; }
 
-        Uri UserAuthorizeUri { get; set; }
+        Uri? UserAuthorizeUri { get; set; }
 
         IConsumerRequest BuildAccessTokenContext(string method, string xAuthMode, string xAuthUsername, string xAuthPassword);
 

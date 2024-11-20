@@ -24,23 +24,22 @@ namespace Hyperar.OAuthCore.Consumer
 {
     using System;
     using System.Collections.Specialized;
-    using System.Net;
     using System.Xml.Linq;
     using Hyperar.OAuthCore.Framework;
 
     public interface IConsumerRequest
     {
-        string AcceptsType { get; set; }
+        string? AcceptsType { get; set; }
 
         IOAuthConsumerContext ConsumerContext { get; }
 
         IOAuthContext Context { get; }
 
-        Uri ProxyServerUri { get; set; }
+        Uri? ProxyServerUri { get; set; }
 
-        string RequestBody { get; set; }
+        string? RequestBody { get; set; }
 
-        Action<string> ResponseBodyAction { get; set; }
+        Action<string>? ResponseBodyAction { get; set; }
 
         int? Timeout { get; set; }
 
@@ -52,14 +51,16 @@ namespace Hyperar.OAuthCore.Consumer
 
         IConsumerRequest SignWithToken(IToken token);
 
-        NameValueCollection ToBodyParameters();
+        Task<NameValueCollection> ToBodyParametersAsync();
 
-        byte[] ToBytes();
+        Task<byte[]> ToBytesAsync();
 
-        XDocument ToDocument();
+        Task<string> ToStringAsync();
 
-        HttpWebRequest ToWebRequest();
+        Task<XDocument> ToXDocumentAsync();
 
-        HttpWebResponse ToWebResponse();
+        HttpRequestMessage ToRequestMessage();
+
+        Task<HttpResponseMessage> ToResponseMessageAsync();
     }
 }

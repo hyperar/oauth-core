@@ -36,7 +36,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
         [TestMethod]
         public void CreateSessionUsingContextOnlyConstructorDoesNotThrow()
         {
-            var session = new OAuthSession(new OAuthConsumerContext());
+            OAuthSession session = new OAuthSession(new OAuthConsumerContext());
 
             Assert.IsNotNull(session);
         }
@@ -44,10 +44,10 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
         [TestMethod]
         public void GenerateRequestWithRawBodyIncludesBodyHash()
         {
-            var session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer", UseHeaderForOAuthParameters = true }, "http://localhost/request", "http://localhost/userauth",
+            OAuthSession session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer", UseHeaderForOAuthParameters = true }, "http://localhost/request", "http://localhost/userauth",
                                            "http://localhost/access");
 
-            var accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
+            TokenBase accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
 
             byte[] rawContents = Encoding.UTF8.GetBytes("Hello World!");
 
@@ -62,40 +62,40 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
 
             Assert.AreEqual(rawContents, description.RawBody);
 
-            Assert.IsTrue(description.Headers[Parameters.OAuth_Authorization_Header].Contains("oauth_body_hash=\"Lve95gjOVATpfV8EL5X4nxwjKHE%3D\""));
+            Assert.IsTrue(description.Headers[Parameters.OAuth_Authorization_Header]?.Contains("oauth_body_hash=\"Lve95gjOVATpfV8EL5X4nxwjKHE%3D\""));
         }
 
         [TestMethod]
         public void GetRequestTokenForConsumerWithCallbackUrl()
         {
-            var consumerContext = new OAuthConsumerContext { ConsumerKey = "key" };
+            OAuthConsumerContext consumerContext = new OAuthConsumerContext { ConsumerKey = "key" };
 
-            var session = new OAuthSession(consumerContext, "http://localhost/request",
+            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/request",
                                            "http://localhost/userauth", "http://localhost/access", "http://localhost/callback");
 
             RequestDescription description = session.BuildRequestTokenContext("POST").GetRequestDescription();
 
-            Assert.IsTrue(description.Body.Contains("oauth_callback=http%3A%2F%2Flocalhost%2Fcallback"));
+            Assert.IsTrue(description.Body?.Contains("oauth_callback=http%3A%2F%2Flocalhost%2Fcallback"));
         }
 
         [TestMethod]
         public void GetRequestTokenForConsumerWithoutCallbackUrl()
         {
-            var consumerContext = new OAuthConsumerContext { ConsumerKey = "key" };
+            OAuthConsumerContext consumerContext = new OAuthConsumerContext { ConsumerKey = "key" };
 
-            var session = new OAuthSession(consumerContext, "http://localhost/request", "http://localhost/userauth", "http://localhost/access");
+            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/request", "http://localhost/userauth", "http://localhost/access");
 
             RequestDescription description = session.BuildRequestTokenContext("POST").GetRequestDescription();
 
-            Assert.IsTrue(description.Body.Contains("oauth_callback=oob"));
+            Assert.IsTrue(description.Body?.Contains("oauth_callback=oob"));
         }
 
         [TestMethod]
         public void GetRequestTokenForMethodGetDoesNotPopulateBody()
         {
-            var consumerContext = new OAuthConsumerContext { ConsumerKey = "key" };
+            OAuthConsumerContext consumerContext = new OAuthConsumerContext { ConsumerKey = "key" };
 
-            var session = new OAuthSession(consumerContext, "http://localhost/request",
+            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/request",
                                            "http://localhost/userauth", "http://localhost/access");
 
             RequestDescription description = session.BuildRequestTokenContext("GET").GetRequestDescription();
@@ -108,7 +108,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
         [TestMethod]
         public void GetUserAuthorizationUriForTokenWithCallback()
         {
-            var session = new OAuthSession(new OAuthConsumerContext(), "http://localhost/request",
+            OAuthSession session = new OAuthSession(new OAuthConsumerContext(), "http://localhost/request",
                                            "http://localhost/userauth", "http://localhost/access");
             string actual = session.GetUserAuthorizationUrlForToken(new TokenBase { Token = "token" },
                                                                     "http://localhost/callback");
@@ -119,7 +119,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
         [TestMethod]
         public void GetUserAuthorizationUriForTokenWithoutCallback()
         {
-            var session = new OAuthSession(new OAuthConsumerContext(), "http://localhost/request",
+            OAuthSession session = new OAuthSession(new OAuthConsumerContext(), "http://localhost/request",
                                            "http://localhost/userauth", "http://localhost/access");
             string actual = session.GetUserAuthorizationUrlForToken(new TokenBase { Token = "token" }, null);
             Assert.AreEqual("http://localhost/userauth?oauth_token=token", actual);
@@ -128,10 +128,10 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
         [TestMethod]
         public void TokenSecretNotIncludedInAuthorizationHeaderForPostRequestWithUseAuthorizationHeaders()
         {
-            var session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer", UseHeaderForOAuthParameters = true }, "http://localhost/request",
+            OAuthSession session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer", UseHeaderForOAuthParameters = true }, "http://localhost/request",
                                            "http://localhost/userauth", "http://localhost/access");
 
-            var accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
+            TokenBase accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
 
             RequestDescription description = session
                 .Request(accessToken)
@@ -140,16 +140,16 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
                 .SignWithToken()
                 .GetRequestDescription();
 
-            Assert.IsFalse(description.Headers["Authorization"].Contains(Parameters.OAuth_Token_Secret));
+            Assert.IsFalse(description.Headers["Authorization"]?.Contains(Parameters.OAuth_Token_Secret));
         }
 
         [TestMethod]
         public void TokenSecretNotIncludedInBodyParametersForPostRequest()
         {
-            var session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer" }, "http://localhost/request",
+            OAuthSession session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer" }, "http://localhost/request",
                                            "http://localhost/userauth", "http://localhost/access");
 
-            var accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
+            TokenBase accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
 
             RequestDescription description = session
                 .Request(accessToken)
@@ -158,16 +158,16 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
                 .SignWithToken()
                 .GetRequestDescription();
 
-            Assert.IsFalse(description.Body.Contains(Parameters.OAuth_Token_Secret));
+            Assert.IsFalse(description.Body?.Contains(Parameters.OAuth_Token_Secret));
         }
 
         [TestMethod]
         public void TokenSecretNotIncludedInQueryParametersForGetRequest()
         {
-            var session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer" }, "http://localhost/request",
+            OAuthSession session = new OAuthSession(new OAuthConsumerContext { ConsumerKey = "consumer" }, "http://localhost/request",
                                            "http://localhost/userauth", "http://localhost/access");
 
-            var accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
+            TokenBase accessToken = new TokenBase { ConsumerKey = "consumer", Token = "token", TokenSecret = "secret" };
 
             RequestDescription description = session
                 .Request(accessToken)
@@ -176,7 +176,7 @@ namespace Hyperar.OAuthCore.UnitTest.Consumer
                 .SignWithToken()
                 .GetRequestDescription();
 
-            Assert.IsFalse(description.Url.ToString().Contains(Parameters.OAuth_Token_Secret));
+            Assert.IsFalse(description.Url?.ToString().Contains(Parameters.OAuth_Token_Secret));
         }
     }
 }

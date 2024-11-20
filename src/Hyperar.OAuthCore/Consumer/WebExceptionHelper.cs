@@ -37,28 +37,31 @@ namespace Hyperar.OAuthCore.Consumer
         /// <param name="webEx"></param>
         /// <param name="authException"></param>
         /// <returns><c>true</c>, if the authException should be throw, <c>false</c> if the original web exception should be thrown</returns>
-        public static bool TryWrapException(IOAuthContext requestContext, WebException webEx, out OAuthException authException, Action<string> responseBodyAction)
+        public static bool TryWrapException(
+            IOAuthContext requestContext,
+            WebException webEx,
+            out OAuthException authException,
+            Action<string>? responseBodyAction)
         {
-            try
-            {
-                string content = webEx.Response.ReadToEnd();
+            string content = webEx.Response?.ReadToEnd() ?? string.Empty;
 
-                if (responseBodyAction != null)
-                {
-                    responseBodyAction(content);
-                }
+            responseBodyAction?.Invoke(content);
 
-                if (content.Contains(Parameters.OAuth_Problem))
-                {
-                    var report = new OAuthProblemReport(content);
-                    authException = new OAuthException(report.ProblemAdvice ?? report.Problem, webEx) { Context = requestContext, Report = report };
-                    return true;
-                }
-            }
-            catch
+            if (content.Contains(Parameters.OAuth_Problem))
             {
+                OAuthProblemReport report = new OAuthProblemReport(content);
+
+                authException = new OAuthException(report.ProblemAdvice ?? report.Problem ?? string.Empty, webEx)
+                {
+                    Context = requestContext,
+                    Report = report
+                };
+
+                return true;
             }
+
             authException = new OAuthException();
+
             return false;
         }
     }

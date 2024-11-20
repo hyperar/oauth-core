@@ -27,11 +27,11 @@ namespace Hyperar.OAuthCore.Framework
 
     public interface IOAuthContext : IToken
     {
-        NameValueCollection AuthorizationHeaderParameters { get; set; }
+        NameValueCollection? AuthorizationHeaderParameters { get; set; }
 
-        string BodyHash { get; set; }
+        string? BodyHash { get; set; }
 
-        string CallbackUrl { get; set; }
+        string? CallbackUrl { get; set; }
 
         NameValueCollection Cookies { get; set; }
 
@@ -41,37 +41,37 @@ namespace Hyperar.OAuthCore.Framework
 
         bool IncludeOAuthRequestBodyHashInSignature { get; set; }
 
-        string Nonce { get; set; }
+        string? Nonce { get; set; }
 
-        string NormalizedRequestUrl { get; }
+        string? NormalizedRequestUrl { get; }
 
         NameValueCollection QueryParameters { get; set; }
 
-        byte[] RawContent { get; set; }
+        byte[]? RawContent { get; set; }
 
-        string RawContentType { get; set; }
+        string? RawContentType { get; set; }
 
-        Uri RawUri { get; set; }
+        Uri? RawUri { get; set; }
 
-        string RequestMethod { get; set; }
+        string? RequestMethod { get; set; }
 
-        string Signature { get; set; }
+        string? Signature { get; set; }
 
-        string SignatureMethod { get; set; }
+        string? SignatureMethod { get; set; }
 
-        string Timestamp { get; set; }
+        string? Timestamp { get; set; }
 
         bool UseAuthorizationHeader { get; set; }
 
-        string Verifier { get; set; }
+        string? Verifier { get; set; }
 
-        string Version { get; set; }
+        string? Version { get; set; }
 
-        string XAuthMode { get; set; }
+        string? XAuthMode { get; set; }
 
-        string XAuthPassword { get; set; }
+        string? XAuthPassword { get; set; }
 
-        string XAuthUsername { get; set; }
+        string? XAuthUsername { get; set; }
 
         void GenerateAndSetBodyHash();
 
@@ -87,6 +87,6 @@ namespace Hyperar.OAuthCore.Framework
 
         string GenerateUrl();
 
-        string ToString();
+        string? ToString();
     }
 }

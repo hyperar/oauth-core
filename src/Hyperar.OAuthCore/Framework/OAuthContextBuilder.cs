@@ -36,7 +36,7 @@ namespace Hyperar.OAuthCore.Framework
 
         private readonly Func<Uri, Uri> _uriAdjuster;
 
-        public OAuthContextBuilder(Func<Uri, Uri> uriAdjuster)
+        public OAuthContextBuilder(Func<Uri, Uri>? uriAdjuster)
         {
             this._uriAdjuster = uriAdjuster ?? this._emptyUriAdjuster;
         }
@@ -53,7 +53,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public virtual IOAuthContext FromHttpRequest(HttpWebRequest request)
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 RawUri = this.CleanUri(request.RequestUri),
                 Cookies = this.CollectCookies(request),
@@ -62,13 +62,13 @@ namespace Hyperar.OAuthCore.Framework
 
                 // TODO: Find out where the hell the form data is.
                 //FormEncodedParameters = GetCleanedNameValueCollection(request.Form),
-                QueryParameters = this.GetCleanedNameValueCollection(this.GetQueryNameValueCollectionFromUri(request.RequestUri)),
+                QueryParameters = this.GetCleanedNameValueCollection(GetQueryNameValueCollectionFromUri(request.RequestUri)),
             };
 
             if (request.GetRequestStream().Length > 0)
             {
                 context.RawContent = new byte[request.GetRequestStream().Length];
-                request.GetRequestStream().Read(context.RawContent, 0, context.RawContent.Length);
+                _ = request.GetRequestStream().Read(context.RawContent, 0, context.RawContent.Length);
                 request.GetRequestStream().Position = 0;
             }
 
@@ -81,15 +81,9 @@ namespace Hyperar.OAuthCore.Framework
         {
             uri = this.CleanUri(uri);
 
-            if (httpMethod == null)
-            {
-                throw new ArgumentNullException(nameof(httpMethod));
-            }
+            ArgumentNullException.ThrowIfNull(httpMethod);
 
-            if (uri == null)
-            {
-                throw new ArgumentNullException(nameof(uri));
-            }
+            ArgumentNullException.ThrowIfNull(uri);
 
             return new OAuthContext
             {
@@ -105,9 +99,7 @@ namespace Hyperar.OAuthCore.Framework
                 throw new ArgumentNullException(nameof(url));
             }
 
-            Uri uri;
-
-            if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out uri))
+            if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri? uri))
             {
                 throw new ArgumentException(string.Format("Failed to parse url: {0} into a valid Uri instance", url));
             }
@@ -117,7 +109,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public virtual IOAuthContext FromWebRequest(HttpWebRequest request, Stream rawBody)
         {
-            using (var reader = new StreamReader(rawBody))
+            using (StreamReader reader = new StreamReader(rawBody))
             {
                 return this.FromWebRequest(request, reader.ReadToEnd());
             }
@@ -125,7 +117,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public virtual IOAuthContext FromWebRequest(HttpWebRequest request, string body)
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 RawUri = this.CleanUri(request.RequestUri),
                 Cookies = this.CollectCookies(request),
@@ -135,7 +127,7 @@ namespace Hyperar.OAuthCore.Framework
 
             string contentType = request.Headers[HttpRequestHeader.ContentType] ?? string.Empty;
 
-            if (contentType.ToLower().Contains("application/x-www-form-urlencoded"))
+            if (contentType.Contains("application/x-www-form-urlencoded", StringComparison.CurrentCultureIgnoreCase))
             {
                 context.FormEncodedParameters = HttpUtility.ParseQueryString(body);
             }
@@ -147,7 +139,7 @@ namespace Hyperar.OAuthCore.Framework
 
         protected virtual Uri CleanUri(Uri uri)
         {
-            var adjustedUri = this._uriAdjuster(uri);
+            Uri adjustedUri = this._uriAdjuster(uri);
             return RemoveEmptyQueryStringParameterIntroducedBySomeOpenSocialPlatformImplementations(adjustedUri);
         }
 
@@ -163,7 +155,7 @@ namespace Hyperar.OAuthCore.Framework
 
         protected virtual NameValueCollection CollectCookiesFromHeaderString(string? cookieHeader)
         {
-            var cookieCollection = new NameValueCollection();
+            NameValueCollection cookieCollection = new NameValueCollection();
 
             if (!string.IsNullOrEmpty(cookieHeader))
             {
@@ -173,7 +165,8 @@ namespace Hyperar.OAuthCore.Framework
                     //Remove the trailing and Leading white spaces
                     string strCookie = cookie.Trim();
 
-                    var reg = new Regex(@"^(\S*)=(\S*)$");
+                    Regex reg = new Regex(@"^(\S*)=(\S*)$", RegexOptions.None, new TimeSpan(0, 0, 10));
+
                     if (reg.IsMatch(strCookie))
                     {
                         Match match = reg.Match(strCookie);
@@ -191,7 +184,7 @@ namespace Hyperar.OAuthCore.Framework
 
         protected virtual NameValueCollection GetCleanedNameValueCollection(NameValueCollection requestQueryString)
         {
-            var nvc = new NameValueCollection(requestQueryString);
+            NameValueCollection nvc = new NameValueCollection(requestQueryString);
 
             if (nvc.HasKeys())
             {
@@ -205,7 +198,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             if (headers.AllKeys.Contains("Authorization"))
             {
-                context.AuthorizationHeaderParameters = UriUtility.GetHeaderParameters(headers["Authorization"]).ToNameValueCollection();
+                context.AuthorizationHeaderParameters = UriUtility.GetHeaderParameters(headers["Authorization"])?.ToNameValueCollection();
                 context.UseAuthorizationHeader = true;
             }
         }
@@ -216,16 +209,16 @@ namespace Hyperar.OAuthCore.Framework
             // to their url.
 
             string originalUrl = adjustedUri.OriginalString;
-            return originalUrl.EndsWith("&") ? new Uri(originalUrl.Substring(0, originalUrl.Length - 1)) : adjustedUri;
+            return originalUrl.EndsWith('&') ? new Uri(originalUrl.Substring(0, originalUrl.Length - 1)) : adjustedUri;
         }
 
-        private NameValueCollection GetQueryNameValueCollectionFromUri(Uri uri)
+        private static NameValueCollection GetQueryNameValueCollectionFromUri(Uri uri)
         {
-            var result = new NameValueCollection();
+            NameValueCollection result = new NameValueCollection();
 
             if (!string.IsNullOrWhiteSpace(uri.Query))
             {
-                foreach (var paramNameAndValue in uri.Query.Split('&'))
+                foreach (string paramNameAndValue in uri.Query.Split('&'))
                 {
                     string[] parts = paramNameAndValue.Split('=');
 

@@ -31,19 +31,19 @@ namespace Hyperar.OAuthCore.Consumer
     /// </summary>
     public interface IOAuthConsumerContext
     {
-        string ConsumerKey { get; set; }
+        string? ConsumerKey { get; set; }
 
-        string ConsumerSecret { get; set; }
+        string? ConsumerSecret { get; set; }
 
-        AsymmetricAlgorithm Key { get; set; }
+        AsymmetricAlgorithm? Key { get; set; }
 
-        string Realm { get; set; }
+        string? Realm { get; set; }
 
         string SignatureMethod { get; set; }
 
         bool UseHeaderForOAuthParameters { get; set; }
 
-        string UserAgent { get; set; }
+        string? UserAgent { get; set; }
 
         void SignContext(IOAuthContext context);
 

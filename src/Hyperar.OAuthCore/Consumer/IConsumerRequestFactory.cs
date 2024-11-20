@@ -33,6 +33,6 @@ namespace Hyperar.OAuthCore.Consumer
         /// <param name="consumerContext">The consumer context.</param>
         /// <param name="token">The token.</param>
         /// <returns></returns>
-        IConsumerRequest CreateConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token);
+        IConsumerRequest CreateConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken? token);
     }
 }

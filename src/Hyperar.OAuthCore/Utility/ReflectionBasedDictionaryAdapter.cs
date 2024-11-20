@@ -32,10 +32,7 @@ namespace Hyperar.OAuthCore.Utility
         /// <param name="target">The target.</param>
         public ReflectionBasedDictionaryAdapter(object target)
         {
-            if (target == null)
-            {
-                throw new ArgumentNullException("target");
-            }
+            ArgumentNullException.ThrowIfNull(target);
 
             Type targetType = target.GetType();
 
@@ -46,9 +43,12 @@ namespace Hyperar.OAuthCore.Utility
                     continue;
                 }
 
-                object value = property.GetValue(target, null);
+                object? value = property.GetValue(target, null);
 
-                this._properties[property.Name] = value;
+                if (value != null)
+                {
+                    this._properties[property.Name] = value;
+                }
             }
         }
 
@@ -123,15 +123,15 @@ namespace Hyperar.OAuthCore.Utility
         }
 
         /// <summary>
-        /// Gets or sets the <see cref="System.Object"/> with the specified key.
+        /// Gets or sets the <see cref="object"/> with the specified key.
         /// </summary>
         /// <value></value>
-        public object this[object key]
+        public object? this[object key]
         {
             get
             {
-                object value;
-                this._properties.TryGetValue(key.ToString(), out value);
+                _ = this._properties.TryGetValue(key.ToString() ?? string.Empty, out object? value);
+
                 return value;
             }
 
@@ -147,7 +147,7 @@ namespace Hyperar.OAuthCore.Utility
         /// 	<paramref name="key"/> is null. </exception>
         /// <exception cref="T:System.ArgumentException">An element with the same key already exists in the <see cref="T:System.Collections.IDictionary"/> object. </exception>
         /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.IDictionary"/> is read-only.-or- The <see cref="T:System.Collections.IDictionary"/> has a fixed size. </exception>
-        public void Add(object key, object value)
+        public void Add(object key, object? value)
         {
             throw new NotImplementedException();
         }
@@ -172,7 +172,12 @@ namespace Hyperar.OAuthCore.Utility
         /// 	<paramref name="key"/> is null. </exception>
         public bool Contains(object key)
         {
-            return this._properties.ContainsKey(key.ToString());
+            if (key is string value)
+            {
+                return this._properties.ContainsKey(value);
+            }
+
+            throw new ArgumentException(nameof(key));
         }
 
         /// <summary>

@@ -23,8 +23,6 @@
 namespace Hyperar.OAuthCore.KeyInterop
 {
     using System;
-    using System.Runtime.Serialization;
-    using System.Security.Permissions;
     using System.Text;
 
     [Serializable]
@@ -36,41 +34,35 @@ namespace Hyperar.OAuthCore.KeyInterop
         {
         }
 
-        public BerDecodeException(String message)
+        public BerDecodeException(string message)
             : base(message)
         {
         }
 
-        public BerDecodeException(String message, Exception ex)
+        public BerDecodeException(string message, Exception ex)
             : base(message, ex)
         {
         }
 
-        public BerDecodeException(String message, int position)
+        public BerDecodeException(string message, int position)
             : base(message)
         {
             this.m_position = position;
         }
 
-        public BerDecodeException(String message, int position, Exception ex)
+        public BerDecodeException(string message, int position, Exception ex)
             : base(message, ex)
         {
             this.m_position = position;
-        }
-
-        private BerDecodeException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-            this.m_position = info.GetInt32("Position");
         }
 
         public override string Message
         {
             get
             {
-                var sb = new StringBuilder(base.Message);
+                StringBuilder sb = new StringBuilder(base.Message);
 
-                sb.AppendFormat(" (Position {0}){1}",
+                _ = sb.AppendFormat(" (Position {0}){1}",
                                 this.m_position, Environment.NewLine);
 
                 return sb.ToString();
@@ -80,13 +72,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         public int Position
         {
             get { return this.m_position; }
-        }
-
-        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            base.GetObjectData(info, context);
-            info.AddValue("Position", this.m_position);
         }
     }
 }

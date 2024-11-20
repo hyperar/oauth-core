@@ -26,9 +26,9 @@ namespace Hyperar.OAuthCore.Provider
 
     public class AccessOutcome
     {
-        public string AdditionalInfo { get; set; }
+        public string? AdditionalInfo { get; set; }
 
-        public IOAuthContext Context { get; set; }
+        public IOAuthContext? Context { get; set; }
 
         public bool Granted { get; set; }
     }

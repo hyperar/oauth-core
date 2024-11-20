@@ -312,8 +312,8 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public BigInteger(string value, int radix)
         {
-            var multiplier = new BigInteger(1);
-            var result = new BigInteger();
+            BigInteger multiplier = new BigInteger(1);
+            BigInteger result = new BigInteger();
             value = value.ToUpper().Trim();
             int limit = 0;
 
@@ -533,7 +533,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger GenPseudoPrime(int bits, int confidence, Random rand)
         {
-            var result = new BigInteger();
+            BigInteger result = new BigInteger();
             bool done = false;
 
             while (!done)
@@ -544,6 +544,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 // prime test
                 done = result.IsProbablePrime(confidence);
             }
+
             return result;
         }
 
@@ -618,6 +619,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                         index = a.dataLength; // to break the outer loop
                         break;
                     }
+
                     mask <<= 1;
                     e++;
                 }
@@ -651,7 +653,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         {
             if (k.dataLength == 1 && k.data[0] == 0)
             {
-                var result = new BigInteger[3];
+                BigInteger[] result = new BigInteger[3];
 
                 result[0] = 0;
                 result[1] = 2 % n;
@@ -661,7 +663,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // calculate constant = b^(2k) / m
             // for Barrett Reduction
-            var constant = new BigInteger();
+            BigInteger constant = new BigInteger();
 
             int nLen = n.dataLength << 1;
             constant.data[nLen] = 0x00000001;
@@ -683,6 +685,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                         index = k.dataLength; // to break the outer loop
                         break;
                     }
+
                     mask <<= 1;
                     s++;
                 }
@@ -696,9 +699,9 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static void MulDivTest(int rounds)
         {
-            var rand = new Random();
-            var val = new byte[64];
-            var val2 = new byte[64];
+            Random rand = new Random();
+            byte[] val = new byte[64];
+            byte[] val2 = new byte[64];
 
             for (int count = 0; count < rounds; count++)
             {
@@ -720,14 +723,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 {
                     for (int i = 0; i < 64; i++)
                     {
-                        if (i < t1)
-                        {
-                            val[i] = (byte)(rand.NextDouble() * 256);
-                        }
-                        else
-                        {
-                            val[i] = 0;
-                        }
+                        val[i] = i < t1 ? (byte)(rand.NextDouble() * 256) : (byte)0;
 
                         if (val[i] != 0)
                         {
@@ -741,14 +737,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 {
                     for (int i = 0; i < 64; i++)
                     {
-                        if (i < t2)
-                        {
-                            val2[i] = (byte)(rand.NextDouble() * 256);
-                        }
-                        else
-                        {
-                            val2[i] = 0;
-                        }
+                        val2[i] = i < t2 ? (byte)(rand.NextDouble() * 256) : (byte)0;
 
                         if (val2[i] != 0)
                         {
@@ -768,8 +757,8 @@ namespace Hyperar.OAuthCore.KeyInterop
                 }
 
                 Console.WriteLine(count);
-                var bn1 = new BigInteger(val, t1);
-                var bn2 = new BigInteger(val2, t2);
+                BigInteger bn1 = new BigInteger(val, t1);
+                BigInteger bn2 = new BigInteger(val2, t2);
 
                 // Determine the quotient and remainder by dividing
                 // the first number by the second.
@@ -796,7 +785,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator -(BigInteger bi1, BigInteger bi2)
         {
-            var result = new BigInteger
+            BigInteger result = new BigInteger
             {
                 dataLength = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength
             };
@@ -809,14 +798,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 diff = bi1.data[i] - (long)bi2.data[i] - carryIn;
                 result.data[i] = (uint)(diff & 0xFFFFFFFF);
 
-                if (diff < 0)
-                {
-                    carryIn = 1;
-                }
-                else
-                {
-                    carryIn = 0;
-                }
+                carryIn = diff < 0 ? 1 : 0;
             }
 
             // roll over to negative
@@ -858,7 +840,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 return new BigInteger();
             }
 
-            var result = new BigInteger(bi1);
+            BigInteger result = new BigInteger(bi1);
 
             // 1's complement
             for (int i = 0; i < maxLength; i++)
@@ -898,7 +880,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator --(BigInteger bi1)
         {
-            var result = new BigInteger(bi1);
+            BigInteger result = new BigInteger(bi1);
 
             long val;
             bool carryIn = true;
@@ -951,8 +933,8 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator %(BigInteger bi1, BigInteger bi2)
         {
-            var quotient = new BigInteger();
-            var remainder = new BigInteger(bi1);
+            BigInteger quotient = new BigInteger();
+            BigInteger remainder = new BigInteger(bi1);
 
             int lastPos = maxLength - 1;
             bool dividendNeg = false;
@@ -962,6 +944,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 bi1 = -bi1;
                 dividendNeg = true;
             }
+
             if ((bi2.data[lastPos] & 0x80000000) != 0) // bi2 negative
             {
                 bi2 = -bi2;
@@ -993,7 +976,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator &(BigInteger bi1, BigInteger bi2)
         {
-            var result = new BigInteger();
+            BigInteger result = new BigInteger();
 
             int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
 
@@ -1026,6 +1009,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     bi1Neg = true;
                     bi1 = -bi1;
                 }
+
                 if ((bi2.data[lastPos] & 0x80000000) != 0) // bi2 negative
                 {
                     bi2Neg = true;
@@ -1036,7 +1020,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
             }
 
-            var result = new BigInteger();
+            BigInteger result = new BigInteger();
 
             // multiply the absolute values
             try
@@ -1125,8 +1109,8 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator /(BigInteger bi1, BigInteger bi2)
         {
-            var quotient = new BigInteger();
-            var remainder = new BigInteger();
+            BigInteger quotient = new BigInteger();
+            BigInteger remainder = new BigInteger();
 
             int lastPos = maxLength - 1;
             bool divisorNeg = false, dividendNeg = false;
@@ -1136,6 +1120,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 bi1 = -bi1;
                 dividendNeg = true;
             }
+
             if ((bi2.data[lastPos] & 0x80000000) != 0) // bi2 negative
             {
                 bi2 = -bi2;
@@ -1168,7 +1153,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator ^(BigInteger bi1, BigInteger bi2)
         {
-            var result = new BigInteger();
+            BigInteger result = new BigInteger();
 
             int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
 
@@ -1190,7 +1175,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator |(BigInteger bi1, BigInteger bi2)
         {
-            var result = new BigInteger();
+            BigInteger result = new BigInteger();
 
             int len = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength;
 
@@ -1212,7 +1197,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator ~(BigInteger bi1)
         {
-            var result = new BigInteger(bi1);
+            BigInteger result = new BigInteger(bi1);
 
             for (int i = 0; i < maxLength; i++)
             {
@@ -1231,7 +1216,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator +(BigInteger bi1, BigInteger bi2)
         {
-            var result = new BigInteger
+            BigInteger result = new BigInteger
             {
                 dataLength = bi1.dataLength > bi2.dataLength ? bi1.dataLength : bi2.dataLength
             };
@@ -1272,7 +1257,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator ++(BigInteger bi1)
         {
-            var result = new BigInteger(bi1);
+            BigInteger result = new BigInteger(bi1);
 
             long val, carry = 1;
             int index = 0;
@@ -1311,6 +1296,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 throw new ArithmeticException("Overflow in ++.");
             }
+
             return result;
         }
 
@@ -1359,12 +1345,13 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                 return false;
             }
+
             return false;
         }
 
         public static BigInteger operator <<(BigInteger bi1, int shiftVal)
         {
-            var result = new BigInteger(bi1);
+            BigInteger result = new BigInteger(bi1);
             result.dataLength = ShiftLeft(result.data, shiftVal);
 
             return result;
@@ -1414,6 +1401,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                 return false;
             }
+
             return false;
         }
 
@@ -1427,7 +1415,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static BigInteger operator >>(BigInteger bi1, int shiftVal)
         {
-            var result = new BigInteger(bi1);
+            BigInteger result = new BigInteger(bi1);
             result.dataLength = ShiftRight(result.data, shiftVal);
 
             if ((bi1.data[maxLength - 1] & 0x80000000) != 0) // negative
@@ -1448,6 +1436,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     result.data[result.dataLength - 1] |= mask;
                     mask >>= 1;
                 }
+
                 result.dataLength = maxLength;
             }
 
@@ -1456,19 +1445,19 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static void RSATest(int rounds)
         {
-            var rand = new Random(1);
-            var val = new byte[64];
+            Random rand = new Random(1);
+            byte[] val = new byte[64];
 
             // private and public key
-            var bi_e =
+            BigInteger bi_e =
                 new BigInteger(
                     "a932b948feed4fb2b692609bd22164fc9edb59fae7880cc1eaff7b3c9626b7e5b241c27a974833b2622ebe09beb451917663d47232488f23a117fc97720f1e7",
                     16);
-            var bi_d =
+            BigInteger bi_d =
                 new BigInteger(
                     "4adf2f7a89da93248509347d2ae506d683dd3a16357e859a980c4f77a4e2f7a01fae289f13a851df6e9db5adaa60bfd2b162bbbe31f7c8f828261a6839311929d2cef4f864dde65e556ce43c89bbbf9f1ac5511315847ce9cc8dc92470a747b8792d6a83b0092d2e5ebaf852c85cacf34278efa99160f2f8aa7ee7214de07b7",
                     16);
-            var bi_n =
+            BigInteger bi_n =
                 new BigInteger(
                     "e8e77781f36a7b3188d711c2190b560f205a52391b3479cdb99fa010745cbeba5f2adc08e1de6bf38398a0487c4a73610d94ec36f17f3f46ad75e17bc1adfec99839589f45f95ccc94cb2a5c500b477eb3323d8cfab0c8458c96f0147a45d27e45a4d11d54d77684f65d48f15fafcc1ba208e71e921b9bd9017c16a5231af7f",
                     16);
@@ -1491,14 +1480,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 {
                     for (int i = 0; i < 64; i++)
                     {
-                        if (i < t1)
-                        {
-                            val[i] = (byte)(rand.NextDouble() * 256);
-                        }
-                        else
-                        {
-                            val[i] = 0;
-                        }
+                        val[i] = i < t1 ? (byte)(rand.NextDouble() * 256) : (byte)0;
 
                         if (val[i] != 0)
                         {
@@ -1515,7 +1497,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 Console.Write("Round = " + count);
 
                 // encrypt and decrypt data
-                var bi_data = new BigInteger(val, t1);
+                BigInteger bi_data = new BigInteger(val, t1);
                 BigInteger bi_encrypted = bi_data.ModPow(bi_e, bi_n);
                 BigInteger bi_decrypted = bi_encrypted.ModPow(bi_d, bi_n);
 
@@ -1526,14 +1508,15 @@ namespace Hyperar.OAuthCore.KeyInterop
                     Console.WriteLine(bi_data + "\n");
                     return;
                 }
+
                 Console.WriteLine(" <PASSED>.");
             }
         }
 
         public static void RSATest2(int rounds)
         {
-            var rand = new Random();
-            var val = new byte[64];
+            Random rand = new Random();
+            byte[] val = new byte[64];
 
             byte[] pseudoPrime1 = {
                                   0x85, 0x84, 0x64, 0xFD, 0x70, 0x6A,
@@ -1563,8 +1546,8 @@ namespace Hyperar.OAuthCore.KeyInterop
                                   0x9B, 0xC2, 0xA5, 0xCB,
                               };
 
-            var bi_p = new BigInteger(pseudoPrime1);
-            var bi_q = new BigInteger(pseudoPrime2);
+            BigInteger bi_p = new BigInteger(pseudoPrime1);
+            BigInteger bi_q = new BigInteger(pseudoPrime2);
             BigInteger bi_pq = (bi_p - 1) * (bi_q - 1);
             BigInteger bi_n = bi_p * bi_q;
 
@@ -1590,14 +1573,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 {
                     for (int i = 0; i < 64; i++)
                     {
-                        if (i < t1)
-                        {
-                            val[i] = (byte)(rand.NextDouble() * 256);
-                        }
-                        else
-                        {
-                            val[i] = 0;
-                        }
+                        val[i] = i < t1 ? (byte)(rand.NextDouble() * 256) : (byte)0;
 
                         if (val[i] != 0)
                         {
@@ -1614,7 +1590,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 Console.Write("Round = " + count);
 
                 // encrypt and decrypt data
-                var bi_data = new BigInteger(val, t1);
+                BigInteger bi_data = new BigInteger(val, t1);
                 BigInteger bi_encrypted = bi_data.ModPow(bi_e, bi_n);
                 BigInteger bi_decrypted = bi_encrypted.ModPow(bi_d, bi_n);
 
@@ -1625,13 +1601,14 @@ namespace Hyperar.OAuthCore.KeyInterop
                     Console.WriteLine(bi_data + "\n");
                     return;
                 }
+
                 Console.WriteLine(" <PASSED>.");
             }
         }
 
         public static void SqrtTest(int rounds)
         {
-            var rand = new Random();
+            Random rand = new Random();
             for (int count = 0; count < rounds; count++)
             {
                 // generate data of random length
@@ -1643,7 +1620,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                 Console.Write("Round = " + count);
 
-                var a = new BigInteger();
+                BigInteger a = new BigInteger();
                 a.GenRandomBits(t1, rand);
 
                 BigInteger b = a.Sqrt();
@@ -1656,6 +1633,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     Console.WriteLine(a + "\n");
                     return;
                 }
+
                 Console.WriteLine(" <PASSED>.");
             }
         }
@@ -1688,6 +1666,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 bits--;
                 mask >>= 1;
             }
+
             bits += (this.dataLength - 1) << 5;
 
             return bits;
@@ -1702,36 +1681,35 @@ namespace Hyperar.OAuthCore.KeyInterop
         //***********************************************************************
         // Overloading of equality operator
         //***********************************************************************
-        public override bool Equals(object o)
+        public override bool Equals(object? obj)
         {
-            var bi = (BigInteger)o;
-
-            if (this.dataLength != bi.dataLength)
+            if (obj is BigInteger bi)
             {
-                return false;
-            }
 
-            for (int i = 0; i < this.dataLength; i++)
-            {
-                if (this.data[i] != bi.data[i])
+                if (this.dataLength != bi.dataLength)
                 {
                     return false;
                 }
+
+                for (int i = 0; i < this.dataLength; i++)
+                {
+                    if (this.data[i] != bi.data[i])
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             }
-            return true;
+            else
+            {
+                return false;
+            }
         }
 
         public bool FermatLittleTest(int confidence)
         {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
+            BigInteger thisVal = (this.data[maxLength - 1] & 0x80000000) != 0 ? -this : this;
 
             if (thisVal.dataLength == 1)
             {
@@ -1752,9 +1730,9 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
 
             int bits = thisVal.BitCount();
-            var a = new BigInteger();
+            BigInteger a = new BigInteger();
             BigInteger p_sub1 = thisVal - new BigInteger(1);
-            var rand = new Random();
+            Random rand = new Random();
 
             for (int round = 0; round < confidence; round++)
             {
@@ -1810,23 +1788,9 @@ namespace Hyperar.OAuthCore.KeyInterop
             BigInteger x;
             BigInteger y;
 
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                x = -this;
-            }
-            else
-            {
-                x = this;
-            }
+            x = (this.data[maxLength - 1] & 0x80000000) != 0 ? -this : this;
 
-            if ((bi.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                y = -bi;
-            }
-            else
-            {
-                y = bi;
-            }
+            y = (bi.data[maxLength - 1] & 0x80000000) != 0 ? -bi : bi;
 
             BigInteger g = y;
 
@@ -1843,7 +1807,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         public BigInteger GenCoPrime(int bits, Random rand)
         {
             bool done = false;
-            var result = new BigInteger();
+            BigInteger result = new BigInteger();
 
             while (!done)
             {
@@ -1888,7 +1852,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             if (remBits != 0)
             {
-                var mask = (uint)(0x01 << (remBits - 1));
+                uint mask = (uint)(0x01 << (remBits - 1));
                 this.data[dwords - 1] |= mask;
 
                 mask = 0xFFFFFFFF >> (32 - remBits);
@@ -1917,7 +1881,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 numBytes++;
             }
 
-            var result = new byte[numBytes];
+            byte[] result = new byte[numBytes];
 
             //Console.WriteLine(result.Length);
 
@@ -1979,15 +1943,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public bool IsProbablePrime(int confidence)
         {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
+            BigInteger thisVal = (this.data[maxLength - 1] & 0x80000000) != 0 ? -this : this;
 
             // test for divisibility by primes < 2000
             for (int p = 0; p < primesBelow2000.Length; p++)
@@ -2023,15 +1979,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public bool IsProbablePrime()
         {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
+            BigInteger thisVal = (this.data[maxLength - 1] & 0x80000000) != 0 ? -this : this;
 
             if (thisVal.dataLength == 1)
             {
@@ -2088,6 +2036,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                         index = p_sub1.dataLength; // to break the outer loop
                         break;
                     }
+
                     mask <<= 1;
                     s++;
                 }
@@ -2095,7 +2044,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             BigInteger t = p_sub1 >> s;
 
-            int bits = thisVal.BitCount();
+            _ = thisVal.BitCount();
             BigInteger a = 2;
 
             // b = a^t mod p
@@ -2121,7 +2070,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             // if number is strong pseudoprime to base 2, then do a strong lucas test
             if (result)
             {
-                result = this.LucasStrongTestHelper(thisVal);
+                result = LucasStrongTestHelper(thisVal);
             }
 
             return result;
@@ -2148,15 +2097,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public bool LucasStrongTest()
         {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
+            BigInteger thisVal = (this.data[maxLength - 1] & 0x80000000) != 0 ? -this : this;
 
             if (thisVal.dataLength == 1)
             {
@@ -2176,7 +2117,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 return false;
             }
 
-            return this.LucasStrongTestHelper(thisVal);
+            return LucasStrongTestHelper(thisVal);
         }
 
         public BigInteger Max(BigInteger bi)
@@ -2206,7 +2147,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         public BigInteger ModInverse(BigInteger modulus)
         {
             BigInteger[] p = { 0, 1 };
-            var q = new BigInteger[2]; // quotients
+            BigInteger[] q = new BigInteger[2]; // quotients
             BigInteger[] r = { 0, 0 }; // remainders
 
             int step = 0;
@@ -2216,8 +2157,8 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             while (b.dataLength > 1 || (b.dataLength == 1 && b.data[0] != 0))
             {
-                var quotient = new BigInteger();
-                var remainder = new BigInteger();
+                BigInteger quotient = new BigInteger();
+                BigInteger remainder = new BigInteger();
 
                 if (step > 1)
                 {
@@ -2295,7 +2236,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
 
             // calculate constant = b^(2k) / m
-            var constant = new BigInteger();
+            BigInteger constant = new BigInteger();
 
             int i = n.dataLength << 1;
             constant.data[i] = 0x00000001;
@@ -2315,12 +2256,12 @@ namespace Hyperar.OAuthCore.KeyInterop
                 {
                     if ((exp.data[pos] & mask) != 0)
                     {
-                        resultNum = this.BarrettReduction(resultNum * tempNum, n, constant);
+                        resultNum = BarrettReduction(resultNum * tempNum, n, constant);
                     }
 
                     mask <<= 1;
 
-                    tempNum = this.BarrettReduction(tempNum * tempNum, n, constant);
+                    tempNum = BarrettReduction(tempNum * tempNum, n, constant);
 
                     if (tempNum.dataLength == 1 && tempNum.data[0] == 1)
                     {
@@ -2331,6 +2272,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                         return resultNum;
                     }
+
                     count++;
                     if (count == totalBits)
                     {
@@ -2349,15 +2291,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public bool RabinMillerTest(int confidence)
         {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
+            BigInteger thisVal = (this.data[maxLength - 1] & 0x80000000) != 0 ? -this : this;
 
             if (thisVal.dataLength == 1)
             {
@@ -2392,6 +2326,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                         index = p_sub1.dataLength; // to break the outer loop
                         break;
                     }
+
                     mask <<= 1;
                     s++;
                 }
@@ -2400,8 +2335,8 @@ namespace Hyperar.OAuthCore.KeyInterop
             BigInteger t = p_sub1 >> s;
 
             int bits = thisVal.BitCount();
-            var a = new BigInteger();
-            var rand = new Random();
+            BigInteger a = new BigInteger();
+            Random rand = new Random();
 
             for (int round = 0; round < confidence; round++)
             {
@@ -2467,13 +2402,14 @@ namespace Hyperar.OAuthCore.KeyInterop
                     return false;
                 }
             }
+
             return true;
         }
 
         public void SetBit(uint bitNum)
         {
             uint bytePos = bitNum >> 5; // divide by 32
-            var bitPos = (byte)(bitNum & 0x1F); // get the lowest 5 bits
+            byte bitPos = (byte)(bitNum & 0x1F); // get the lowest 5 bits
 
             uint mask = (uint)1 << bitPos;
             this.data[bytePos] |= mask;
@@ -2486,15 +2422,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public bool SolovayStrassenTest(int confidence)
         {
-            BigInteger thisVal;
-            if ((this.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                thisVal = -this;
-            }
-            else
-            {
-                thisVal = this;
-            }
+            BigInteger thisVal = (this.data[maxLength - 1] & 0x80000000) != 0 ? -this : this;
 
             if (thisVal.dataLength == 1)
             {
@@ -2515,11 +2443,11 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
 
             int bits = thisVal.BitCount();
-            var a = new BigInteger();
+            BigInteger a = new BigInteger();
             BigInteger p_sub1 = thisVal - 1;
             BigInteger p_sub1_shift = p_sub1 >> 1;
 
-            var rand = new Random();
+            Random rand = new Random();
 
             for (int round = 0; round < confidence; round++)
             {
@@ -2579,7 +2507,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public BigInteger Sqrt()
         {
-            var numBits = (uint)this.BitCount();
+            uint numBits = (uint)this.BitCount();
 
             if ((numBits & 0x1) != 0) // odd number of bits
             {
@@ -2591,11 +2519,11 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
 
             uint bytePos = numBits >> 5;
-            var bitPos = (byte)(numBits & 0x1F);
+            byte bitPos = (byte)(numBits & 0x1F);
 
             uint mask;
 
-            var result = new BigInteger();
+            BigInteger result = new BigInteger();
             if (bitPos == 0)
             {
                 mask = 0x80000000;
@@ -2605,6 +2533,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 mask = (uint)1 << bitPos;
                 bytePos++;
             }
+
             result.dataLength = (int)bytePos;
 
             for (int i = (int)bytePos - 1; i >= 0; i--)
@@ -2622,8 +2551,10 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                     mask >>= 1;
                 }
+
                 mask = 0x80000000;
             }
+
             return result;
         }
 
@@ -2669,9 +2600,9 @@ namespace Hyperar.OAuthCore.KeyInterop
                 }
             }
 
-            var quotient = new BigInteger();
-            var remainder = new BigInteger();
-            var biRadix = new BigInteger(radix);
+            BigInteger quotient = new BigInteger();
+            BigInteger remainder = new BigInteger();
+            BigInteger biRadix = new BigInteger(radix);
 
             if (a.dataLength == 1 && a.data[0] == 0)
             {
@@ -2683,17 +2614,11 @@ namespace Hyperar.OAuthCore.KeyInterop
                 {
                     SingleByteDivide(a, biRadix, quotient, remainder);
 
-                    if (remainder.data[0] < 10)
-                    {
-                        result = remainder.data[0] + result;
-                    }
-                    else
-                    {
-                        result = charSet[(int)remainder.data[0] - 10] + result;
-                    }
+                    result = remainder.data[0] < 10 ? remainder.data[0] + result : charSet[(int)remainder.data[0] - 10] + result;
 
                     a = quotient;
                 }
+
                 if (negative)
                 {
                     result = "-" + result;
@@ -2709,7 +2634,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             if (bytePos < this.dataLength)
             {
-                var bitPos = (byte)(bitNum & 0x1F);
+                byte bitPos = (byte)(bitNum & 0x1F);
 
                 uint mask = (uint)1 << bitPos;
                 uint mask2 = 0xFFFFFFFF ^ mask;
@@ -2727,7 +2652,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                                                 BigInteger k, BigInteger n,
                                                 BigInteger constant, int s)
         {
-            var result = new BigInteger[3];
+            BigInteger[] result = new BigInteger[3];
 
             if ((k.data[0] & 0x00000001) == 0)
             {
@@ -2762,7 +2687,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                         u1 = u1 * v1 % n;
 
                         v = ((v * v1) - (P * Q_k)) % n;
-                        v1 = n.BarrettReduction(v1 * v1, n, constant);
+                        v1 = BarrettReduction(v1 * v1, n, constant);
                         v1 = (v1 - ((Q_k * Q) << 1)) % n;
 
                         if (flag)
@@ -2771,7 +2696,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                         }
                         else
                         {
-                            Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
+                            Q_k = BarrettReduction(Q_k * Q_k, n, constant);
                         }
 
                         Q_k = Q_k * Q % n;
@@ -2782,7 +2707,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                         u1 = ((u1 * v) - Q_k) % n;
 
                         v1 = ((v * v1) - (P * Q_k)) % n;
-                        v = n.BarrettReduction(v * v, n, constant);
+                        v = BarrettReduction(v * v, n, constant);
                         v = (v - (Q_k << 1)) % n;
 
                         if (flag)
@@ -2792,12 +2717,13 @@ namespace Hyperar.OAuthCore.KeyInterop
                         }
                         else
                         {
-                            Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
+                            Q_k = BarrettReduction(Q_k * Q_k, n, constant);
                         }
                     }
 
                     mask >>= 1;
                 }
+
                 mask = 0x80000000;
             }
 
@@ -2812,7 +2738,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
             else
             {
-                Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
+                Q_k = BarrettReduction(Q_k * Q_k, n, constant);
             }
 
             Q_k = Q_k * Q % n;
@@ -2830,7 +2756,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 }
                 else
                 {
-                    Q_k = n.BarrettReduction(Q_k * Q_k, n, constant);
+                    Q_k = BarrettReduction(Q_k * Q_k, n, constant);
                 }
             }
 
@@ -2844,10 +2770,10 @@ namespace Hyperar.OAuthCore.KeyInterop
         private static void MultiByteDivide(BigInteger bi1, BigInteger bi2,
                                     BigInteger outQuotient, BigInteger outRemainder)
         {
-            var result = new uint[maxLength];
+            uint[] result = new uint[maxLength];
 
             int remainderLen = bi1.dataLength + 1;
-            var remainder = new uint[remainderLen];
+            uint[] remainder = new uint[remainderLen];
 
             uint mask = 0x80000000;
             uint val = bi2.data[bi2.dataLength - 1];
@@ -2867,7 +2793,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 remainder[i] = bi1.data[i];
             }
 
-            ShiftLeft(remainder, shift);
+            _ = ShiftLeft(remainder, shift);
             bi2 <<= shift;
 
             /*
@@ -2885,7 +2811,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             ulong secondDivisorByte = bi2.data[bi2.dataLength - 2];
 
             int divisorLen = bi2.dataLength + 1;
-            var dividendPart = new uint[divisorLen];
+            uint[] dividendPart = new uint[divisorLen];
 
             while (j > 0)
             {
@@ -2920,7 +2846,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     dividendPart[h] = remainder[pos - h];
                 }
 
-                var kk = new BigInteger(dividendPart);
+                BigInteger kk = new BigInteger(dividendPart);
                 BigInteger ss = bi2 * (long)q_hat;
 
                 //Console.WriteLine("ss before = " + ss);
@@ -2930,6 +2856,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     ss -= bi2;
                     //Console.WriteLine(ss);
                 }
+
                 BigInteger yy = kk - ss;
 
                 //Console.WriteLine("ss = " + ss);
@@ -3026,8 +2953,10 @@ namespace Hyperar.OAuthCore.KeyInterop
                         bufLen++;
                     }
                 }
+
                 count -= shiftAmount;
             }
+
             return bufLen;
         }
 
@@ -3092,7 +3021,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         private static void SingleByteDivide(BigInteger bi1, BigInteger bi2,
                                      BigInteger outQuotient, BigInteger outRemainder)
         {
-            var result = new uint[maxLength];
+            uint[] result = new uint[maxLength];
             int resultPos = 0;
 
             // copy dividend to reminder
@@ -3122,6 +3051,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                 outRemainder.data[pos] = (uint)(dividend % divisor);
             }
+
             pos--;
 
             while (pos >= 0)
@@ -3226,13 +3156,13 @@ namespace Hyperar.OAuthCore.KeyInterop
         // Reference [4]
         //***********************************************************************
 
-        private BigInteger BarrettReduction(BigInteger x, BigInteger n, BigInteger constant)
+        private static BigInteger BarrettReduction(BigInteger x, BigInteger n, BigInteger constant)
         {
             int k = n.dataLength,
                 kPlusOne = k + 1,
                 kMinusOne = k - 1;
 
-            var q1 = new BigInteger();
+            BigInteger q1 = new BigInteger();
 
             // q1 = x / b^(k-1)
             for (int i = kMinusOne, j = 0; i < x.dataLength; i++, j++)
@@ -3247,7 +3177,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
 
             BigInteger q2 = q1 * constant;
-            var q3 = new BigInteger();
+            BigInteger q3 = new BigInteger();
 
             // q3 = q2 / b^(k+1)
             for (int i = kPlusOne, j = 0; i < q2.dataLength; i++, j++)
@@ -3263,7 +3193,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // r1 = x mod b^(k+1)
             // i.e. keep the lowest (k+1) words
-            var r1 = new BigInteger();
+            BigInteger r1 = new BigInteger();
             int lengthToCopy = x.dataLength > kPlusOne ? kPlusOne : x.dataLength;
             for (int i = 0; i < lengthToCopy; i++)
             {
@@ -3275,7 +3205,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             // r2 = (q3 * n) mod b^(k+1)
             // partial multiplication of q3 and n
 
-            var r2 = new BigInteger();
+            BigInteger r2 = new BigInteger();
             for (int i = 0; i < q3.dataLength; i++)
             {
                 if (q3.data[i] == 0)
@@ -3300,6 +3230,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     r2.data[t] = (uint)mcarry;
                 }
             }
+
             r2.dataLength = kPlusOne;
             while (r2.dataLength > 1 && r2.data[r2.dataLength - 1] == 0)
             {
@@ -3309,7 +3240,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             r1 -= r2;
             if ((r1.data[maxLength - 1] & 0x80000000) != 0) // negative
             {
-                var val = new BigInteger();
+                BigInteger val = new BigInteger();
                 val.data[kPlusOne] = 0x00000001;
                 val.dataLength = kPlusOne + 1;
                 r1 += val;
@@ -3410,7 +3341,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         // Returns True if number is a strong Lucus pseudo prime.
         // Otherwise, returns False indicating that number is composite.
         //***********************************************************************
-        private bool LucasStrongTestHelper(BigInteger thisVal)
+        private static bool LucasStrongTestHelper(BigInteger thisVal)
         {
             // Do the test (selects D based on Selfridge)
             // Let D be the first element of the sequence
@@ -3449,6 +3380,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     D = (Math.Abs(D) + 2) * sign;
                     sign = -sign;
                 }
+
                 dCount++;
             }
 
@@ -3476,6 +3408,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                         index = p_add1.dataLength; // to break the outer loop
                         break;
                     }
+
                     mask <<= 1;
                     s++;
                 }
@@ -3485,7 +3418,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // calculate constant = b^(2k) / m
             // for Barrett Reduction
-            var constant = new BigInteger();
+            BigInteger constant = new BigInteger();
 
             int nLen = thisVal.dataLength << 1;
             constant.data[nLen] = 0x00000001;
@@ -3508,7 +3441,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 if (!isPrime)
                 {
                     // doubling of index
-                    lucas[1] = thisVal.BarrettReduction(lucas[1] * lucas[1], thisVal, constant);
+                    lucas[1] = BarrettReduction(lucas[1] * lucas[1], thisVal, constant);
                     lucas[1] = (lucas[1] - (lucas[2] << 1)) % thisVal;
 
                     //lucas[1] = ((lucas[1] * lucas[1]) - (lucas[2] << 1)) % thisVal;
@@ -3519,7 +3452,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     }
                 }
 
-                lucas[2] = thisVal.BarrettReduction(lucas[2] * lucas[2], thisVal, constant); //Q^k
+                lucas[2] = BarrettReduction(lucas[2] * lucas[2], thisVal, constant); //Q^k
             }
 
             if (isPrime) // additional checks for composite numbers

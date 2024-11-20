@@ -36,15 +36,15 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void OutsideAfterRange()
         {
-            var inspector = new TimestampRangeInspector(new TimeSpan(0, 0, 0), new TimeSpan(1, 0, 0),
+            TimestampRangeInspector inspector = new TimestampRangeInspector(new TimeSpan(0, 0, 0), new TimeSpan(1, 0, 0),
                                                         () => new DateTime(2008, 1, 1, 12, 0, 0));
 
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 Timestamp = new DateTime(2008, 1, 1, 13, 0, 1).Epoch().ToString()
             };
 
-            var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
 
             Assert.AreEqual("The timestamp is to far in the future, if must be at most 3600 seconds after the server current date and time", ex.Message);
         }
@@ -52,15 +52,15 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void OutsideBeforeRange()
         {
-            var inspector = new TimestampRangeInspector(new TimeSpan(1, 0, 0), new TimeSpan(0, 0, 0),
+            TimestampRangeInspector inspector = new TimestampRangeInspector(new TimeSpan(1, 0, 0), new TimeSpan(0, 0, 0),
                                                         () => new DateTime(2008, 1, 1, 12, 0, 0));
 
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 Timestamp = new DateTime(2008, 1, 1, 10, 59, 59).Epoch().ToString()
             };
 
-            var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
 
             Assert.AreEqual("The timestamp is to old, it must be at most 3600 seconds before the servers current date and time", ex.Message);
         }
@@ -68,10 +68,10 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void WithAfterRange()
         {
-            var inspector = new TimestampRangeInspector(new TimeSpan(0, 0, 0), new TimeSpan(1, 0, 0),
+            TimestampRangeInspector inspector = new TimestampRangeInspector(new TimeSpan(0, 0, 0), new TimeSpan(1, 0, 0),
                                                         () => new DateTime(2008, 1, 1, 12, 0, 0));
 
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 Timestamp = new DateTime(2008, 1, 1, 13, 0, 0).Epoch().ToString()
             };
@@ -82,10 +82,10 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void WithinBeforeRange()
         {
-            var inspector = new TimestampRangeInspector(new TimeSpan(1, 0, 0), new TimeSpan(0, 0, 0),
+            TimestampRangeInspector inspector = new TimestampRangeInspector(new TimeSpan(1, 0, 0), new TimeSpan(0, 0, 0),
                                                         () => new DateTime(2008, 1, 1, 12, 0, 0));
 
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 Timestamp = new DateTime(2008, 1, 1, 11, 0, 0).Epoch().ToString()
             };

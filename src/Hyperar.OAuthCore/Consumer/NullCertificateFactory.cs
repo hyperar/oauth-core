@@ -26,7 +26,7 @@ namespace Hyperar.OAuthCore.Consumer
 
     public class NullCertificateFactory : ICertificateFactory
     {
-        public X509Certificate2 CreateCertificate()
+        public X509Certificate2? CreateCertificate()
         {
             return null;
         }

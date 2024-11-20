@@ -51,16 +51,18 @@ namespace Hyperar.OAuthCore.Framework
 
             if (parameters.AllKeys.Any(key => key == Parameters.OAuth_Acceptable_Timestamps))
             {
-                string[] timeStamps = parameters[Parameters.OAuth_Acceptable_Timestamps].Split(new[] { '-' });
-                this.AcceptableTimeStampsFrom = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps[0]));
-                this.AcceptableTimeStampsTo = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps[1]));
+                string[]? timeStamps = parameters[Parameters.OAuth_Acceptable_Timestamps]?.Split(separatorHyphen);
+
+                this.AcceptableTimeStampsFrom = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps?.ElementAtOrDefault(0)));
+                this.AcceptableTimeStampsTo = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps?.ElementAtOrDefault(1)));
             }
 
             if (parameters.AllKeys.Any(key => key == Parameters.OAuth_Acceptable_Versions))
             {
-                string[] versions = parameters[Parameters.OAuth_Acceptable_Versions].Split(new[] { '-' });
-                this.AcceptableVersionFrom = versions[0];
-                this.AcceptableVersionTo = versions[1];
+                string[]? versions = parameters[Parameters.OAuth_Acceptable_Versions]?.Split(separatorHyphen);
+
+                this.AcceptableVersionFrom = versions?.ElementAtOrDefault(0);
+                this.AcceptableVersionTo = versions?.ElementAtOrDefault(1);
             }
         }
 
@@ -73,17 +75,20 @@ namespace Hyperar.OAuthCore.Framework
 
         public DateTime? AcceptableTimeStampsTo { get; set; }
 
-        public string AcceptableVersionFrom { get; set; }
+        public string? AcceptableVersionFrom { get; set; }
 
-        public string AcceptableVersionTo { get; set; }
+        public string? AcceptableVersionTo { get; set; }
 
-        public List<string> ParametersAbsent { get; set; }
+        public List<string>? ParametersAbsent { get; set; }
 
-        public List<string> ParametersRejected { get; set; }
+        public List<string>? ParametersRejected { get; set; }
 
-        public string Problem { get; set; }
+        public string? Problem { get; set; }
 
-        public string ProblemAdvice { get; set; }
+        public string? ProblemAdvice { get; set; }
+
+        private static readonly char[] separatorHyphen = new[] { '-' };
+        private static readonly char[] separatorAmpersand = new[] { '&' };
 
         public override string ToString()
         {
@@ -92,21 +97,22 @@ namespace Hyperar.OAuthCore.Framework
                 throw Error.CantBuildProblemReportWhenProblemEmpty();
             }
 
-            var response = new NameValueCollection();
-
-            response[Parameters.OAuth_Problem] = this.Problem;
+            NameValueCollection response = new NameValueCollection
+            {
+                [Parameters.OAuth_Problem] = this.Problem
+            };
 
             if (!string.IsNullOrEmpty(this.ProblemAdvice))
             {
                 response[Parameters.OAuth_Problem_Advice] = this.ProblemAdvice.Replace("\r\n", "\n").Replace("\r", "\n");
             }
 
-            if (this.ParametersAbsent.Count > 0)
+            if (this.ParametersAbsent?.Count > 0)
             {
                 response[Parameters.OAuth_Parameters_Absent] = FormatParameterNames(this.ParametersAbsent);
             }
 
-            if (this.ParametersRejected.Count > 0)
+            if (this.ParametersRejected?.Count > 0)
             {
                 response[Parameters.OAuth_Parameters_Rejected] = FormatParameterNames(this.ParametersRejected);
             }
@@ -129,24 +135,24 @@ namespace Hyperar.OAuthCore.Framework
 
         private static string FormatParameterNames(IEnumerable<string> names)
         {
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
             foreach (string name in names)
             {
                 if (builder.Length > 0)
                 {
-                    builder.Append("&");
+                    _ = builder.Append('&');
                 }
 
-                builder.Append(UriUtility.UrlEncode(name));
+                _ = builder.Append(UriUtility.UrlEncode(name));
             }
 
             return builder.ToString();
         }
 
-        private static List<string> ParseFormattedParameters(string formattedList)
+        private static List<string>? ParseFormattedParameters(string? formattedList)
         {
-            return formattedList.Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            return formattedList?.Split(separatorAmpersand, StringSplitOptions.RemoveEmptyEntries).ToList();
         }
     }
 }

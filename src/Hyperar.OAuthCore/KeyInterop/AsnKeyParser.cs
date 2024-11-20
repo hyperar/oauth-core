@@ -27,7 +27,6 @@ namespace Hyperar.OAuthCore.KeyInterop
     #endregion License
 
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
@@ -36,14 +35,15 @@ namespace Hyperar.OAuthCore.KeyInterop
 
     public class AsnKeyParser
     {
+
         private readonly AsnParser parser;
 
-        public AsnKeyParser(String pathname)
+        public AsnKeyParser(string pathname)
         {
-            using (var reader = new BinaryReader(
+            using (BinaryReader reader = new BinaryReader(
                 new FileStream(pathname, FileMode.Open, FileAccess.Read)))
             {
-                var info = new FileInfo(pathname);
+                FileInfo info = new FileInfo(pathname);
 
                 this.parser = new AsnParser(reader.ReadBytes((int)info.Length));
             }
@@ -56,7 +56,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public static byte[] TrimLeadingZero(byte[] values)
         {
-            byte[] r = null;
+            byte[] r;
             if ((0x00 == values[0]) && (values.Length > 1))
             {
                 r = new byte[values.Length - 1];
@@ -91,77 +91,43 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public RSAParameters ParseRSAPublicKey()
         {
-            var parameters = new RSAParameters();
+            RSAParameters parameters = new RSAParameters();
 
-            // Current value
-            byte[] value = null;
+            this.ValidateSequenceSize();
 
-            // Sanity Check
-            int length = 0;
+            this.ValidateAlgorithmIdentifierSize();
 
-            // Checkpoint
-            int position = this.parser.CurrentPosition();
-
-            // Ignore Sequence - PublicKeyInfo
-            length = this.parser.NextSequence();
-            if (length != this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect Sequence Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Ignore Sequence - AlgorithmIdentifier
-            length = this.parser.NextSequence();
-            if (length > this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Grab the OID
-            value = this.parser.NextOID();
-            byte[] oid = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
-            if (!EqualOid(value, oid))
-            {
-                throw new BerDecodeException("Expected OID 1.2.840.113549.1.1.1", position);
-            }
+            this.ValidateRsaKeyOid();
 
             // Optional Parameters
             if (this.parser.IsNextNull())
             {
-                this.parser.NextNull();
+                _ = this.parser.NextNull();
 
                 // Also OK: value = parser.Next();
             }
             else
             {
                 // Gracefully skip the optional data
-                value = this.parser.Next();
+                _ = this.parser.Next();
             }
 
             // Checkpoint
-            position = this.parser.CurrentPosition();
+            int position = this.parser.CurrentPosition();
 
             // Ignore BitString - PublicKey
-            length = this.parser.NextBitString();
+            int length = this.parser.NextBitString();
+
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect PublicKey Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                (this.parser.RemainingBytes()).ToString(CultureInfo.InvariantCulture));
+                StringBuilder sb = new StringBuilder("Incorrect PublicKey Size. ");
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
@@ -170,12 +136,17 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // Ignore Sequence - RSAPublicKey
             length = this.parser.NextSequence();
+
             if (length < this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
+                StringBuilder sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
@@ -189,90 +160,61 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public RSAParameters ParseRSAPrivateKey()
         {
-            var parameters = new RSAParameters();
+            RSAParameters parameters = new RSAParameters();
 
-            // Current value
-            byte[] value = null;
+            this.ValidateSequenceSize();
 
             // Checkpoint
             int position = this.parser.CurrentPosition();
 
-            // Sanity Check
-            int length = 0;
-
-            // Ignore Sequence - PrivateKeyInfo
-            length = this.parser.NextSequence();
-            if (length != this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect Sequence Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
+            // Current value
             // Version
-            value = this.parser.NextInteger();
+            byte[] value = this.parser.NextInteger();
+
             if (0x00 != value[0])
             {
-                var sb = new StringBuilder("Incorrect PrivateKeyInfo Version. ");
-                var v = new BigInteger(value);
-                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
+                StringBuilder sb = new StringBuilder("Incorrect PrivateKeyInfo Version. ");
+
+                BigInteger v = new BigInteger(value);
+
+                _ = sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
+
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
-            // Checkpoint
-            position = this.parser.CurrentPosition();
+            this.ValidateAlgorithmIdentifierSize();
 
-            // Ignore Sequence - AlgorithmIdentifier
-            length = this.parser.NextSequence();
-            if (length > this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Grab the OID
-            value = this.parser.NextOID();
-            byte[] oid = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
-            if (!EqualOid(value, oid))
-            {
-                throw new BerDecodeException("Expected OID 1.2.840.113549.1.1.1", position);
-            }
+            this.ValidateRsaKeyOid();
 
             // Optional Parameters
             if (this.parser.IsNextNull())
             {
-                this.parser.NextNull();
+                _ = this.parser.NextNull();
 
                 // Also OK: value = parser.Next();
             }
             else
             {
                 // Gracefully skip the optional data
-                value = this.parser.Next();
+                _ = this.parser.Next();
             }
 
             // Checkpoint
             position = this.parser.CurrentPosition();
 
             // Ignore OctetString - PrivateKey
-            length = this.parser.NextOctetString();
+            int length = this.parser.NextOctetString();
+
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect PrivateKey Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
+                StringBuilder sb = new StringBuilder("Incorrect PrivateKey Size. ");
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
@@ -281,12 +223,17 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // Ignore Sequence - RSAPrivateKey
             length = this.parser.NextSequence();
+
             if (length < this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect RSAPrivateKey Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
+                StringBuilder sb = new StringBuilder("Incorrect RSAPrivateKey Size. ");
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
@@ -297,9 +244,12 @@ namespace Hyperar.OAuthCore.KeyInterop
             value = this.parser.NextInteger();
             if (0x00 != value[0])
             {
-                var sb = new StringBuilder("Incorrect RSAPrivateKey Version. ");
-                var v = new BigInteger(value);
-                sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
+                StringBuilder sb = new StringBuilder("Incorrect RSAPrivateKey Version. ");
+
+                BigInteger v = new BigInteger(value);
+
+                _ = sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
+
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
@@ -319,66 +269,15 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public DSAParameters ParseDSAPublicKey()
         {
-            var parameters = new DSAParameters();
+            DSAParameters parameters = new DSAParameters();
 
-            // Current value
-            byte[] value = null;
+            this.ValidateSequenceSize();
 
-            // Current Position
-            int position = this.parser.CurrentPosition();
+            this.ValidateAlgorithmIdentifierSize();
 
-            // Sanity Checks
-            int length = 0;
+            this.ValidateDsaKeyOid();
 
-            // Ignore Sequence - PublicKeyInfo
-            length = this.parser.NextSequence();
-            if (length != this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect Sequence Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Ignore Sequence - AlgorithmIdentifier
-            length = this.parser.NextSequence();
-            if (length > this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Grab the OID
-            value = this.parser.NextOID();
-            byte[] oid = { 0x2a, 0x86, 0x48, 0xce, 0x38, 0x04, 0x01 };
-            if (!EqualOid(value, oid))
-            {
-                throw new BerDecodeException("Expected OID 1.2.840.10040.4.1", position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Ignore Sequence - DSS-Params
-            length = this.parser.NextSequence();
-            if (length > this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect DSS-Params Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
+            this.ValidateDdsParametersSize();
 
             // Next three are curve parameters
             parameters.P = TrimLeadingZero(this.parser.NextInteger());
@@ -386,7 +285,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             parameters.G = TrimLeadingZero(this.parser.NextInteger());
 
             // Ignore BitString - PrivateKey
-            this.parser.NextBitString();
+            _ = this.parser.NextBitString();
 
             // Public Key
             parameters.Y = TrimLeadingZero(this.parser.NextInteger());
@@ -398,76 +297,27 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public DSAParameters ParseDSAPrivateKey()
         {
-            var parameters = new DSAParameters();
+            DSAParameters parameters = new DSAParameters();
 
-            // Current value
-            byte[] value = null;
-
-            // Current Position
-            int position = this.parser.CurrentPosition();
-
-            // Sanity Checks
-            int length = 0;
-
-            // Ignore Sequence - PrivateKeyInfo
-            length = this.parser.NextSequence();
-            if (length != this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect Sequence Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
+            this.ValidateSequenceSize();
 
             // Checkpoint
-            position = this.parser.CurrentPosition();
+            int position = this.parser.CurrentPosition();
 
+            // Current value
             // Version
-            value = this.parser.NextInteger();
+            byte[] value = this.parser.NextInteger();
+
             if (0x00 != value[0])
             {
                 throw new BerDecodeException("Incorrect PrivateKeyInfo Version", position);
             }
 
-            // Checkpoint
-            position = this.parser.CurrentPosition();
+            this.ValidateAlgorithmIdentifierSize();
 
-            // Ignore Sequence - AlgorithmIdentifier
-            length = this.parser.NextSequence();
-            if (length > this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
+            this.ValidateDsaKeyOid();
 
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Grab the OID
-            value = this.parser.NextOID();
-            byte[] oid = { 0x2a, 0x86, 0x48, 0xce, 0x38, 0x04, 0x01 };
-            if (!EqualOid(value, oid))
-            {
-                throw new BerDecodeException("Expected OID 1.2.840.10040.4.1", position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Ignore Sequence - DSS-Params
-            length = this.parser.NextSequence();
-            if (length > this.parser.RemainingBytes())
-            {
-                var sb = new StringBuilder("Incorrect DSS-Params Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                length.ToString(CultureInfo.InvariantCulture),
-                                this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                throw new BerDecodeException(sb.ToString(), position);
-            }
+            this.ValidateDdsParametersSize();
 
             // Next three are curve parameters
             parameters.P = TrimLeadingZero(this.parser.NextInteger());
@@ -475,7 +325,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             parameters.G = TrimLeadingZero(this.parser.NextInteger());
 
             // Ignore OctetString - PrivateKey
-            this.parser.NextOctetString();
+            _ = this.parser.NextOctetString();
 
             // Private Key
             parameters.X = TrimLeadingZero(this.parser.NextInteger());
@@ -484,373 +334,102 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             return parameters;
         }
-    }
 
-    internal class AsnParser
-    {
-        private readonly int initialCount;
-
-        private readonly List<byte> octets;
-
-        public AsnParser(byte[] values)
+        private void ValidateSequenceSize()
         {
-            this.octets = new List<byte>(values.Length);
-            this.octets.AddRange(values);
+            // Current Position
+            int position = this.parser.CurrentPosition();
 
-            this.initialCount = this.octets.Count;
+            // Ignore Sequence - PrivateKeyInfo
+            int length = this.parser.NextSequence();
+
+            if (length != this.parser.RemainingBytes())
+            {
+                StringBuilder sb = new StringBuilder(Constants.IncorrectSequenceSizeMessage);
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
+                throw new BerDecodeException(sb.ToString(), position);
+            }
         }
 
-        public int CurrentPosition()
+        private void ValidateDsaKeyOid()
         {
-            return this.initialCount - this.octets.Count;
-        }
-
-        public int RemainingBytes()
-        {
-            return this.octets.Count;
-        }
-
-        private int GetLength()
-        {
-            int length = 0;
-
             // Checkpoint
-            int position = this.CurrentPosition();
+            int position = this.parser.CurrentPosition();
 
-            try
+            // Grab the OID
+            byte[] value = this.parser.NextOID();
+
+            byte[] oid = { 0x2a, 0x86, 0x48, 0xce, 0x38, 0x04, 0x01 };
+
+            if (!EqualOid(value, oid))
             {
-                byte b = this.GetNextOctet();
-
-                if (b == (b & 0x7f))
-                {
-                    return b;
-                }
-                int i = b & 0x7f;
-
-                if (i > 4)
-                {
-                    var sb = new StringBuilder("Invalid Length Encoding. ");
-                    sb.AppendFormat("Length uses {0} octets",
-                                    i.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                while (0 != i--)
-                {
-                    // shift left
-                    length <<= 8;
-
-                    length |= this.GetNextOctet();
-                }
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
-            }
-
-            return length;
-        }
-
-        public byte[] Next()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-#pragma warning disable 0219
-                byte b = this.GetNextOctet();
-#pragma warning restore 0219
-
-                int length = this.GetLength();
-                if (length > this.RemainingBytes())
-                {
-                    var sb = new StringBuilder("Incorrect Size. ");
-                    sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                    length.ToString(CultureInfo.InvariantCulture),
-                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                return this.GetOctets(length);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException("Expected OID 1.2.840.10040.4.1", position);
             }
         }
 
-        public byte GetNextOctet()
+        private void ValidateRsaKeyOid()
         {
-            int position = this.CurrentPosition();
+            // Checkpoint
+            int position = this.parser.CurrentPosition();
 
-            if (0 == this.RemainingBytes())
+            // Grab the OID
+            byte[] value = this.parser.NextOID();
+
+            byte[] oid = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
+
+            if (!EqualOid(value, oid))
             {
-                var sb = new StringBuilder("Incorrect Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                1.ToString(CultureInfo.InvariantCulture),
-                                this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
+                throw new BerDecodeException("Expected OID 1.2.840.113549.1.1.1", position);
+            }
+        }
+
+        private void ValidateDdsParametersSize()
+        {
+            // Checkpoint
+            int position = this.parser.CurrentPosition();
+
+            // Ignore Sequence - DSS-Params
+            int length = this.parser.NextSequence();
+
+            if (length > this.parser.RemainingBytes())
+            {
+                StringBuilder sb = new StringBuilder("Incorrect DSS-Params Size. ");
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
                 throw new BerDecodeException(sb.ToString(), position);
             }
-
-            byte b = this.GetOctets(1)[0];
-
-            return b;
         }
 
-        public byte[] GetOctets(int octetCount)
+        private void ValidateAlgorithmIdentifierSize()
         {
-            int position = this.CurrentPosition();
+            // Checkpoint
+            int position = this.parser.CurrentPosition();
 
-            if (octetCount > this.RemainingBytes())
+            // Ignore Sequence - AlgorithmIdentifier
+            int length = this.parser.NextSequence();
+
+            if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect Size. ");
-                sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                octetCount.ToString(CultureInfo.InvariantCulture),
-                                this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
+                StringBuilder sb = new StringBuilder(Constants.IncorrectAlgorithmIdentifierSizeMessage);
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
                 throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            var values = new byte[octetCount];
-
-            try
-            {
-                this.octets.CopyTo(0, values, 0, octetCount);
-                this.octets.RemoveRange(0, octetCount);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
-            }
-
-            return values;
-        }
-
-        public bool IsNextNull()
-        {
-            return 0x05 == this.octets[0];
-        }
-
-        public int NextNull()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-                if (0x05 != b)
-                {
-                    var sb = new StringBuilder("Expected Null. ");
-                    sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                // Next octet must be 0
-                b = this.GetNextOctet();
-                if (0x00 != b)
-                {
-                    var sb = new StringBuilder("Null has non-zero size. ");
-                    sb.AppendFormat("Size: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                return 0;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
-            }
-        }
-
-        public bool IsNextSequence()
-        {
-            return 0x30 == this.octets[0];
-        }
-
-        public int NextSequence()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-                if (0x30 != b)
-                {
-                    var sb = new StringBuilder("Expected Sequence. ");
-                    sb.AppendFormat("Specified Identifier: {0}",
-                                    b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                int length = this.GetLength();
-                if (length > this.RemainingBytes())
-                {
-                    var sb = new StringBuilder("Incorrect Sequence Size. ");
-                    sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                    length.ToString(CultureInfo.InvariantCulture),
-                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                return length;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
-            }
-        }
-
-        public bool IsNextOctetString()
-        {
-            return 0x04 == this.octets[0];
-        }
-
-        public int NextOctetString()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-                if (0x04 != b)
-                {
-                    var sb = new StringBuilder("Expected Octet String. ");
-                    sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                int length = this.GetLength();
-                if (length > this.RemainingBytes())
-                {
-                    var sb = new StringBuilder("Incorrect Octet String Size. ");
-                    sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                    length.ToString(CultureInfo.InvariantCulture),
-                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                return length;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
-            }
-        }
-
-        public bool IsNextBitString()
-        {
-            return 0x03 == this.octets[0];
-        }
-
-        public int NextBitString()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-                if (0x03 != b)
-                {
-                    var sb = new StringBuilder("Expected Bit String. ");
-                    sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                int length = this.GetLength();
-
-                // We need to consume unused bits, which is the first
-                //   octet of the remaing values
-                b = this.octets[0];
-                this.octets.RemoveAt(0);
-                length--;
-
-                if (0x00 != b)
-                {
-                    throw new BerDecodeException("The first octet of BitString must be 0", position);
-                }
-
-                return length;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
-            }
-        }
-
-        public bool IsNextInteger()
-        {
-            return 0x02 == this.octets[0];
-        }
-
-        public byte[] NextInteger()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-                if (0x02 != b)
-                {
-                    var sb = new StringBuilder("Expected Integer. ");
-                    sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                int length = this.GetLength();
-                if (length > this.RemainingBytes())
-                {
-                    var sb = new StringBuilder("Incorrect Integer Size. ");
-                    sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                    length.ToString(CultureInfo.InvariantCulture),
-                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                return this.GetOctets(length);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
-            }
-        }
-
-        public byte[] NextOID()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-                if (0x06 != b)
-                {
-                    var sb = new StringBuilder("Expected Object Identifier. ");
-                    sb.AppendFormat("Specified Identifier: {0}",
-                                    b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                int length = this.GetLength();
-                if (length > this.RemainingBytes())
-                {
-                    var sb = new StringBuilder("Incorrect Object Identifier Size. ");
-                    sb.AppendFormat("Specified: {0}, Remaining: {1}",
-                                    length.ToString(CultureInfo.InvariantCulture),
-                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                var values = new byte[length];
-
-                for (int i = 0; i < length; i++)
-                {
-                    values[i] = this.octets[0];
-                    this.octets.RemoveAt(0);
-                }
-
-                return values;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
             }
         }
     }

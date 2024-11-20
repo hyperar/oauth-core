@@ -29,17 +29,11 @@ namespace Hyperar.OAuthCore.Consumer
     {
         public static readonly DefaultConsumerRequestFactory Instance = new DefaultConsumerRequestFactory();
 
-        public IConsumerRequest CreateConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken token)
+        public IConsumerRequest CreateConsumerRequest(IOAuthContext context, IOAuthConsumerContext consumerContext, IToken? token)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException("context");
-            }
+            ArgumentNullException.ThrowIfNull(context);
 
-            if (consumerContext == null)
-            {
-                throw new ArgumentNullException("consumerContext");
-            }
+            ArgumentNullException.ThrowIfNull(consumerContext);
 
             return new ConsumerRequest(context, consumerContext, token);
         }

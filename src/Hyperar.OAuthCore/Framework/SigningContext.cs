@@ -26,10 +26,10 @@ namespace Hyperar.OAuthCore.Framework
 
     public class SigningContext
     {
-        public AsymmetricAlgorithm Algorithm { get; set; }
+        public AsymmetricAlgorithm? Algorithm { get; set; }
 
-        public string ConsumerSecret { get; set; }
+        public string? ConsumerSecret { get; set; }
 
-        public string SignatureBase { get; set; }
+        public string? SignatureBase { get; set; }
     }
 }

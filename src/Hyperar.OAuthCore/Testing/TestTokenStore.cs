@@ -71,20 +71,40 @@ namespace Hyperar.OAuthCore.Testing
         public IToken CreateAccessToken(IOAuthContext context)
         {
             EnsureTestConsumer(context);
-            return new TokenBase { ConsumerKey = "key", Realm = null, Token = "accesskey", TokenSecret = AccessSecret, SessionHandle = "sessionHandle" };
+            return new TokenBase
+            {
+                ConsumerKey = "key",
+                Realm = null,
+                Token = "accesskey",
+                TokenSecret = AccessSecret,
+                SessionHandle = "sessionHandle"
+            };
         }
 
-        public IToken CreateAccessTokenForRequestToken(IOAuthContext requestContext)
+        public static IToken CreateAccessTokenForRequestToken(IOAuthContext requestContext)
         {
             EnsureTestConsumer(requestContext);
-            return new TokenBase { ConsumerKey = "key", Realm = null, Token = "accesskey", TokenSecret = AccessSecret, SessionHandle = "sessionHandle" };
+            return new TokenBase
+            {
+                ConsumerKey = "key",
+                Realm = null,
+                Token = "accesskey",
+                TokenSecret = AccessSecret,
+                SessionHandle = "sessionHandle"
+            };
         }
 
         public IToken CreateRequestToken(IOAuthContext context)
         {
             EnsureTestConsumer(context);
 
-            return new TokenBase { ConsumerKey = "key", Realm = null, Token = "requestkey", TokenSecret = RequestSecret };
+            return new TokenBase
+            {
+                ConsumerKey = "key",
+                Realm = null,
+                Token = "requestkey",
+                TokenSecret = RequestSecret
+            };
         }
 
         public IToken GetAccessTokenAssociatedWithRequestToken(IOAuthContext requestContext)
@@ -96,7 +116,13 @@ namespace Hyperar.OAuthCore.Testing
                 throw new OAuthException(requestContext, OAuthProblems.TokenRejected, "Expected Token \"requestkey\"");
             }
 
-            return new TokenBase { ConsumerKey = "key", Realm = null, Token = "accesskey", TokenSecret = AccessSecret };
+            return new TokenBase
+            {
+                ConsumerKey = "key",
+                Realm = null,
+                Token = "accesskey",
+                TokenSecret = AccessSecret
+            };
         }
 
         public string GetAccessTokenSecret(IOAuthContext context)
@@ -132,26 +158,38 @@ namespace Hyperar.OAuthCore.Testing
         public IToken RenewAccessToken(IOAuthContext requestContext)
         {
             EnsureTestConsumer(requestContext);
-            return new TokenBase { ConsumerKey = "key", Realm = null, Token = "accesskey", TokenSecret = AccessSecret, SessionHandle = requestContext.SessionHandle };
+
+            return new TokenBase
+            {
+                ConsumerKey = "key",
+                Realm = null,
+                Token = "accesskey",
+                TokenSecret = AccessSecret,
+                SessionHandle = requestContext.SessionHandle
+            };
         }
 
         private static void EnsureTestConsumer(IConsumer consumer)
         {
-            if (consumer == null)
-            {
-                throw new ArgumentNullException("consumer");
-            }
+            ArgumentNullException.ThrowIfNull(consumer);
 
-            if (consumer.Realm != null)
+            if (consumer is OAuthContext context)
             {
-                throw new OAuthException(consumer as OAuthContext, OAuthProblems.ConsumerKeyRejected,
-                                         "supplied realm was unknown to the provider");
-            }
+                if (consumer.Realm != null)
+                {
+                    throw new OAuthException(
+                        context,
+                        OAuthProblems.ConsumerKeyRejected,
+                        "supplied realm was unknown to the provider");
+                }
 
-            if (consumer.ConsumerKey != "key")
-            {
-                throw new OAuthException(consumer as OAuthContext, OAuthProblems.ConsumerKeyRejected,
-                                         "supplied consumer key was unknown to the provider");
+                if (consumer.ConsumerKey != "key")
+                {
+                    throw new OAuthException(
+                        context,
+                        OAuthProblems.ConsumerKeyRejected,
+                        "supplied consumer key was unknown to the provider");
+                }
             }
         }
     }

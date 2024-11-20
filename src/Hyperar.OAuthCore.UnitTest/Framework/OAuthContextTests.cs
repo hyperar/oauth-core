@@ -36,7 +36,7 @@
         [TestMethod]
         public void GenerateSignatureForEmptyBody()
         {
-            var context = new OAuthContext();
+            OAuthContext context = new OAuthContext();
 
             Assert.AreEqual("2jmj7l5rSw0yVb/vlWAYkK/YBwk=", context.GenerateBodyHash());
         }
@@ -44,7 +44,7 @@
         [TestMethod]
         public void GenerateSignatureWhenTokenIsUrlEncoded()
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 RequestMethod = "GET",
                 RawUri = new Uri("https://www.google.com/m8/feeds/contacts/default/base"),
@@ -68,7 +68,7 @@
             // generate a signature base, as per the oauth body hash spec example
             // http://oauth.googlecode.com/svn/spec/ext/body_hash/1.0/oauth-bodyhash.html
 
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 RequestMethod = "POST",
                 RawUri = new Uri("http://www.example.com/resource"),
@@ -94,7 +94,7 @@
             // generate a signature base, as per the twitter example
             // http://dev.twitter.com/pages/xauth
 
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 RawUri = new Uri("https://api.twitter.com/oauth/access_token"),
                 RequestMethod = "POST",

@@ -28,11 +28,8 @@ namespace Hyperar.OAuthCore.KeyInterop
     using System.Globalization;
     using System.Security.Cryptography;
 
-    internal class AsnKeyBuilder
+    internal static class AsnKeyBuilder
     {
-        private static readonly byte[] EMPTY = new byte[] { };
-
-        private static readonly byte[] ZERO = new byte[] { 0 };
 
         /// <summary>
         /// <para>An ordered sequence of zero, one or more bits. Returns
@@ -86,11 +83,13 @@ namespace Hyperar.OAuthCore.KeyInterop
             if (IsEmpty(octets))
             {
                 // Empty octet string
-                return new AsnType(0x03, EMPTY);
+                return new AsnType(0x03, Constants.EMPTY);
             }
 
             if (!(unusedBits < 8))
-            { throw new ArgumentException("Unused bits must be less than 8."); }
+            {
+                throw new ArgumentException("Unused bits must be less than 8.");
+            }
 
             byte[] b = Concatenate(new byte[] { (byte)unusedBits }, octets);
 
@@ -118,7 +117,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         public static AsnType CreateBitString(AsnType value)
         {
             if (IsEmpty(value))
-            { return new AsnType(0x03, EMPTY); }
+            {
+                return new AsnType(0x03, Constants.EMPTY);
+            }
 
             // BitString: Tag 0x03 (3, Universal, Primitive)
             return CreateBitString(value.GetBytes(), 0x00);
@@ -144,7 +145,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         public static AsnType CreateBitString(AsnType[] values)
         {
             if (IsEmpty(values))
-            { return new AsnType(0x03, EMPTY); }
+            {
+                return new AsnType(0x03, Constants.EMPTY);
+            }
 
             // BitString: Tag 0x03 (3, Universal, Primitive)
             return CreateBitString(Concatenate(values), 0x00);
@@ -174,16 +177,22 @@ namespace Hyperar.OAuthCore.KeyInterop
         public static AsnType CreateBitString(string value)
         {
             if (IsEmpty(value))
-            { return CreateBitString(EMPTY); }
+            {
+                return CreateBitString(Constants.EMPTY);
+            }
 
             // Any unused bits?
             int lstrlen = value.Length;
-            int unusedBits = 8 - lstrlen % 8;
+            int unusedBits = 8 - (lstrlen % 8);
             if (8 == unusedBits)
-            { unusedBits = 0; }
+            {
+                unusedBits = 0;
+            }
 
             for (int i = 0; i < unusedBits; i++)
-            { value += "0"; }
+            {
+                value += "0";
+            }
 
             // Determine number of octets
             int loctlen = (lstrlen + 7) / 8;
@@ -192,12 +201,21 @@ namespace Hyperar.OAuthCore.KeyInterop
             for (int i = 0; i < loctlen; i++)
             {
                 string s = value.Substring(i * 8, 8);
-                byte b = 0x00;
-
+                byte b;
                 try
-                { b = Convert.ToByte(s, 2); }
-                catch (FormatException /*e*/) { unusedBits = 0; break; }
-                catch (OverflowException /*e*/) { unusedBits = 0; break; }
+                {
+                    b = Convert.ToByte(s, 2);
+                }
+                catch (FormatException /*e*/)
+                {
+                    unusedBits = 0;
+                    break;
+                }
+                catch (OverflowException /*e*/)
+                {
+                    unusedBits = 0;
+                    break;
+                }
 
                 octets.Add(b);
             }
@@ -234,7 +252,9 @@ namespace Hyperar.OAuthCore.KeyInterop
             //   drop the Integer? Dropping integers
             //   is probably not te best choice...
             if (IsEmpty(value))
-            { return CreateInteger(ZERO); }
+            {
+                return CreateInteger(Constants.ZERO);
+            }
 
             return new AsnType(0x02, value);
         }
@@ -287,12 +307,16 @@ namespace Hyperar.OAuthCore.KeyInterop
             //   drop the Integer? Dropping integers
             //   is probably not te best choice...
             if (IsEmpty(value))
-            { return CreateInteger(ZERO); }
+            {
+                return CreateInteger(Constants.ZERO);
+            }
 
             // No Trimming
             // The byte[] may be that way for a reason
             if (IsZero(value))
-            { return CreateInteger(value); }
+            {
+                return CreateInteger(value);
+            }
 
             //
             // At this point, we know we have at least 1 octet
@@ -302,7 +326,9 @@ namespace Hyperar.OAuthCore.KeyInterop
             if (value[0] >= 0x80)
 
             // Pass through with no modifications
-            { return CreateInteger(value); }
+            {
+                return CreateInteger(value);
+            }
 
             // No need to Duplicate - Compliment2s
             // performs the action
@@ -338,11 +364,14 @@ namespace Hyperar.OAuthCore.KeyInterop
         /// <seealso cref="CreateIntegerNeg"/>
         public static AsnType CreateIntegerPos(byte[] value)
         {
-            byte[] i = null, d = Duplicate(value);
+            byte[] d = Duplicate(value);
 
             if (IsEmpty(d))
-            { d = ZERO; }
+            {
+                d = Constants.ZERO;
+            }
 
+            byte[] i;
             // Mediate the 2's compliment representation.
             // If the first byte has its high bit set, we will
             // add the additional byte of 0x00
@@ -392,7 +421,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             if (IsEmpty(value))
             {
                 // Empty octet string
-                return new AsnType(0x04, EMPTY);
+                return new AsnType(0x04, Constants.EMPTY);
             }
 
             // OctetString: Tag 0x04 (4, Universal, Primitive)
@@ -478,7 +507,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         public static AsnType CreateOctetString(string value)
         {
             if (IsEmpty(value))
-            { return CreateOctetString(EMPTY); }
+            {
+                return CreateOctetString(Constants.EMPTY);
+            }
 
             // Determine number of octets
             int len = (value.Length + 255) / 256;
@@ -487,18 +518,80 @@ namespace Hyperar.OAuthCore.KeyInterop
             for (int i = 0; i < len; i++)
             {
                 string s = value.Substring(i * 2, 2);
-                byte b = 0x00;
-
+                byte b;
                 try
-                { b = Convert.ToByte(s, 16); }
-                catch (FormatException /*e*/) { break; }
-                catch (OverflowException /*e*/) { break; }
+                {
+                    b = Convert.ToByte(s, 16);
+                }
+                catch (FormatException /*e*/)
+                {
+                    break;
+                }
+                catch (OverflowException /*e*/)
+                {
+                    break;
+                }
 
                 octets.Add(b);
             }
 
             // OctetString: Tag 0x04 (4, Universal, Primitive)
             return CreateOctetString(octets.ToArray());
+        }
+
+        private static bool ValidateOidValue(string value, ref ulong a, ref List<ulong> arcs)
+        {
+            // Punt?
+            if (IsEmpty(value))
+            {
+                return false;
+            }
+
+            string[] tokens = value.Split(Constants.SeparatorSpaceAndDot);
+
+            // Punt?
+            if (IsEmpty(tokens))
+            {
+                return false;
+            }
+
+            // Parsing/Manipulation of the arc value
+            a = 0;
+
+            // One or more strings are available
+            arcs = new List<ulong>();
+
+            foreach (string t in tokens)
+            {
+                // No empty or ill-formed strings...
+                if (t.Length == 0)
+                {
+                    break;
+                }
+
+                try
+                {
+                    a = Convert.ToUInt64(t, CultureInfo.InvariantCulture);
+                }
+                catch (FormatException /*e*/)
+                {
+                    break;
+                }
+                catch (OverflowException /*e*/)
+                {
+                    break;
+                }
+
+                arcs.Add(a);
+            }
+
+            // Punt?
+            if (0 == arcs.Count)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -516,44 +609,12 @@ namespace Hyperar.OAuthCore.KeyInterop
         /// <code>AsnType oid = CreateOid("1.2.840.113549.1.1.1")</code>
         /// </example>
         /// <seealso cref="CreateOid(byte[])"/>
-        public static AsnType CreateOid(string value)
+        public static AsnType? CreateOid(string value)
         {
-            // Punt?
-            if (IsEmpty(value))
-            {
-                return null;
-            }
-
-            string[] tokens = value.Split(new char[] { ' ', '.' });
-
-            // Punt?
-            if (IsEmpty(tokens))
-            {
-                return null;
-            }
-
-            // Parsing/Manipulation of the arc value
+            List<ulong> arcs = new List<ulong>();
             ulong a = 0;
 
-            // One or more strings are available
-            List<ulong> arcs = new List<ulong>();
-
-            foreach (string t in tokens)
-            {
-                // No empty or ill-formed strings...
-                if (t.Length == 0)
-                { break; }
-
-                try
-                { a = Convert.ToUInt64(t, CultureInfo.InvariantCulture); }
-                catch (FormatException /*e*/) { break; }
-                catch (OverflowException /*e*/) { break; }
-
-                arcs.Add(a);
-            }
-
-            // Punt?
-            if (0 == arcs.Count)
+            if (!ValidateOidValue(value, ref a, ref arcs))
             {
                 return null;
             }
@@ -564,9 +625,15 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Guard the case of a small list
             // The list has at least 1 item...
             if (arcs.Count >= 1)
-            { a = arcs[0] * 40; }
+            {
+                a = arcs[0] * 40;
+            }
+
             if (arcs.Count >= 2)
-            { a += arcs[1]; }
+            {
+                a += arcs[1];
+            }
+
             octets.Add((byte)a);
 
             // Add remaining arcs (subidentifiers)
@@ -585,7 +652,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                     // Each entry is formed from the low 7 bits (0x7F).
                     // Set high bit of all entries (0x80) per X.680. We
                     // will unset the high bit of the final byte later.
-                    temp.Add((byte)(0x80 | arc & 0x7F));
+                    temp.Add((byte)(0x80 | (arc & 0x7F)));
                     arc >>= 7;
                 } while (0 != arc);
 
@@ -602,7 +669,9 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                 // Add to the resulting array
                 foreach (byte b in t)
-                { octets.Add(b); }
+                {
+                    octets.Add(b);
+                }
             }
 
             return CreateOid(octets.ToArray());
@@ -625,11 +694,13 @@ namespace Hyperar.OAuthCore.KeyInterop
         /// AsnType = CreateOid(rsa)</code>
         /// </example>
         /// <seealso cref="CreateOid(string)"/>
-        public static AsnType CreateOid(byte[] value)
+        public static AsnType? CreateOid(byte[] value)
         {
             // Punt...
             if (IsEmpty(value))
-            { return null; }
+            {
+                return null;
+            }
 
             // OID: Tag 0x06 (6, Universal, Primitive)
             return new AsnType(0x06, value);
@@ -660,7 +731,9 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // One or more required
             if (IsEmpty(value))
-            { throw new ArgumentException("A sequence requires at least one value."); }
+            {
+                throw new ArgumentException("A sequence requires at least one value.");
+            }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
             return new AsnType(0x30, value.GetBytes());
@@ -691,7 +764,9 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // One or more required
             if (IsEmpty(values))
-            { throw new ArgumentException("A sequence requires at least one value."); }
+            {
+                throw new ArgumentException("A sequence requires at least one value.");
+            }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
             return new AsnType(0x10 | 0x20, Concatenate(values));
@@ -719,7 +794,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         {
             // From the ASN.1 Mailing List
             if (IsEmpty(value))
-            { return new AsnType(0x30, EMPTY); }
+            {
+                return new AsnType(0x30, Constants.EMPTY);
+            }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
             return new AsnType(0x30, value.GetBytes());
@@ -747,7 +824,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         {
             // From the ASN.1 Mailing List
             if (IsEmpty(values))
-            { return new AsnType(0x30, EMPTY); }
+            {
+                return new AsnType(0x30, Constants.EMPTY);
+            }
 
             // Sequence: Tag 0x30 (16, Universal, Constructed)
             return new AsnType(0x30, Concatenate(values));
@@ -771,20 +850,24 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Debug.Assert(null != privateKey);
 
             /* *
-      * SEQUENCE              // PrivateKeyInfo
-      * +- INTEGER(0)         // Version (v1998)
-      * +- SEQUENCE           // AlgorithmIdentifier
-      * |  +- OID             // 1.2.840.10040.4.1
-      * |  +- SEQUENCE        // DSS-Params (Optional Parameters)
-      * |    +- INTEGER (P)
-      * |    +- INTEGER (Q)
-      * |    +- INTEGER (G)
-      * +- OCTETSTRING        // PrivateKey
-      *    +- INTEGER(X)   // DSAPrivateKey X
-      * */
+            * SEQUENCE              // PrivateKeyInfo
+            * +- INTEGER(0)         // Version (v1998)
+            * +- SEQUENCE           // AlgorithmIdentifier
+            * |  +- OID             // 1.2.840.10040.4.1
+            * |  +- SEQUENCE        // DSS-Params (Optional Parameters)
+            * |    +- INTEGER (P)
+            * |    +- INTEGER (Q)
+            * |    +- INTEGER (G)
+            * +- OCTETSTRING        // PrivateKey
+            *    +- INTEGER(X)   // DSAPrivateKey X
+            * */
 
             // Version - 0 (v1998)
-            AsnType version = CreateInteger(ZERO);
+            AsnType version = CreateInteger(Constants.ZERO);
+
+            ArgumentNullException.ThrowIfNull(privateKey.P);
+            ArgumentNullException.ThrowIfNull(privateKey.Q);
+            ArgumentNullException.ThrowIfNull(privateKey.G);
 
             // Domain Parameters
             AsnType p = CreateIntegerPos(privateKey.P);
@@ -795,10 +878,19 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // OID - packed 1.2.840.10040.4.1
             //   { 0x2A, 0x86, 0x48, 0xCE, 0x38, 0x04, 0x01 }
-            AsnType oid = CreateOid("1.2.840.10040.4.1");
+            AsnType? oid = CreateOid("1.2.840.10040.4.1");
+
+            ArgumentNullException.ThrowIfNull(oid);
 
             // AlgorithmIdentifier
-            AsnType algorithmID = CreateSequence(new AsnType[] { oid, dssParams });
+            AsnType algorithmID = CreateSequence(
+                new AsnType[]
+                {
+                    oid,
+                    dssParams
+                });
+
+            ArgumentNullException.ThrowIfNull(privateKey.X);
 
             // Private Key X
             AsnType x = CreateIntegerPos(privateKey.X);
@@ -829,23 +921,32 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Debug.Assert(null != privateKey);
 
             /* *
-      * SEQUENCE                  // PublicKeyInfo
-      * +- INTEGER(0)             // Version - 0 (v1998)
-      * +- SEQUENCE               // AlgorithmIdentifier
-      *    +- OID                 // 1.2.840.113549.1.1.1
-      *    +- NULL                // Optional Parameters
-      * +- OCTETSTRING            // PrivateKey
-      *    +- SEQUENCE            // RSAPrivateKey
-      *       +- INTEGER(0)       // Version - 0 (v1998)
-      *       +- INTEGER(N)
-      *       +- INTEGER(E)
-      *       +- INTEGER(D)
-      *       +- INTEGER(P)
-      *       +- INTEGER(Q)
-      *       +- INTEGER(DP)
-      *       +- INTEGER(DQ)
-      *       +- INTEGER(Inv Q)
-      * */
+            * SEQUENCE                  // PublicKeyInfo
+            * +- INTEGER(0)             // Version - 0 (v1998)
+            * +- SEQUENCE               // AlgorithmIdentifier
+            *    +- OID                 // 1.2.840.113549.1.1.1
+            *    +- NULL                // Optional Parameters
+            * +- OCTETSTRING            // PrivateKey
+            *    +- SEQUENCE            // RSAPrivateKey
+            *       +- INTEGER(0)       // Version - 0 (v1998)
+            *       +- INTEGER(N)
+            *       +- INTEGER(E)
+            *       +- INTEGER(D)
+            *       +- INTEGER(P)
+            *       +- INTEGER(Q)
+            *       +- INTEGER(DP)
+            *       +- INTEGER(DQ)
+            *       +- INTEGER(Inv Q)
+            * */
+
+            ArgumentNullException.ThrowIfNull(privateKey.Modulus);
+            ArgumentNullException.ThrowIfNull(privateKey.Exponent);
+            ArgumentNullException.ThrowIfNull(privateKey.D);
+            ArgumentNullException.ThrowIfNull(privateKey.P);
+            ArgumentNullException.ThrowIfNull(privateKey.Q);
+            ArgumentNullException.ThrowIfNull(privateKey.DP);
+            ArgumentNullException.ThrowIfNull(privateKey.DQ);
+            ArgumentNullException.ThrowIfNull(privateKey.InverseQ);
 
             AsnType n = CreateIntegerPos(privateKey.Modulus);
             AsnType e = CreateIntegerPos(privateKey.Exponent);
@@ -861,13 +962,33 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // octstring = OCTETSTRING(SEQUENCE(INTEGER(0)INTEGER(N)...))
             AsnType key = CreateOctetString(
-                CreateSequence(new AsnType[] { version, n, e, d, p, q, dp, dq, iq })
-                );
+                CreateSequence(
+                    new AsnType[]
+                    {
+                        version,
+                        n,
+                        e,
+                        d,
+                        p,
+                        q,
+                        dp,
+                        dq,
+                        iq
+                    }));
 
             // OID - packed 1.2.840.113549.1.1.1
             //   { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 }
-            AsnType algorithmID = CreateSequence(new AsnType[] { CreateOid("1.2.840.113549.1.1.1"), CreateNull() }
-                );
+
+            AsnType? value = CreateOid("1.2.840.113549.1.1.1");
+
+            ArgumentNullException.ThrowIfNull(value);
+
+            AsnType algorithmID = CreateSequence(
+                new AsnType[]
+                {
+                    value,
+                    CreateNull()
+                });
 
             // PrivateKeyInfo
             AsnType privateKeyInfo =
@@ -892,16 +1013,20 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Debug.Assert(null != publicKey);
 
             /* *
-      * SEQUENCE              // PrivateKeyInfo
-      * +- SEQUENCE           // AlgorithmIdentifier
-      * |  +- OID             // 1.2.840.10040.4.1
-      * |  +- SEQUENCE        // DSS-Params (Optional Parameters)
-      * |    +- INTEGER (P)
-      * |    +- INTEGER (Q)
-      * |    +- INTEGER (G)
-      * +- BITSTRING          // PublicKey
-      *    +- INTEGER(Y)      // DSAPublicKey Y
-      * */
+            * SEQUENCE              // PrivateKeyInfo
+            * +- SEQUENCE           // AlgorithmIdentifier
+            * |  +- OID             // 1.2.840.10040.4.1
+            * |  +- SEQUENCE        // DSS-Params (Optional Parameters)
+            * |    +- INTEGER (P)
+            * |    +- INTEGER (Q)
+            * |    +- INTEGER (G)
+            * +- BITSTRING          // PublicKey
+            *    +- INTEGER(Y)      // DSAPublicKey Y
+            * */
+
+            ArgumentNullException.ThrowIfNull(publicKey.P);
+            ArgumentNullException.ThrowIfNull(publicKey.Q);
+            ArgumentNullException.ThrowIfNull(publicKey.G);
 
             // DSA Parameters
             AsnType p = CreateIntegerPos(publicKey.P);
@@ -913,10 +1038,14 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // OID - packed 1.2.840.10040.4.1
             //   { 0x2A, 0x86, 0x48, 0xCE, 0x38, 0x04, 0x01 }
-            AsnType oid = CreateOid("1.2.840.10040.4.1");
+            AsnType? oid = CreateOid("1.2.840.10040.4.1");
+
+            ArgumentNullException.ThrowIfNull(oid);
 
             // Sequence
             AsnType algorithmID = CreateSequence(new AsnType[] { oid, dssParams });
+
+            ArgumentNullException.ThrowIfNull(publicKey.Y);
 
             // Public Key Y
             AsnType y = CreateIntegerPos(publicKey.Y);
@@ -945,30 +1074,32 @@ namespace Hyperar.OAuthCore.KeyInterop
             // Debug.Assert(null != publicKey);
 
             /* *
-      * SEQUENCE              // PrivateKeyInfo
-      * +- SEQUENCE           // AlgorithmIdentifier
-      *    +- OID             // 1.2.840.113549.1.1.1
-      *    +- Null            // Optional Parameters
-      * +- BITSTRING          // PrivateKey
-      *    +- SEQUENCE        // RSAPrivateKey
-      *       +- INTEGER(N)   // N
-      *       +- INTEGER(E)   // E
-      * */
+            * SEQUENCE              // PrivateKeyInfo
+            * +- SEQUENCE           // AlgorithmIdentifier
+            *    +- OID             // 1.2.840.113549.1.1.1
+            *    +- Null            // Optional Parameters
+            * +- BITSTRING          // PrivateKey
+            *    +- SEQUENCE        // RSAPrivateKey
+            *       +- INTEGER(N)   // N
+            *       +- INTEGER(E)   // E
+            * */
 
             // OID - packed 1.2.840.113549.1.1.1
             //   { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 }
-            AsnType oid = CreateOid("1.2.840.113549.1.1.1");
-            AsnType algorithmID =
-                CreateSequence(new AsnType[] { oid, CreateNull() });
+            AsnType? oid = CreateOid("1.2.840.113549.1.1.1");
+
+            ArgumentNullException.ThrowIfNull(oid);
+
+            AsnType algorithmID = CreateSequence(new AsnType[] { oid, CreateNull() });
+
+            ArgumentNullException.ThrowIfNull(publicKey.Modulus);
+            ArgumentNullException.ThrowIfNull(publicKey.Exponent);
 
             AsnType n = CreateIntegerPos(publicKey.Modulus);
             AsnType e = CreateIntegerPos(publicKey.Exponent);
-            AsnType key = CreateBitString(
-                CreateSequence(new AsnType[] { n, e })
-                );
+            AsnType key = CreateBitString(CreateSequence(new AsnType[] { n, e }));
 
-            AsnType publicKeyInfo =
-                CreateSequence(new AsnType[] { algorithmID, key });
+            AsnType publicKeyInfo = CreateSequence(new AsnType[] { algorithmID, key });
 
             return new AsnMessage(publicKeyInfo.GetBytes(), "X.509");
         }
@@ -982,7 +1113,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         public static byte[] TrimEnd(byte[] octets)
         {
             if (IsEmpty(octets) || IsZero(octets))
-            { return EMPTY; }
+            {
+                return Constants.EMPTY;
+            }
 
             byte[] d = Duplicate(octets);
 
@@ -1004,7 +1137,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         public static byte[] TrimStart(byte[] octets)
         {
             if (IsEmpty(octets) || IsZero(octets))
-            { return new byte[] { }; }
+            {
+                return Array.Empty<byte>();
+            }
 
             byte[] d = Duplicate(octets);
 
@@ -1013,13 +1148,18 @@ namespace Hyperar.OAuthCore.KeyInterop
             foreach (byte b in d)
             {
                 if (0 != b)
-                { break; }
+                {
+                    break;
+                }
+
                 pos++;
             }
 
             // Nothing to trim
             if (pos == d.Length)
-            { return octets; }
+            {
+                return octets;
+            }
 
             // Allocate trimmed array
             byte[] t = new byte[d.Length - pos];
@@ -1030,31 +1170,18 @@ namespace Hyperar.OAuthCore.KeyInterop
             return t;
         }
 
-        private static byte[] Compliment1s(byte[] value)
+        internal static byte[] Compliment2s(byte[] value)
         {
             if (IsEmpty(value))
-            { return EMPTY; }
-
-            // Make a copy of octet array
-            byte[] c = Duplicate(value);
-
-            for (int i = c.Length - 1; i >= 0; i--)
             {
-                // Compliment
-                c[i] = (byte)~c[i];
+                return Constants.EMPTY;
             }
-
-            return c;
-        }
-
-        private static byte[] Compliment2s(byte[] value)
-        {
-            if (IsEmpty(value))
-            { return EMPTY; }
 
             // 2s Compliment of 0 is 0
             if (IsZero(value))
-            { return Duplicate(value); }
+            {
+                return Duplicate(value);
+            }
 
             // Make a copy of octet array
             byte[] d = Duplicate(value);
@@ -1072,14 +1199,11 @@ namespace Hyperar.OAuthCore.KeyInterop
                 d[i] = (byte)(j & 0xFF);
 
                 // Determine Next Carry
-                if (0x100 == (j & 0x100))
-                { carry = 1; }
-                else
-                { carry = 0; }
+                carry = 0x100 == (j & 0x100) ? 1 : 0;
             }
 
             // Carry Array (we may need to carry out of 'd'
-            byte[] c = null;
+            byte[] c;
             if (1 == carry)
             {
                 c = new byte[d.Length + 1];
@@ -1097,19 +1221,21 @@ namespace Hyperar.OAuthCore.KeyInterop
             return c;
         }
 
-        private static byte[] Concatenate(AsnType[] values)
+        internal static byte[] Concatenate(AsnType[] values)
         {
             // Nothing in, nothing out
             if (IsEmpty(values))
             {
-                return new byte[] { };
+                return Array.Empty<byte>();
             }
 
             int length = 0;
             foreach (AsnType t in values)
             {
                 if (null != t)
-                { length += t.GetBytes().Length; }
+                {
+                    length += t.GetBytes().Length;
+                }
             }
 
             byte[] cated = new byte[length];
@@ -1129,24 +1255,26 @@ namespace Hyperar.OAuthCore.KeyInterop
             return cated;
         }
 
-        private static byte[] Concatenate(byte[] first, byte[] second)
+        internal static byte[] Concatenate(byte[] first, byte[] second)
         {
             return Concatenate(new byte[][] { first, second });
         }
 
-        private static byte[] Concatenate(byte[][] values)
+        internal static byte[] Concatenate(byte[][] values)
         {
             // Nothing in, nothing out
             if (IsEmpty(values))
             {
-                return new byte[] { };
+                return Array.Empty<byte>();
             }
 
             int length = 0;
             foreach (byte[] b in values)
             {
                 if (null != b)
-                { length += b.Length; }
+                {
+                    length += b.Length;
+                }
             }
 
             byte[] cated = new byte[length];
@@ -1164,10 +1292,12 @@ namespace Hyperar.OAuthCore.KeyInterop
             return cated;
         }
 
-        private static byte[] Duplicate(byte[] b)
+        internal static byte[] Duplicate(byte[] b)
         {
             if (IsEmpty(b))
-            { return EMPTY; }
+            {
+                return Constants.EMPTY;
+            }
 
             byte[] d = new byte[b.Length];
             Array.Copy(b, d, b.Length);
@@ -1175,23 +1305,27 @@ namespace Hyperar.OAuthCore.KeyInterop
             return d;
         }
 
-        private static bool IsEmpty(byte[] octets)
+        internal static bool IsEmpty(byte[] octets)
         {
             if (null == octets || 0 == octets.Length)
-            { return true; }
+            {
+                return true;
+            }
 
             return false;
         }
 
-        private static bool IsEmpty(string s)
+        internal static bool IsEmpty(string s)
         {
             if (null == s || 0 == s.Length)
-            { return true; }
+            {
+                return true;
+            }
 
             return false;
         }
 
-        private static bool IsEmpty(string[] strings)
+        internal static bool IsEmpty(string[] strings)
         {
             if (null == strings || 0 == strings.Length)
             {
@@ -1201,15 +1335,17 @@ namespace Hyperar.OAuthCore.KeyInterop
             return false;
         }
 
-        private static bool IsEmpty(AsnType value)
+        internal static bool IsEmpty(AsnType value)
         {
             if (null == value)
-            { return true; }
+            {
+                return true;
+            }
 
             return false;
         }
 
-        private static bool IsEmpty(AsnType[] values)
+        internal static bool IsEmpty(AsnType[] values)
         {
             if (null == values || 0 == values.Length)
             {
@@ -1219,7 +1355,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             return false;
         }
 
-        private static bool IsEmpty(byte[][] arrays)
+        internal static bool IsEmpty(byte[][] arrays)
         {
             if (null == arrays || 0 == arrays.Length)
             {
@@ -1229,270 +1365,24 @@ namespace Hyperar.OAuthCore.KeyInterop
             return false;
         }
 
-        private static bool IsZero(byte[] octets)
+        internal static bool IsZero(byte[] octets)
         {
             if (IsEmpty(octets))
-            { return false; }
+            {
+                return false;
+            }
 
             bool allZeros = true;
             for (int i = 0; i < octets.Length; i++)
             {
                 if (0 != octets[i])
-                { allZeros = false; break; }
+                {
+                    allZeros = false;
+                    break;
+                }
             }
+
             return allZeros;
         }
-
-        public class AsnMessage
-        {
-            private readonly string m_format;
-
-            private readonly byte[] m_octets;
-
-            public AsnMessage(byte[] octets, string format)
-            {
-                this.m_octets = octets;
-                this.m_format = format;
-            }
-
-            public int Length
-            {
-                get
-                {
-                    if (null == this.m_octets)
-                    { return 0; }
-                    return this.m_octets.Length;
-                }
-
-                // set { m_length = value; }
-            }
-
-            public byte[] GetBytes()
-            {
-                if (null == this.m_octets)
-                { return new byte[] { }; }
-
-                return this.m_octets;
-            }
-
-            public string GetFormat()
-            { return this.m_format; }
-        }
-
-        public class AsnType
-        {
-            // Constructors
-            // No default - must specify tag and data
-
-            // Setters and Getters
-            private readonly byte[] m_tag;
-
-            private byte[] m_length;
-
-            private byte[] m_octets;
-
-            private bool m_raw;
-
-            public AsnType(byte tag, byte octet)
-            {
-                this.m_raw = false;
-                this.m_tag = new byte[] { tag };
-                this.m_octets = new byte[] { octet };
-            }
-
-            public AsnType(byte tag, byte[] octets)
-            {
-                this.m_raw = false;
-                this.m_tag = new byte[] { tag };
-                this.m_octets = octets;
-            }
-
-            public AsnType(byte tag, byte[] length, byte[] octets)
-            {
-                this.m_raw = true;
-                this.m_tag = new byte[] { tag };
-                this.m_length = length;
-                this.m_octets = octets;
-            }
-
-            public byte[] Length
-            {
-                get
-                {
-                    if (null == this.m_length)
-                    {
-                        return EMPTY;
-                    }
-
-                    return this.m_length;
-                }
-
-                // set { m_length = value; }
-            }
-
-            public byte[] Octets
-            {
-                get
-                {
-                    if (null == this.m_octets)
-                    { return EMPTY; }
-                    return this.m_octets;
-                }
-
-                set
-                { this.m_octets = value; }
-            }
-
-            public byte[] Tag
-            {
-                get
-                {
-                    if (null == this.m_tag)
-                    {
-                        return EMPTY;
-                    }
-
-                    return this.m_tag;
-                }
-
-                // set { m_tag = value; }
-            }
-
-            private bool Raw
-            {
-                get { return this.m_raw; }
-                set { this.m_raw = value; }
-            }
-
-            // Methods
-            public byte[] GetBytes()
-            {
-                // Created raw by user
-                // return the bytes....
-                if (true == this.m_raw)
-                {
-                    return this.Concatenate(
-                        new byte[][] { this.m_tag, this.m_length, this.m_octets }
-                        );
-                }
-
-                this.SetLength();
-
-                // Special case
-                // Null does not use length
-                if (0x05 == this.m_tag[0])
-                {
-                    return this.Concatenate(
-                        new byte[][] { this.m_tag, this.m_octets }
-                        );
-                }
-
-                return this.Concatenate(
-                    new byte[][] { this.m_tag, this.m_length, this.m_octets }
-                    );
-            }
-
-            private byte[] Concatenate(byte[][] values)
-            {
-                // Nothing in, nothing out
-                if (IsEmpty(values))
-                {
-                    return new byte[] { };
-                }
-
-                int length = 0;
-                foreach (byte[] b in values)
-                {
-                    if (null != b)
-                    {
-                        length += b.Length;
-                    }
-                }
-
-                byte[] cated = new byte[length];
-
-                int current = 0;
-                foreach (byte[] b in values)
-                {
-                    if (null != b)
-                    {
-                        Array.Copy(b, 0, cated, current, b.Length);
-                        current += b.Length;
-                    }
-                }
-
-                return cated;
-            }
-
-            private void SetLength()
-            {
-                if (null == this.m_octets)
-                {
-                    this.m_length = ZERO;
-                    return;
-                }
-
-                // Special case
-                // Null does not use length
-                if (0x05 == this.m_tag[0])
-                {
-                    this.m_length = EMPTY;
-                    return;
-                }
-
-                byte[] length = null;
-
-                // Length: 0 <= l < 0x80
-                if (this.m_octets.Length < 0x80)
-                {
-                    length = new byte[1];
-                    length[0] = (byte)this.m_octets.Length;
-                }
-
-                // 0x80 < length <= 0xFF
-                else if (this.m_octets.Length <= 0xFF)
-                {
-                    length = new byte[2];
-                    length[0] = 0x81;
-                    length[1] = (byte)(this.m_octets.Length & 0xFF);
-                }
-
-                //
-                // We should almost never see these...
-                //
-
-                // 0xFF < length <= 0xFFFF
-                else if (this.m_octets.Length <= 0xFFFF)
-                {
-                    length = new byte[3];
-                    length[0] = 0x82;
-                    length[1] = (byte)((this.m_octets.Length & 0xFF00) >> 8);
-                    length[2] = (byte)(this.m_octets.Length & 0xFF);
-                }
-
-                // 0xFFFF < length <= 0xFFFFFF
-                else if (this.m_octets.Length <= 0xFFFFFF)
-                {
-                    length = new byte[4];
-                    length[0] = 0x83;
-                    length[1] = (byte)((this.m_octets.Length & 0xFF0000) >> 16);
-                    length[2] = (byte)((this.m_octets.Length & 0xFF00) >> 8);
-                    length[3] = (byte)(this.m_octets.Length & 0xFF);
-                }
-
-                // 0xFFFFFF < length <= 0xFFFFFFFF
-                else
-                {
-                    length = new byte[5];
-                    length[0] = 0x84;
-                    length[1] = (byte)((this.m_octets.Length & 0xFF000000) >> 24);
-                    length[2] = (byte)((this.m_octets.Length & 0xFF0000) >> 16);
-                    length[3] = (byte)((this.m_octets.Length & 0xFF00) >> 8);
-                    length[4] = (byte)(this.m_octets.Length & 0xFF);
-                }
-
-                this.m_length = length;
-            }
-        };
     }
 }

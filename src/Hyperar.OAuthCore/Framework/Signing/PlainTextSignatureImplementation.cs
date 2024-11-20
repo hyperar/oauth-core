@@ -33,15 +33,20 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
         public void SignContext(IOAuthContext authContext, SigningContext signingContext)
         {
-            authContext.Signature = this.GenerateSignature(authContext, signingContext);
+            authContext.Signature = GenerateSignature(authContext, signingContext);
         }
 
-        public bool ValidateSignature(IOAuthContext authContext, SigningContext signingContext)
+        public bool ValidateSignature(IOAuthContext? authContext, SigningContext? signingContext)
         {
-            return authContext.Signature.EqualsInConstantTime(this.GenerateSignature(authContext, signingContext));
+            ArgumentNullException.ThrowIfNull(authContext);
+            ArgumentNullException.ThrowIfNull(signingContext);
+            ArgumentException.ThrowIfNullOrWhiteSpace(authContext.Signature);
+            ArgumentException.ThrowIfNullOrWhiteSpace(signingContext.SignatureBase);
+
+            return authContext.Signature.EqualsInConstantTime(GenerateSignature(authContext, signingContext));
         }
 
-        private string GenerateSignature(IOAuthContext authContext, SigningContext signingContext)
+        private static string GenerateSignature(IOAuthContext authContext, SigningContext signingContext)
         {
             return UriUtility.UrlEncode(string.Format("{0}&{1}", signingContext.ConsumerSecret, authContext.TokenSecret));
         }

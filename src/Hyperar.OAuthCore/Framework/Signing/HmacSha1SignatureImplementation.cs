@@ -39,22 +39,20 @@ namespace Hyperar.OAuthCore.Framework.Signing
             authContext.Signature = GenerateSignature(authContext, signingContext);
         }
 
-        public bool ValidateSignature(IOAuthContext authContext, SigningContext signingContext)
+        public bool ValidateSignature(IOAuthContext? authContext, SigningContext? signingContext)
         {
+            ArgumentNullException.ThrowIfNull(authContext);
+            ArgumentNullException.ThrowIfNull(signingContext);
+            ArgumentException.ThrowIfNullOrWhiteSpace(authContext.Signature);
+            ArgumentException.ThrowIfNullOrWhiteSpace(signingContext.SignatureBase);
+
             return authContext.Signature.EqualsInConstantTime(GenerateSignature(authContext, signingContext));
         }
 
-        private static string ComputeHash(HashAlgorithm hashAlgorithm, string data)
+        private static string ComputeHash(HashAlgorithm hashAlgorithm, string? data)
         {
-            if (hashAlgorithm == null)
-            {
-                throw new ArgumentNullException("hashAlgorithm");
-            }
-
-            if (string.IsNullOrEmpty(data))
-            {
-                throw new ArgumentNullException("data");
-            }
+            ArgumentNullException.ThrowIfNull(hashAlgorithm);
+            ArgumentException.ThrowIfNullOrWhiteSpace(data);
 
             byte[] dataBuffer = Encoding.ASCII.GetBytes(data);
             byte[] hashBytes = hashAlgorithm.ComputeHash(dataBuffer);
@@ -67,12 +65,13 @@ namespace Hyperar.OAuthCore.Framework.Signing
             string consumerSecret = (signingContext.ConsumerSecret != null)
                                         ? UriUtility.UrlEncode(signingContext.ConsumerSecret)
                                         : "";
-            string tokenSecret = (authContext.TokenSecret != null)
-                                     ? UriUtility.UrlEncode(authContext.TokenSecret)
-                                     : null;
+            string? tokenSecret = (authContext.TokenSecret != null)
+                                ? UriUtility.UrlEncode(authContext.TokenSecret)
+                                : null;
+
             string hashSource = string.Format("{0}&{1}", consumerSecret, tokenSecret);
 
-            var hashAlgorithm = new HMACSHA1 { Key = Encoding.ASCII.GetBytes(hashSource) };
+            HMACSHA1 hashAlgorithm = new HMACSHA1 { Key = Encoding.ASCII.GetBytes(hashSource) };
 
             return ComputeHash(hashAlgorithm, signingContext.SignatureBase);
         }

@@ -42,8 +42,12 @@ namespace Hyperar.OAuthCore.Consumer
 
         private IConsumerRequestFactory _consumerRequestFactory = DefaultConsumerRequestFactory.Instance;
 
-        public OAuthSession(IOAuthConsumerContext consumerContext)
-            : this(consumerContext, (Uri)null, null, null, null)
+        public OAuthSession(IOAuthConsumerContext consumerContext) : this(
+            consumerContext,
+            (Uri?)null,
+            null,
+            null,
+            null)
         {
         }
 
@@ -57,8 +61,12 @@ namespace Hyperar.OAuthCore.Consumer
         {
         }
 
-        public OAuthSession(IOAuthConsumerContext consumerContext, Uri requestTokenUri, Uri userAuthorizeUri,
-                            Uri accessTokenUri, Uri callBackUri)
+        public OAuthSession(
+            IOAuthConsumerContext consumerContext,
+            Uri? requestTokenUri,
+            Uri? userAuthorizeUri,
+            Uri? accessTokenUri,
+            Uri? callBackUri)
         {
             this.ConsumerContext = consumerContext;
             this.RequestTokenUri = requestTokenUri;
@@ -67,27 +75,42 @@ namespace Hyperar.OAuthCore.Consumer
             this.CallbackUri = callBackUri;
         }
 
-        public OAuthSession(IOAuthConsumerContext consumerContext, string requestTokenUrl, string userAuthorizeUrl,
-                            string accessTokenUrl, string callBackUrl)
-            : this(consumerContext, new Uri(requestTokenUrl), new Uri(userAuthorizeUrl), new Uri(accessTokenUrl), ParseCallbackUri(callBackUrl))
+        public OAuthSession(
+            IOAuthConsumerContext consumerContext,
+            string requestTokenUrl,
+            string userAuthorizeUrl,
+            string accessTokenUrl,
+            string? callBackUrl) : this(
+                consumerContext,
+                new Uri(requestTokenUrl),
+                new Uri(userAuthorizeUrl),
+                new Uri(accessTokenUrl),
+                ParseCallbackUri(callBackUrl))
         {
         }
 
-        public OAuthSession(IOAuthConsumerContext consumerContext, string requestTokenUrl, string userAuthorizeUrl,
-                            string accessTokenUrl)
-            : this(consumerContext, requestTokenUrl, userAuthorizeUrl, accessTokenUrl, null)
+        public OAuthSession(
+            IOAuthConsumerContext consumerContext,
+            string requestTokenUrl,
+            string userAuthorizeUrl,
+            string accessTokenUrl) : this(
+                consumerContext,
+                requestTokenUrl,
+                userAuthorizeUrl,
+                accessTokenUrl,
+                null)
         {
         }
 
-        public IToken AccessToken { get; set; }
+        public IToken? AccessToken { get; set; }
 
-        public Uri AccessTokenUri { get; set; }
+        public Uri? AccessTokenUri { get; set; }
 
         public bool AddBodyHashesToRawRequests { get; set; }
 
         public bool CallbackMustBeConfirmed { get; set; }
 
-        public Uri CallbackUri { get; set; }
+        public Uri? CallbackUri { get; set; }
 
         public IOAuthConsumerContext ConsumerContext { get; set; }
 
@@ -99,23 +122,25 @@ namespace Hyperar.OAuthCore.Consumer
             {
                 if (this._consumerRequestFactory == null)
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
 
                 this._consumerRequestFactory = value;
             }
         }
 
-        public Uri ProxyServerUri { get; set; }
+        public Uri? ProxyServerUri { get; set; }
 
-        public Uri RequestTokenUri { get; set; }
+        public Uri? RequestTokenUri { get; set; }
 
-        public Action<string> ResponseBodyAction { get; set; }
+        public Action<string>? ResponseBodyAction { get; set; }
 
-        public Uri UserAuthorizeUri { get; set; }
+        public Uri? UserAuthorizeUri { get; set; }
 
         public IConsumerRequest BuildAccessTokenContext(string method, string xAuthMode, string xAuthUsername, string xAuthPassword)
         {
+            ArgumentNullException.ThrowIfNull(this.AccessTokenUri);
+
             return this.Request()
               .ForMethod(method)
               .AlterContext(context => context.XAuthUsername = xAuthUsername)
@@ -125,8 +150,10 @@ namespace Hyperar.OAuthCore.Consumer
               .SignWithoutToken();
         }
 
-        public IConsumerRequest BuildExchangeRequestTokenForAccessTokenContext(IToken requestToken, string method, string verificationCode)
+        public IConsumerRequest BuildExchangeRequestTokenForAccessTokenContext(IToken requestToken, string method, string? verificationCode)
         {
+            ArgumentNullException.ThrowIfNull(this.AccessTokenUri);
+
             return this.Request()
                 .ForMethod(method)
                 .AlterContext(context => context.Verifier = verificationCode)
@@ -136,6 +163,8 @@ namespace Hyperar.OAuthCore.Consumer
 
         public IConsumerRequest BuildRenewAccessTokenContext(IToken requestToken, string method, string sessionHandle)
         {
+            ArgumentNullException.ThrowIfNull(this.AccessTokenUri);
+
             return this.Request()
                 .ForMethod(method)
                 .AlterContext(context => context.SessionHandle = sessionHandle)
@@ -145,6 +174,8 @@ namespace Hyperar.OAuthCore.Consumer
 
         public IConsumerRequest BuildRequestTokenContext(string method)
         {
+            ArgumentNullException.ThrowIfNull(this.RequestTokenUri);
+
             return this.Request()
                 .ForMethod(method)
                 .AlterContext(context => context.CallbackUrl = (this.CallbackUri == null) ? "oob" : this.CallbackUri.ToString())
@@ -169,7 +200,7 @@ namespace Hyperar.OAuthCore.Consumer
             return this.ExchangeRequestTokenForAccessToken(requestToken, "GET", verificationCode);
         }
 
-        public IToken ExchangeRequestTokenForAccessToken(IToken requestToken, string method, string verificationCode)
+        public IToken ExchangeRequestTokenForAccessToken(IToken requestToken, string method, string? verificationCode)
         {
             TokenBase token = this.BuildExchangeRequestTokenForAccessTokenContext(requestToken, method, verificationCode)
                 .Select(collection =>
@@ -209,14 +240,15 @@ namespace Hyperar.OAuthCore.Consumer
 
         public IToken GetRequestToken(string method)
         {
-            var results = this.BuildRequestTokenContext(method).Select(collection =>
-                                                                  new
-                                                                  {
-                                                                      this.ConsumerContext.ConsumerKey,
-                                                                      Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
-                                                                      TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
-                                                                      CallackConfirmed = WasCallbackConfimed(collection)
-                                                                  });
+            var results = this.BuildRequestTokenContext(method)
+                .Select(collection =>
+                    new
+                    {
+                        this.ConsumerContext.ConsumerKey,
+                        Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
+                        TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
+                        CallackConfirmed = WasCallbackConfimed(collection)
+                    });
 
             if (!results.CallackConfirmed && this.CallbackMustBeConfirmed)
             {
@@ -236,11 +268,13 @@ namespace Hyperar.OAuthCore.Consumer
             return this.GetUserAuthorizationUrlForToken(token, null);
         }
 
-        public string GetUserAuthorizationUrlForToken(IToken token, string callbackUrl)
+        public string GetUserAuthorizationUrlForToken(IToken token, string? callbackUrl)
         {
-            var builder = new UriBuilder(this.UserAuthorizeUri);
+            ArgumentNullException.ThrowIfNull(this.UserAuthorizeUri);
 
-            var collection = new NameValueCollection();
+            UriBuilder builder = new UriBuilder(this.UserAuthorizeUri);
+
+            NameValueCollection collection = new NameValueCollection();
 
             if (builder.Query != null)
             {
@@ -288,7 +322,7 @@ namespace Hyperar.OAuthCore.Consumer
 
         public IConsumerRequest Request(IToken accessToken)
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = this.ConsumerContext.UseHeaderForOAuthParameters,
                 IncludeOAuthRequestBodyHashInSignature = this.AddBodyHashesToRawRequests
@@ -309,7 +343,7 @@ namespace Hyperar.OAuthCore.Consumer
 
         public IConsumerRequest Request()
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = this.ConsumerContext.UseHeaderForOAuthParameters,
                 IncludeOAuthRequestBodyHashInSignature = this.AddBodyHashesToRawRequests
@@ -374,7 +408,7 @@ namespace Hyperar.OAuthCore.Consumer
             return this.AddItems(this._queryParameters, anonymousClass);
         }
 
-        private static Uri ParseCallbackUri(string callBackUrl)
+        private static Uri? ParseCallbackUri(string? callBackUrl)
         {
             if (string.IsNullOrEmpty(callBackUrl))
             {
@@ -389,7 +423,7 @@ namespace Hyperar.OAuthCore.Consumer
             return new Uri(callBackUrl);
         }
 
-        private static string ParseResponseParameter(NameValueCollection collection, string parameter)
+        private static string? ParseResponseParameter(NameValueCollection collection, string parameter)
         {
             string value = (collection[parameter] ?? "").Trim();
             return (value.Length > 0) ? value : null;
@@ -397,8 +431,9 @@ namespace Hyperar.OAuthCore.Consumer
 
         private static bool WasCallbackConfimed(NameValueCollection parameters)
         {
-            string value = ParseResponseParameter(parameters, Parameters.OAuth_Callback_Confirmed);
-            return (value == "true");
+            string? value = ParseResponseParameter(parameters, Parameters.OAuth_Callback_Confirmed);
+
+            return value == "true";
         }
 
         private OAuthSession AddItems(NameValueCollection destination, object anonymousClass)

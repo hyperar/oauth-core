@@ -3,9 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyperar.OAuthCore", "Hyperar.OAuthCore\Hyperar.OAuthCore.csproj", "{2ABC1B5F-8F9A-4E72-9BAE-C94ACE04B5DE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyperar.OAuthCore", "src\Hyperar.OAuthCore\Hyperar.OAuthCore.csproj", "{2ABC1B5F-8F9A-4E72-9BAE-C94ACE04B5DE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyperar.OAuthCore.UnitTest", "Hyperar.OAuthCore.UnitTest\Hyperar.OAuthCore.UnitTest.csproj", "{95B86123-E148-42CD-9B2D-D897D687305F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyperar.OAuthCore.UnitTest", "src\Hyperar.OAuthCore.UnitTest\Hyperar.OAuthCore.UnitTest.csproj", "{95B86123-E148-42CD-9B2D-D897D687305F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{80C9A258-A97D-463B-95D7-C7C746950460}"
+	ProjectSection(SolutionItems) = preProject
+		src\.editorconfig = src\.editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
