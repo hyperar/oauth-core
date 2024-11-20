@@ -65,7 +65,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
 
             return length;
@@ -93,7 +93,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
         }
 
@@ -137,7 +137,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
 
             return values;
@@ -175,7 +175,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
         }
 
@@ -212,7 +212,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
         }
 
@@ -249,7 +249,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
         }
 
@@ -289,7 +289,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
         }
 
@@ -326,7 +326,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
         }
 
@@ -366,7 +366,7 @@
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new BerDecodeException("Error Parsing Key", position, ex);
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
         }
     }

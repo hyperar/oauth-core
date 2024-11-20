@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyperar.OAuthCore.UnitTest"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{80C9A258-A97D-463B-95D7-C7C746950460}"
 	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
+		src\.editorconfig = src\.editorconfig
 	EndProjectSection
 EndProject
 Global

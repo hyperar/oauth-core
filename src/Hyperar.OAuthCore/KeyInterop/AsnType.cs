@@ -47,8 +47,6 @@
 
                 return this.m_length;
             }
-
-            // set { m_length = value; }
         }
 
         public byte[] Octets

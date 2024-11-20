@@ -122,7 +122,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 StringBuilder sb = new StringBuilder("Incorrect PublicKey Size. ");
 
-                StringBuilder unused1 = sb.AppendFormat(
+                _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
                     length.ToString(CultureInfo.InvariantCulture),
                     this.parser.RemainingBytes()
@@ -141,7 +141,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 StringBuilder sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
 
-                StringBuilder unused = sb.AppendFormat(
+                _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
                     length.ToString(CultureInfo.InvariantCulture),
                     this.parser.RemainingBytes()
@@ -177,7 +177,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                 BigInteger v = new BigInteger(value);
 
-                StringBuilder unused3 = sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
+                _ = sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
 
                 throw new BerDecodeException(sb.ToString(), position);
             }
@@ -209,7 +209,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 StringBuilder sb = new StringBuilder("Incorrect PrivateKey Size. ");
 
-                StringBuilder unused2 = sb.AppendFormat(
+                _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
                     length.ToString(CultureInfo.InvariantCulture),
                     this.parser.RemainingBytes()
@@ -228,7 +228,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 StringBuilder sb = new StringBuilder("Incorrect RSAPrivateKey Size. ");
 
-                StringBuilder unused1 = sb.AppendFormat(
+                _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
                     length.ToString(CultureInfo.InvariantCulture),
                     this.parser.RemainingBytes()
@@ -248,7 +248,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
                 BigInteger v = new BigInteger(value);
 
-                StringBuilder unused = sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
+                _ = sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
 
                 throw new BerDecodeException(sb.ToString(), position);
             }
@@ -347,7 +347,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 StringBuilder sb = new StringBuilder(Constants.IncorrectSequenceSizeMessage);
 
-                StringBuilder unused = sb.AppendFormat(
+                _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
                     length.ToString(CultureInfo.InvariantCulture),
                     this.parser.RemainingBytes()
@@ -401,7 +401,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 StringBuilder sb = new StringBuilder("Incorrect DSS-Params Size. ");
 
-                StringBuilder unused = sb.AppendFormat(
+                _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
                     length.ToString(CultureInfo.InvariantCulture),
                     this.parser.RemainingBytes()
@@ -423,7 +423,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 StringBuilder sb = new StringBuilder(Constants.IncorrectAlgorithmIdentifierSizeMessage);
 
-                StringBuilder unused = sb.AppendFormat(
+                _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
                     length.ToString(CultureInfo.InvariantCulture),
                     this.parser.RemainingBytes()
