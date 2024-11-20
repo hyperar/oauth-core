@@ -28,7 +28,7 @@ namespace Hyperar.OAuthCore.KeyInterop
     using System.Globalization;
     using System.Security.Cryptography;
 
-    internal class AsnKeyBuilder
+    internal static class AsnKeyBuilder
     {
 
         /// <summary>

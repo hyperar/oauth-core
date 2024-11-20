@@ -43,8 +43,8 @@ namespace Hyperar.OAuthCore.Framework.Signing
         {
             ArgumentNullException.ThrowIfNull(authContext);
             ArgumentNullException.ThrowIfNull(signingContext);
-            ArgumentException.ThrowIfNullOrWhiteSpace(authContext?.Signature);
-            ArgumentException.ThrowIfNullOrWhiteSpace(signingContext?.SignatureBase);
+            ArgumentException.ThrowIfNullOrWhiteSpace(authContext.Signature);
+            ArgumentException.ThrowIfNullOrWhiteSpace(signingContext.SignatureBase);
 
             if (signingContext.Algorithm == null)
             {

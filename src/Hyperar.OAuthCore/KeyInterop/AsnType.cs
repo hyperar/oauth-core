@@ -78,8 +78,6 @@
 
                 return this.m_tag;
             }
-
-            // set { m_tag = value; }
         }
 
         private bool Raw { get; set; }

@@ -25,8 +25,6 @@
 
                 return this.m_octets.Length;
             }
-
-            // set { m_length = value; }
         }
 
         public byte[] GetBytes()
