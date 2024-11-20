@@ -33,8 +33,6 @@
     [TestClass]
     public class StringUtilityTests
     {
-        /*
-         * Temporarily disabled.
         [TestMethod]
         public void EqualsInConstantTimeComparesInConstantTimeRegardlessOfPercentMatchToWithinMarginOfError()
         {
@@ -65,7 +63,6 @@
 
             Assert.IsTrue(percentDifferenceStringEquals > percentDifference);
         }
-        */
 
         [DataTestMethod]
         [DataRow("XY", "XY")]
