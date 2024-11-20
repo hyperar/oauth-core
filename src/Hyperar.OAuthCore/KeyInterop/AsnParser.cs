@@ -77,9 +77,8 @@
 
             try
             {
-                byte b = this.GetNextOctet();
-
                 int length = this.GetLength();
+                
                 if (length > this.RemainingBytes())
                 {
                     StringBuilder sb = new StringBuilder("Incorrect Size. ");
