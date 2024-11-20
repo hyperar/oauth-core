@@ -36,7 +36,7 @@ namespace Hyperar.OAuthCore.Utility
                 return true;
             }
 
-            if (value.Length != other?.Length)
+            if (value.Length != other.Length)
             {
                 return false;
             }

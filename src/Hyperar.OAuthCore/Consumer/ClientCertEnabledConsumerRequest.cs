@@ -54,7 +54,7 @@ namespace Hyperar.OAuthCore.Consumer
 
             if (certificate != null)
             {
-                httpClientHandler.ClientCertificates.Add(certificate);
+                int unused = httpClientHandler.ClientCertificates.Add(certificate);
             }
 
             return httpClientHandler;

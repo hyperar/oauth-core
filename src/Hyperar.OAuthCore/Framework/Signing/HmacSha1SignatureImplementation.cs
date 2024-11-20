@@ -41,6 +41,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
         public bool ValidateSignature(IOAuthContext? authContext, SigningContext? signingContext)
         {
+            ArgumentNullException.ThrowIfNull(authContext);
             ArgumentException.ThrowIfNullOrWhiteSpace(authContext?.Signature);
             ArgumentException.ThrowIfNullOrWhiteSpace(signingContext?.SignatureBase);
 
@@ -50,11 +51,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
         private static string ComputeHash(HashAlgorithm hashAlgorithm, string? data)
         {
             ArgumentNullException.ThrowIfNull(hashAlgorithm);
-
-            if (string.IsNullOrEmpty(data))
-            {
-                throw new ArgumentNullException(nameof(data));
-            }
+            ArgumentException.ThrowIfNullOrWhiteSpace(data);
 
             byte[] dataBuffer = Encoding.ASCII.GetBytes(data);
             byte[] hashBytes = hashAlgorithm.ComputeHash(dataBuffer);

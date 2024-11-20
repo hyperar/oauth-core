@@ -23,12 +23,18 @@
 namespace Hyperar.OAuthCore.KeyInterop
 {
     using System;
+    using System.Runtime.Serialization;
     using System.Text;
 
     [Serializable]
     public sealed class BerDecodeException : Exception
     {
         private readonly int m_position;
+
+        private BerDecodeException(SerializationInfo info, StreamingContext context) : base()
+        {
+
+        }
 
         public BerDecodeException()
         {

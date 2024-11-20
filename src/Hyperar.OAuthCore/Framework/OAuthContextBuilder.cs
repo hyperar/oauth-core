@@ -165,7 +165,7 @@ namespace Hyperar.OAuthCore.Framework
                     //Remove the trailing and Leading white spaces
                     string strCookie = cookie.Trim();
 
-                    Regex reg = new Regex(@"^(\S*)=(\S*)$");
+                    Regex reg = new Regex(@"^(\S*)=(\S*)$", RegexOptions.None, new TimeSpan(0, 0, 10));
 
                     if (reg.IsMatch(strCookie))
                     {

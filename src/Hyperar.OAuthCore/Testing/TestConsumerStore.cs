@@ -36,7 +36,11 @@ namespace Hyperar.OAuthCore.Testing
     {
         public AsymmetricAlgorithm GetConsumerPublicKey(IConsumer consumer)
         {
-            return TestCertificates.OAuthTestCertificate().GetRSAPublicKey() ?? throw new NullReferenceException("GetRSAPubclicKey");
+            RSA? publicKey = TestCertificates.OAuthTestCertificate().GetRSAPublicKey() ?? throw new NullReferenceException("GetRSAPubclicKey");
+
+            ArgumentNullException.ThrowIfNull(publicKey);
+
+            return publicKey;
         }
 
         public string GetConsumerSecret(IOAuthContext consumer)

@@ -38,6 +38,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
         public bool ValidateSignature(IOAuthContext? authContext, SigningContext? signingContext)
         {
+            ArgumentNullException.ThrowIfNull(authContext);
             ArgumentException.ThrowIfNullOrWhiteSpace(authContext?.Signature);
             ArgumentException.ThrowIfNullOrWhiteSpace(signingContext?.SignatureBase);
 

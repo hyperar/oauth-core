@@ -1681,9 +1681,9 @@ namespace Hyperar.OAuthCore.KeyInterop
         //***********************************************************************
         // Overloading of equality operator
         //***********************************************************************
-        public override bool Equals(object? o)
+        public override bool Equals(object? obj)
         {
-            if (o is BigInteger bi)
+            if (obj is BigInteger bi)
             {
 
                 if (this.dataLength != bi.dataLength)

@@ -23,7 +23,6 @@
 namespace Hyperar.OAuthCore.Framework.Signing
 {
     using System.Collections.Generic;
-    using System.Linq;
 
     public class OAuthContextSigner : IOAuthContextSigner
     {
@@ -65,7 +64,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
         {
             ArgumentNullException.ThrowIfNull(authContext);
 
-            IContextSignatureImplementation? impl = this._implementations.FirstOrDefault(i => i.MethodName == authContext.SignatureMethod);
+            IContextSignatureImplementation? impl = this._implementations.Find(i => i.MethodName == authContext.SignatureMethod);
 
             if (impl != null)
             {
