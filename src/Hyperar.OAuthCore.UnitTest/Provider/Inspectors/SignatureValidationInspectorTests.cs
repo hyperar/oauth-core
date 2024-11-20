@@ -40,21 +40,22 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void InvalidSignatureThrows()
         {
-            var repository = new MockRepository();
+            MockRepository repository = new MockRepository();
 
-            var consumerStore = repository.DynamicMock<IConsumerStore>();
-            var signer = repository.StrictMock<IOAuthContextSigner>();
+            IConsumerStore consumerStore = repository.DynamicMock<IConsumerStore>();
+            IOAuthContextSigner signer = repository.StrictMock<IOAuthContextSigner>();
 
-            var context = new OAuthContext { ConsumerKey = "key", SignatureMethod = SignatureMethod.PlainText };
+            OAuthContext context = new OAuthContext { ConsumerKey = "key", SignatureMethod = SignatureMethod.PlainText };
 
             using (repository.Record())
             {
                 _ = Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(false);
             }
+
             using (repository.Playback())
             {
-                var inspector = new SignatureValidationInspector(consumerStore, signer);
-                var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
+                SignatureValidationInspector inspector = new SignatureValidationInspector(consumerStore, signer);
+                OAuthException ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
                 Assert.AreEqual("Failed to validate signature", ex.Message);
             }
         }
@@ -62,20 +63,21 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void PlainTextSignatureMethodDoesNotFetchCertificate()
         {
-            var repository = new MockRepository();
+            MockRepository repository = new MockRepository();
 
-            var consumerStore = repository.DynamicMock<IConsumerStore>();
-            var signer = repository.StrictMock<IOAuthContextSigner>();
+            IConsumerStore consumerStore = repository.DynamicMock<IConsumerStore>();
+            IOAuthContextSigner signer = repository.StrictMock<IOAuthContextSigner>();
 
-            var context = new OAuthContext { ConsumerKey = "key", SignatureMethod = SignatureMethod.PlainText };
+            OAuthContext context = new OAuthContext { ConsumerKey = "key", SignatureMethod = SignatureMethod.PlainText };
 
             using (repository.Record())
             {
                 _ = Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(true);
             }
+
             using (repository.Playback())
             {
-                var inspector = new SignatureValidationInspector(consumerStore, signer);
+                SignatureValidationInspector inspector = new SignatureValidationInspector(consumerStore, signer);
                 inspector.InspectContext(ProviderPhase.GrantRequestToken, context);
             }
         }
@@ -83,12 +85,12 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void RsaSha1SignatureMethodFetchesCertificate()
         {
-            var repository = new MockRepository();
+            MockRepository repository = new MockRepository();
 
-            var consumerStore = repository.DynamicMock<IConsumerStore>();
-            var signer = repository.StrictMock<IOAuthContextSigner>();
+            IConsumerStore consumerStore = repository.DynamicMock<IConsumerStore>();
+            IOAuthContextSigner signer = repository.StrictMock<IOAuthContextSigner>();
 
-            var context = new OAuthContext { ConsumerKey = "key", SignatureMethod = SignatureMethod.RsaSha1 };
+            OAuthContext context = new OAuthContext { ConsumerKey = "key", SignatureMethod = SignatureMethod.RsaSha1 };
 
             using (repository.Record())
             {
@@ -96,9 +98,10 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
                     TestCertificates.OAuthTestCertificate().GetRSAPublicKey() ?? throw new NullReferenceException("GetRSAPubclicKey"));
                 _ = Expect.Call(signer.ValidateSignature(null, null)).IgnoreArguments().Return(true);
             }
+
             using (repository.Playback())
             {
-                var inspector = new SignatureValidationInspector(consumerStore, signer);
+                SignatureValidationInspector inspector = new SignatureValidationInspector(consumerStore, signer);
                 inspector.InspectContext(ProviderPhase.GrantRequestToken, context);
             }
         }

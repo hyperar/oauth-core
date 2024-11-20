@@ -22,7 +22,8 @@
                 return;
             }
 
-            var authMode = context.XAuthMode;
+            string? authMode = context.XAuthMode;
+
             if (string.IsNullOrEmpty(authMode))
             {
                 throw Error.EmptyXAuthMode(context);
@@ -33,13 +34,15 @@
                 throw Error.InvalidXAuthMode(context);
             }
 
-            var username = context.XAuthUsername;
+            string? username = context.XAuthUsername;
+
             if (string.IsNullOrEmpty(username))
             {
                 throw Error.EmptyXAuthUsername(context);
             }
 
-            var password = context.XAuthPassword;
+            string? password = context.XAuthPassword;
+
             if (string.IsNullOrEmpty(password))
             {
                 throw Error.EmptyXAuthPassword(context);

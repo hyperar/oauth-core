@@ -55,7 +55,10 @@ namespace Hyperar.OAuthCore.Provider.Inspectors
 
         protected virtual SigningContext CreateSignatureContextForConsumer(IOAuthContext context)
         {
-            var signingContext = new SigningContext { ConsumerSecret = this._consumerStore.GetConsumerSecret(context) };
+            SigningContext signingContext = new SigningContext
+            {
+                ConsumerSecret = this._consumerStore.GetConsumerSecret(context)
+            };
 
             if (this.SignatureMethodRequiresCertificate(context.SignatureMethod))
             {

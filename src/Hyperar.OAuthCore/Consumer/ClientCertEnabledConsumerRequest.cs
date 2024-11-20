@@ -48,13 +48,13 @@ namespace Hyperar.OAuthCore.Consumer
 
         protected override HttpClientHandler GetHttpClientHandler()
         {
-            var httpClientHandler = base.GetHttpClientHandler();
+            HttpClientHandler httpClientHandler = base.GetHttpClientHandler();
 
             X509Certificate2? certificate = this._certificateFactory.CreateCertificate();
 
             if (certificate != null)
             {
-                var unused = httpClientHandler.ClientCertificates.Add(certificate);
+                httpClientHandler.ClientCertificates.Add(certificate);
             }
 
             return httpClientHandler;

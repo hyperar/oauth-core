@@ -41,9 +41,9 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
 
         public OAuthProvider1ATests()
         {
-            var tokenStore = new TestTokenStore();
-            var consumerStore = new TestConsumerStore();
-            var nonceStore = new TestNonceStore();
+            TestTokenStore tokenStore = new TestTokenStore();
+            TestConsumerStore consumerStore = new TestConsumerStore();
+            TestNonceStore nonceStore = new TestNonceStore();
 
             this.provider = new OAuthProvider(tokenStore,
                                          new SignatureValidationInspector(consumerStore),
@@ -55,7 +55,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
 
         private static OAuthSession CreateConsumer(string signatureMethod)
         {
-            var consumerContext = new OAuthConsumerContext
+            OAuthConsumerContext consumerContext = new OAuthConsumerContext
             {
                 SignatureMethod = signatureMethod,
                 ConsumerKey = "key",
@@ -63,7 +63,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
                 Key = TestCertificates.OAuthTestCertificate().GetRSAPrivateKey() ?? throw new NullReferenceException("GetRSAPrivateKey")
             };
 
-            var session = new OAuthSession(consumerContext, "http://localhost/oauth/requesttoken.rails",
+            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/oauth/requesttoken.rails",
                                            "http://localhost/oauth/userauhtorize.rails",
                                            "http://localhost/oauth/accesstoken.rails");
 
@@ -87,7 +87,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(
                 new TokenBase { ConsumerKey = "key", Token = "requestkey" }, "GET", verifier).Context;
-            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
             Assert.AreEqual("Missing required parameter : oauth_verifier", ex.Message);
         }
 
@@ -97,7 +97,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             OAuthSession session = CreateConsumer(SignatureMethod.RsaSha1);
             IOAuthContext context = session.BuildExchangeRequestTokenForAccessTokenContext(
                 new TokenBase { ConsumerKey = "key", Token = "requestkey" }, "GET", "wrong").Context;
-            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
             Assert.AreEqual("The parameter \"oauth_verifier\" was rejected", ex.Message);
         }
 
@@ -115,7 +115,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             context.CallbackUrl = null; // clear parameter, as it will default to "oob"
-            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
             Assert.AreEqual("Missing required parameter : oauth_callback", ex.Message);
         }
     }

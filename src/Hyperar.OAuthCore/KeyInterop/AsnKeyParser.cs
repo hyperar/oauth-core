@@ -38,12 +38,12 @@ namespace Hyperar.OAuthCore.KeyInterop
     {
         private readonly AsnParser parser;
 
-        public AsnKeyParser(String pathname)
+        public AsnKeyParser(string pathname)
         {
-            using (var reader = new BinaryReader(
+            using (BinaryReader reader = new BinaryReader(
                 new FileStream(pathname, FileMode.Open, FileAccess.Read)))
             {
-                var info = new FileInfo(pathname);
+                FileInfo info = new FileInfo(pathname);
 
                 this.parser = new AsnParser(reader.ReadBytes((int)info.Length));
             }
@@ -91,7 +91,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public RSAParameters ParseRSAPublicKey()
         {
-            var parameters = new RSAParameters();
+            RSAParameters parameters = new RSAParameters();
 
             // Checkpoint
             int position = this.parser.CurrentPosition();
@@ -101,7 +101,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             int length = this.parser.NextSequence();
             if (length != this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect Sequence Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -115,7 +115,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextSequence();
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -154,7 +154,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextBitString();
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect PublicKey Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect PublicKey Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -168,7 +168,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextSequence();
             if (length < this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -185,7 +185,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public RSAParameters ParseRSAPrivateKey()
         {
-            var parameters = new RSAParameters();
+            RSAParameters parameters = new RSAParameters();
 
             // Checkpoint
             int position = this.parser.CurrentPosition();
@@ -195,7 +195,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             int length = this.parser.NextSequence();
             if (length != this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect Sequence Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -210,8 +210,8 @@ namespace Hyperar.OAuthCore.KeyInterop
             byte[] value = this.parser.NextInteger();
             if (0x00 != value[0])
             {
-                var sb = new StringBuilder("Incorrect PrivateKeyInfo Version. ");
-                var v = new BigInteger(value);
+                StringBuilder sb = new StringBuilder("Incorrect PrivateKeyInfo Version. ");
+                BigInteger v = new BigInteger(value);
                 _ = sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
                 throw new BerDecodeException(sb.ToString(), position);
             }
@@ -223,7 +223,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextSequence();
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -261,7 +261,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextOctetString();
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect PrivateKey Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect PrivateKey Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -275,7 +275,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextSequence();
             if (length < this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect RSAPrivateKey Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect RSAPrivateKey Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -289,8 +289,8 @@ namespace Hyperar.OAuthCore.KeyInterop
             value = this.parser.NextInteger();
             if (0x00 != value[0])
             {
-                var sb = new StringBuilder("Incorrect RSAPrivateKey Version. ");
-                var v = new BigInteger(value);
+                StringBuilder sb = new StringBuilder("Incorrect RSAPrivateKey Version. ");
+                BigInteger v = new BigInteger(value);
                 _ = sb.AppendFormat("Expected: 0, Specified: {0}", v.ToString(10));
                 throw new BerDecodeException(sb.ToString(), position);
             }
@@ -311,7 +311,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public DSAParameters ParseDSAPublicKey()
         {
-            var parameters = new DSAParameters();
+            DSAParameters parameters = new DSAParameters();
 
             // Current Position
             int position = this.parser.CurrentPosition();
@@ -321,7 +321,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             int length = this.parser.NextSequence();
             if (length != this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect Sequence Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -335,7 +335,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextSequence();
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -361,7 +361,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextSequence();
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect DSS-Params Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect DSS-Params Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -386,7 +386,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
         public DSAParameters ParseDSAPrivateKey()
         {
-            var parameters = new DSAParameters();
+            DSAParameters parameters = new DSAParameters();
 
             // Current Position
             int position = this.parser.CurrentPosition();
@@ -396,7 +396,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             int length = this.parser.NextSequence();
             if (length != this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect Sequence Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -421,7 +421,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextSequence();
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect AlgorithmIdentifier Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -446,7 +446,7 @@ namespace Hyperar.OAuthCore.KeyInterop
             length = this.parser.NextSequence();
             if (length > this.parser.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect DSS-Params Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect DSS-Params Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 length.ToString(CultureInfo.InvariantCulture),
                                 this.parser.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -509,11 +509,12 @@ namespace Hyperar.OAuthCore.KeyInterop
                 {
                     return b;
                 }
+
                 int i = b & 0x7f;
 
                 if (i > 4)
                 {
-                    var sb = new StringBuilder("Invalid Length Encoding. ");
+                    StringBuilder sb = new StringBuilder("Invalid Length Encoding. ");
                     _ = sb.AppendFormat("Length uses {0} octets",
                                     i.ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
@@ -546,7 +547,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 int length = this.GetLength();
                 if (length > this.RemainingBytes())
                 {
-                    var sb = new StringBuilder("Incorrect Size. ");
+                    StringBuilder sb = new StringBuilder("Incorrect Size. ");
                     _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                     length.ToString(CultureInfo.InvariantCulture),
                                     this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -567,7 +568,7 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             if (0 == this.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 1.ToString(CultureInfo.InvariantCulture),
                                 this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -585,14 +586,14 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             if (octetCount > this.RemainingBytes())
             {
-                var sb = new StringBuilder("Incorrect Size. ");
+                StringBuilder sb = new StringBuilder("Incorrect Size. ");
                 _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                 octetCount.ToString(CultureInfo.InvariantCulture),
                                 this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
                 throw new BerDecodeException(sb.ToString(), position);
             }
 
-            var values = new byte[octetCount];
+            byte[] values = new byte[octetCount];
 
             try
             {
@@ -621,7 +622,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 byte b = this.GetNextOctet();
                 if (0x05 != b)
                 {
-                    var sb = new StringBuilder("Expected Null. ");
+                    StringBuilder sb = new StringBuilder("Expected Null. ");
                     _ = sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
                 }
@@ -630,7 +631,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 b = this.GetNextOctet();
                 if (0x00 != b)
                 {
-                    var sb = new StringBuilder("Null has non-zero size. ");
+                    StringBuilder sb = new StringBuilder("Null has non-zero size. ");
                     _ = sb.AppendFormat("Size: {0}", b.ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
                 }
@@ -657,7 +658,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 byte b = this.GetNextOctet();
                 if (0x30 != b)
                 {
-                    var sb = new StringBuilder("Expected Sequence. ");
+                    StringBuilder sb = new StringBuilder("Expected Sequence. ");
                     _ = sb.AppendFormat("Specified Identifier: {0}",
                                     b.ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
@@ -666,7 +667,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 int length = this.GetLength();
                 if (length > this.RemainingBytes())
                 {
-                    var sb = new StringBuilder("Incorrect Sequence Size. ");
+                    StringBuilder sb = new StringBuilder("Incorrect Sequence Size. ");
                     _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                     length.ToString(CultureInfo.InvariantCulture),
                                     this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -695,7 +696,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 byte b = this.GetNextOctet();
                 if (0x04 != b)
                 {
-                    var sb = new StringBuilder("Expected Octet String. ");
+                    StringBuilder sb = new StringBuilder("Expected Octet String. ");
                     _ = sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
                 }
@@ -703,7 +704,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 int length = this.GetLength();
                 if (length > this.RemainingBytes())
                 {
-                    var sb = new StringBuilder("Incorrect Octet String Size. ");
+                    StringBuilder sb = new StringBuilder("Incorrect Octet String Size. ");
                     _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                     length.ToString(CultureInfo.InvariantCulture),
                                     this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -732,7 +733,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 byte b = this.GetNextOctet();
                 if (0x03 != b)
                 {
-                    var sb = new StringBuilder("Expected Bit String. ");
+                    StringBuilder sb = new StringBuilder("Expected Bit String. ");
                     _ = sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
                 }
@@ -772,7 +773,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 byte b = this.GetNextOctet();
                 if (0x02 != b)
                 {
-                    var sb = new StringBuilder("Expected Integer. ");
+                    StringBuilder sb = new StringBuilder("Expected Integer. ");
                     _ = sb.AppendFormat("Specified Identifier: {0}", b.ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
                 }
@@ -780,7 +781,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 int length = this.GetLength();
                 if (length > this.RemainingBytes())
                 {
-                    var sb = new StringBuilder("Incorrect Integer Size. ");
+                    StringBuilder sb = new StringBuilder("Incorrect Integer Size. ");
                     _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                     length.ToString(CultureInfo.InvariantCulture),
                                     this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
@@ -804,7 +805,7 @@ namespace Hyperar.OAuthCore.KeyInterop
                 byte b = this.GetNextOctet();
                 if (0x06 != b)
                 {
-                    var sb = new StringBuilder("Expected Object Identifier. ");
+                    StringBuilder sb = new StringBuilder("Expected Object Identifier. ");
                     _ = sb.AppendFormat("Specified Identifier: {0}",
                                     b.ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
@@ -813,14 +814,14 @@ namespace Hyperar.OAuthCore.KeyInterop
                 int length = this.GetLength();
                 if (length > this.RemainingBytes())
                 {
-                    var sb = new StringBuilder("Incorrect Object Identifier Size. ");
+                    StringBuilder sb = new StringBuilder("Incorrect Object Identifier Size. ");
                     _ = sb.AppendFormat("Specified: {0}, Remaining: {1}",
                                     length.ToString(CultureInfo.InvariantCulture),
                                     this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
                 }
 
-                var values = new byte[length];
+                byte[] values = new byte[length];
 
                 for (int i = 0; i < length; i++)
                 {

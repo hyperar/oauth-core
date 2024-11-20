@@ -86,7 +86,7 @@ namespace Hyperar.OAuthCore.Consumer
         /// <returns></returns>
         private X509Certificate2Collection GetCertificateCollection()
         {
-            var certStore = new X509Store("My", StoreLocation.LocalMachine);
+            X509Store certStore = new X509Store("My", StoreLocation.LocalMachine);
             certStore.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
             X509Certificate2Collection certificateCollection = certStore.Certificates.Find(this._findType, this._certificateSubject, false);
             certStore.Close();

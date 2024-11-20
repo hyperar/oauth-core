@@ -51,7 +51,7 @@ namespace Hyperar.OAuthCore.Framework
 
             if (parameters.AllKeys.Any(key => key == Parameters.OAuth_Acceptable_Timestamps))
             {
-                var timeStamps = parameters[Parameters.OAuth_Acceptable_Timestamps]?.Split(separatorHyphen);
+                string[]? timeStamps = parameters[Parameters.OAuth_Acceptable_Timestamps]?.Split(separatorHyphen);
 
                 this.AcceptableTimeStampsFrom = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps?.ElementAtOrDefault(0)));
                 this.AcceptableTimeStampsTo = DateTimeUtility.FromEpoch(Convert.ToInt64(timeStamps?.ElementAtOrDefault(1)));
@@ -59,7 +59,7 @@ namespace Hyperar.OAuthCore.Framework
 
             if (parameters.AllKeys.Any(key => key == Parameters.OAuth_Acceptable_Versions))
             {
-                var versions = parameters[Parameters.OAuth_Acceptable_Versions]?.Split(separatorHyphen);
+                string[]? versions = parameters[Parameters.OAuth_Acceptable_Versions]?.Split(separatorHyphen);
 
                 this.AcceptableVersionFrom = versions?.ElementAtOrDefault(0);
                 this.AcceptableVersionTo = versions?.ElementAtOrDefault(1);
@@ -97,7 +97,7 @@ namespace Hyperar.OAuthCore.Framework
                 throw Error.CantBuildProblemReportWhenProblemEmpty();
             }
 
-            var response = new NameValueCollection
+            NameValueCollection response = new NameValueCollection
             {
                 [Parameters.OAuth_Problem] = this.Problem
             };
@@ -135,7 +135,7 @@ namespace Hyperar.OAuthCore.Framework
 
         private static string FormatParameterNames(IEnumerable<string> names)
         {
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
             foreach (string name in names)
             {

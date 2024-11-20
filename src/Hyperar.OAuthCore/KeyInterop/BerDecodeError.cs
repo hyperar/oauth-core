@@ -34,23 +34,23 @@ namespace Hyperar.OAuthCore.KeyInterop
         {
         }
 
-        public BerDecodeException(String message)
+        public BerDecodeException(string message)
             : base(message)
         {
         }
 
-        public BerDecodeException(String message, Exception ex)
+        public BerDecodeException(string message, Exception ex)
             : base(message, ex)
         {
         }
 
-        public BerDecodeException(String message, int position)
+        public BerDecodeException(string message, int position)
             : base(message)
         {
             this.m_position = position;
         }
 
-        public BerDecodeException(String message, int position, Exception ex)
+        public BerDecodeException(string message, int position, Exception ex)
             : base(message, ex)
         {
             this.m_position = position;
@@ -60,7 +60,7 @@ namespace Hyperar.OAuthCore.KeyInterop
         {
             get
             {
-                var sb = new StringBuilder(base.Message);
+                StringBuilder sb = new StringBuilder(base.Message);
 
                 _ = sb.AppendFormat(" (Position {0}){1}",
                                 this.m_position, Environment.NewLine);

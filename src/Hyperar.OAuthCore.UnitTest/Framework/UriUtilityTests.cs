@@ -87,16 +87,16 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         {
             string signatureInHeader = "auth_signature=\"uZF3aYQFtyK0F1FFHY+w7/Be+m4=\"";
 
-            var paramter = UriUtility.ParseAuthorizationHeaderKeyValuePair(signatureInHeader);
+            QueryParameter parameter = UriUtility.ParseAuthorizationHeaderKeyValuePair(signatureInHeader);
 
-            Assert.AreEqual("auth_signature", paramter.Key);
-            Assert.AreEqual("uZF3aYQFtyK0F1FFHY w7/Be m4=", paramter.Value);
+            Assert.AreEqual("auth_signature", parameter.Key);
+            Assert.AreEqual("uZF3aYQFtyK0F1FFHY w7/Be m4=", parameter.Value);
         }
 
         [TestMethod]
         public void NormalizeRequestParameters_ReturnsParametersInOrdinalOrder()
         {
-            var parameters = new Dictionary<string, string> { { "ZIP", "123" }, { "CVV", "123" }, { "ccid", "123" } };
+            Dictionary<string, string> parameters = new Dictionary<string, string> { { "ZIP", "123" }, { "CVV", "123" }, { "ccid", "123" } };
 
             Assert.AreEqual("CVV=123&ZIP=123&ccid=123", UriUtility.NormalizeRequestParameters(parameters));
         }

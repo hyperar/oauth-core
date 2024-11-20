@@ -72,7 +72,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            var accessToken = new AccessToken
+            AccessToken accessToken = new AccessToken
             {
                 ConsumerKey = context.ConsumerKey,
                 ExpiryDate = DateTime.UtcNow.AddDays(20),
@@ -91,7 +91,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            var token = new RequestToken
+            RequestToken token = new RequestToken
             {
                 ConsumerKey = context.ConsumerKey,
                 Realm = context.Realm,
@@ -151,7 +151,7 @@ namespace Hyperar.OAuthCore.Storage.Basic
 
         public IToken? GetToken(IOAuthContext context)
         {
-            var token = (IToken?)null;
+            IToken? token = null;
 
             if (!string.IsNullOrEmpty(context.Token))
             {

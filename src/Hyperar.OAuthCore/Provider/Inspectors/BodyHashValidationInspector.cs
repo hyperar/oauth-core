@@ -22,7 +22,6 @@
 
 namespace Hyperar.OAuthCore.Provider.Inspectors
 {
-    using System;
     using Hyperar.OAuthCore.Framework;
     using Hyperar.OAuthCore.Utility;
 
@@ -31,7 +30,7 @@ namespace Hyperar.OAuthCore.Provider.Inspectors
         public void InspectContext(ProviderPhase phase, IOAuthContext context)
         {
             if (context.SignatureMethod == SignatureMethod.PlainText ||
-                String.IsNullOrEmpty(context.BodyHash))
+                string.IsNullOrEmpty(context.BodyHash))
             {
                 return;
             }

@@ -83,7 +83,7 @@ namespace Hyperar.OAuthCore.Consumer
 
             Uri uri = this.Context.GenerateUri();
 
-            var description = new RequestDescription
+            RequestDescription description = new RequestDescription
             {
                 Url = uri,
                 Method = this.Context.RequestMethod,
@@ -175,7 +175,7 @@ namespace Hyperar.OAuthCore.Consumer
         {
             if (string.IsNullOrEmpty(this.ResponseBody))
             {
-                var responseMessage = await this.ToResponseMessageAsync();
+                HttpResponseMessage responseMessage = await this.ToResponseMessageAsync();
 
                 this.ResponseBody = await responseMessage.Content
                     .ReadAsStringAsync();
@@ -191,7 +191,7 @@ namespace Hyperar.OAuthCore.Consumer
             ArgumentNullException.ThrowIfNull(description.Url);
             ArgumentException.ThrowIfNullOrWhiteSpace(description.Method);
 
-            var requestMessage = new HttpRequestMessage(
+            HttpRequestMessage requestMessage = new HttpRequestMessage(
                 description.Method.ToHttpMethod(),
                 description.Url);
 
@@ -204,7 +204,7 @@ namespace Hyperar.OAuthCore.Consumer
 
             try
             {
-                var modifiedDateString = this.Context.Headers["If-Modified-Since"];
+                string? modifiedDateString = this.Context.Headers["If-Modified-Since"];
 
                 if (modifiedDateString != null)
                 {
@@ -265,9 +265,9 @@ namespace Hyperar.OAuthCore.Consumer
         {
             try
             {
-                using (var httpClient = this.GetHttpClient())
+                using (HttpClient httpClient = this.GetHttpClient())
                 {
-                    var requestMessage = this.ToRequestMessage();
+                    HttpRequestMessage requestMessage = this.ToRequestMessage();
 
                     return await httpClient.SendAsync(requestMessage);
                 }

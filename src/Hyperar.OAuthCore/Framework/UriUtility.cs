@@ -59,7 +59,7 @@ namespace Hyperar.OAuthCore.Framework
 
             string normalizedRequestParameters = NormalizeRequestParameters(parameters);
 
-            var signatureBase = new StringBuilder();
+            StringBuilder signatureBase = new StringBuilder();
             _ = signatureBase.AppendFormat("{0}&", httpMethod.ToUpper());
 
             _ = signatureBase.AppendFormat("{0}&", UrlEncode(NormalizeUri(url)));
@@ -75,11 +75,11 @@ namespace Hyperar.OAuthCore.Framework
         /// <returns></returns>
         public static string FormatQueryString(IEnumerable<KeyValuePair<string, string>> parameters)
         {
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
             if (parameters != null)
             {
-                foreach (var pair in parameters)
+                foreach (QueryParameter pair in parameters)
                 {
                     if (builder.Length > 0)
                     {
@@ -101,7 +101,7 @@ namespace Hyperar.OAuthCore.Framework
         /// <returns></returns>
         public static string FormatQueryString(NameValueCollection parameters)
         {
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
             if (parameters != null)
             {
@@ -122,7 +122,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public static string FormatTokenForResponse(IToken token)
         {
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
             _ = builder.Append(Parameters.OAuth_Token).Append('=').Append(UrlEncode(token.Token))
                 .Append('&').Append(Parameters.OAuth_Token_Secret).Append('=').Append(UrlEncode(token.TokenSecret));
@@ -144,7 +144,7 @@ namespace Hyperar.OAuthCore.Framework
 
             parameters = parameters.Trim();
 
-            var result = new List<QueryParameter>();
+            List<QueryParameter> result = new List<QueryParameter>();
 
             if (!parameters.StartsWith(OAuthAuthorizationHeaderStart, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -184,7 +184,7 @@ namespace Hyperar.OAuthCore.Framework
                 parameters = parameters.Remove(0, 1);
             }
 
-            var result = new List<QueryParameter>();
+            List<QueryParameter> result = new List<QueryParameter>();
 
             if (!string.IsNullOrEmpty(parameters))
             {
@@ -222,9 +222,9 @@ namespace Hyperar.OAuthCore.Framework
                 .Select(
                     x => new QueryParameter(x.Key, UrlEncode(x.Value)));
 
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
-            foreach (var parameter in orderedParameters)
+            foreach (QueryParameter parameter in orderedParameters)
             {
                 if (builder.Length > 0)
                 {
@@ -278,9 +278,9 @@ namespace Hyperar.OAuthCore.Framework
 
         public static NameValueCollection ToNameValueCollection(this IEnumerable<QueryParameter> source)
         {
-            var collection = new NameValueCollection();
+            NameValueCollection collection = new NameValueCollection();
 
-            foreach (var parameter in source)
+            foreach (QueryParameter parameter in source)
             {
                 collection[parameter.Key] = parameter.Value;
             }
@@ -322,7 +322,7 @@ namespace Hyperar.OAuthCore.Framework
 
             // Fix for the exception Uri.EscapeDataString throws when the string is longer than 32766
             // Microsoft documentation http://msdn.microsoft.com/en-us/library/system.uri.escapedatastring.aspx
-            var escaped = new StringBuilder();
+            StringBuilder escaped = new StringBuilder();
 
             const int maxChunkSize = 32766;
 

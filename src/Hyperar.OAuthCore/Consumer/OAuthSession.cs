@@ -272,9 +272,9 @@ namespace Hyperar.OAuthCore.Consumer
         {
             ArgumentNullException.ThrowIfNull(this.UserAuthorizeUri);
 
-            var builder = new UriBuilder(this.UserAuthorizeUri);
+            UriBuilder builder = new UriBuilder(this.UserAuthorizeUri);
 
-            var collection = new NameValueCollection();
+            NameValueCollection collection = new NameValueCollection();
 
             if (builder.Query != null)
             {
@@ -322,7 +322,7 @@ namespace Hyperar.OAuthCore.Consumer
 
         public IConsumerRequest Request(IToken accessToken)
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = this.ConsumerContext.UseHeaderForOAuthParameters,
                 IncludeOAuthRequestBodyHashInSignature = this.AddBodyHashesToRawRequests
@@ -343,7 +343,7 @@ namespace Hyperar.OAuthCore.Consumer
 
         public IConsumerRequest Request()
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = this.ConsumerContext.UseHeaderForOAuthParameters,
                 IncludeOAuthRequestBodyHashInSignature = this.AddBodyHashesToRawRequests

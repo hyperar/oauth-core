@@ -41,9 +41,9 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
 
         public OAuthProvider10Tests()
         {
-            var tokenStore = new TestTokenStore();
-            var consumerStore = new TestConsumerStore();
-            var nonceStore = new TestNonceStore();
+            TestTokenStore tokenStore = new TestTokenStore();
+            TestConsumerStore consumerStore = new TestConsumerStore();
+            TestNonceStore nonceStore = new TestNonceStore();
 
             this.provider = new OAuthProvider(tokenStore,
                                          new SignatureValidationInspector(consumerStore),
@@ -55,7 +55,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
 
         private static OAuthSession CreateConsumer(string signatureMethod)
         {
-            var consumerContext = new OAuthConsumerContext
+            OAuthConsumerContext consumerContext = new OAuthConsumerContext
             {
                 SignatureMethod = signatureMethod,
                 ConsumerKey = "key",
@@ -63,7 +63,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
                 Key = TestCertificates.OAuthTestCertificate().GetRSAPrivateKey() ?? throw new NullReferenceException("GetRSAPrivateKey")
             };
 
-            var session = new OAuthSession(consumerContext, "http://localhost/oauth/requesttoken.rails",
+            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/oauth/requesttoken.rails",
                                            "http://localhost/oauth/userauhtorize.rails",
                                            "http://localhost/oauth/accesstoken.rails");
 
@@ -76,10 +76,10 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
         }
 
         [TestMethod]
-        public void RequestTokenWithTokenSecretParamterThrowsException()
+        public void RequestTokenWithTokenSecretparameterThrowsException()
         {
             IOAuthContext context = new OAuthContext { TokenSecret = "secret" };
-            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
             Assert.AreEqual("The oauth_token_secret must not be transmitted to the provider.", ex.Message);
         }
 
@@ -175,7 +175,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             OAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             context.Signature = "wrong";
-            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
             Assert.AreEqual("Failed to validate signature", ex.Message);
         }
 
@@ -185,7 +185,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             OAuthSession session = CreateConsumer(SignatureMethod.PlainText);
             session.ConsumerContext.ConsumerKey = "invalid";
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
-            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
             Assert.AreEqual("Unknown Consumer (Realm: , Key: invalid)", ex.Message);
         }
 
@@ -216,7 +216,7 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             IOAuthContext context = session.BuildRequestTokenContext("GET").Context;
             context.Signature =
                 "eeh8hLNIlNNq1Xrp7BOCc+xgY/K8AmjxKNM7UdLqqcvNSmJqcPcf7yQIOvu8oj5R/mDvBpSb3+CEhxDoW23gggsddPIxNdOcDuEOenugoCifEY6nRz8sbtYt3GHXsDS2esEse/N8bWgDdOm2FRDKuy9OOluQuKXLjx5wkD/KYMY=";
-            var ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
             Assert.AreEqual("Failed to validate signature", ex.Message);
         }
         [TestMethod]

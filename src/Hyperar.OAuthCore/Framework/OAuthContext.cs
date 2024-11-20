@@ -313,7 +313,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public string GenerateOAuthParametersForHeader()
         {
-            var builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
 
             if (this.Realm != null)
             {
@@ -324,7 +324,7 @@ namespace Hyperar.OAuthCore.Framework
 
             if (parameters != null)
             {
-                foreach (var parameter in parameters.Where(p => p.Key != Parameters.Realm))
+                foreach (QueryParameter parameter in parameters.Where(p => p.Key != Parameters.Realm))
                 {
                     if (builder.Length > 0)
                     {
@@ -363,7 +363,7 @@ namespace Hyperar.OAuthCore.Framework
                 this.GenerateAndSetBodyHash();
             }
 
-            var allParameters = new List<QueryParameter>();
+            List<QueryParameter> allParameters = new List<QueryParameter>();
 
             //fix for issue: http://groups.google.com/group/oauth/browse_thread/thread/42ef5fecc54a7e9a/a54e92b13888056c?hl=en&lnk=gst&q=Signing+PUT+Request#a54e92b13888056c
             if (this.FormEncodedParameters != null && this.RequestMethod == "POST")
@@ -399,7 +399,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(this.NormalizedRequestUrl);
 
-            var builder = new UriBuilder(this.NormalizedRequestUrl);
+            UriBuilder builder = new UriBuilder(this.NormalizedRequestUrl);
 
             IEnumerable<QueryParameter> parameters = this.QueryParameters.ToQueryParametersExcludingTokenSecret();
 
@@ -412,7 +412,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(this.NormalizedRequestUrl);
 
-            var builder = new UriBuilder(this.NormalizedRequestUrl);
+            UriBuilder builder = new UriBuilder(this.NormalizedRequestUrl);
 
             IEnumerable<QueryParameter> parameters = this.QueryParameters.ToQueryParameters()
                 .Where(q => !q.Key.StartsWith(Parameters.OAuthParameterPrefix) && !q.Key.StartsWith(Parameters.XAuthParameterPrefix));
@@ -426,7 +426,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(this.NormalizedRequestUrl);
 
-            var builder = new UriBuilder(this.NormalizedRequestUrl)
+            UriBuilder builder = new UriBuilder(this.NormalizedRequestUrl)
             {
                 Query = ""
             };

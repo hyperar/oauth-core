@@ -37,15 +37,15 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void InValidConsumerThrows()
         {
-            var consumerStore = MockRepository.GenerateStub<IConsumerStore>();
+            IConsumerStore consumerStore = MockRepository.GenerateStub<IConsumerStore>();
 
-            var context = new OAuthContext { ConsumerKey = "key" };
+            OAuthContext context = new OAuthContext { ConsumerKey = "key" };
 
             _ = consumerStore.Stub(stub => stub.IsConsumer(context)).Return(false);
 
-            var inspector = new OAuthCore.Provider.Inspectors.ConsumerValidationInspector(consumerStore);
+            OAuthCore.Provider.Inspectors.ConsumerValidationInspector inspector = new OAuthCore.Provider.Inspectors.ConsumerValidationInspector(consumerStore);
 
-            var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
 
             Assert.AreEqual("Unknown Consumer (Realm: , Key: key)", ex.Message);
         }
@@ -53,18 +53,19 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void ValidConsumerPassesThrough()
         {
-            var repository = new MockRepository();
+            MockRepository repository = new MockRepository();
 
-            var consumerStore = repository.StrictMock<IConsumerStore>();
-            var context = new OAuthContext { ConsumerKey = "key" };
+            IConsumerStore consumerStore = repository.StrictMock<IConsumerStore>();
+            OAuthContext context = new OAuthContext { ConsumerKey = "key" };
 
             using (repository.Record())
             {
                 _ = Expect.Call(consumerStore.IsConsumer(context)).Return(true);
             }
+
             using (repository.Playback())
             {
-                var inspector = new OAuthCore.Provider.Inspectors.ConsumerValidationInspector(consumerStore);
+                OAuthCore.Provider.Inspectors.ConsumerValidationInspector inspector = new OAuthCore.Provider.Inspectors.ConsumerValidationInspector(consumerStore);
                 inspector.InspectContext(ProviderPhase.GrantRequestToken, context);
             }
         }

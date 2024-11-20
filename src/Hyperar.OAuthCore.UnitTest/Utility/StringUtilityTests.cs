@@ -124,7 +124,7 @@
 
         private static string GenerateTestString(double percentMatch, int length)
         {
-            var matchLength = (int)(percentMatch * length);
+            int matchLength = (int)(percentMatch * length);
             int nonMatchLength = length - matchLength;
 
             if (nonMatchLength == 0)

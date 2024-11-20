@@ -53,7 +53,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public virtual IOAuthContext FromHttpRequest(HttpWebRequest request)
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 RawUri = this.CleanUri(request.RequestUri),
                 Cookies = this.CollectCookies(request),
@@ -99,7 +99,6 @@ namespace Hyperar.OAuthCore.Framework
                 throw new ArgumentNullException(nameof(url));
             }
 
-
             if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri? uri))
             {
                 throw new ArgumentException(string.Format("Failed to parse url: {0} into a valid Uri instance", url));
@@ -110,7 +109,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public virtual IOAuthContext FromWebRequest(HttpWebRequest request, Stream rawBody)
         {
-            using (var reader = new StreamReader(rawBody))
+            using (StreamReader reader = new StreamReader(rawBody))
             {
                 return this.FromWebRequest(request, reader.ReadToEnd());
             }
@@ -118,7 +117,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public virtual IOAuthContext FromWebRequest(HttpWebRequest request, string body)
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 RawUri = this.CleanUri(request.RequestUri),
                 Cookies = this.CollectCookies(request),
@@ -140,7 +139,7 @@ namespace Hyperar.OAuthCore.Framework
 
         protected virtual Uri CleanUri(Uri uri)
         {
-            var adjustedUri = this._uriAdjuster(uri);
+            Uri adjustedUri = this._uriAdjuster(uri);
             return RemoveEmptyQueryStringParameterIntroducedBySomeOpenSocialPlatformImplementations(adjustedUri);
         }
 
@@ -156,7 +155,7 @@ namespace Hyperar.OAuthCore.Framework
 
         protected virtual NameValueCollection CollectCookiesFromHeaderString(string? cookieHeader)
         {
-            var cookieCollection = new NameValueCollection();
+            NameValueCollection cookieCollection = new NameValueCollection();
 
             if (!string.IsNullOrEmpty(cookieHeader))
             {
@@ -166,7 +165,7 @@ namespace Hyperar.OAuthCore.Framework
                     //Remove the trailing and Leading white spaces
                     string strCookie = cookie.Trim();
 
-                    var reg = new Regex(@"^(\S*)=(\S*)$");
+                    Regex reg = new Regex(@"^(\S*)=(\S*)$");
 
                     if (reg.IsMatch(strCookie))
                     {
@@ -185,7 +184,7 @@ namespace Hyperar.OAuthCore.Framework
 
         protected virtual NameValueCollection GetCleanedNameValueCollection(NameValueCollection requestQueryString)
         {
-            var nvc = new NameValueCollection(requestQueryString);
+            NameValueCollection nvc = new NameValueCollection(requestQueryString);
 
             if (nvc.HasKeys())
             {
@@ -215,11 +214,11 @@ namespace Hyperar.OAuthCore.Framework
 
         private static NameValueCollection GetQueryNameValueCollectionFromUri(Uri uri)
         {
-            var result = new NameValueCollection();
+            NameValueCollection result = new NameValueCollection();
 
             if (!string.IsNullOrWhiteSpace(uri.Query))
             {
-                foreach (var paramNameAndValue in uri.Query.Split('&'))
+                foreach (string paramNameAndValue in uri.Query.Split('&'))
                 {
                     string[] parts = paramNameAndValue.Split('=');
 

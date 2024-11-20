@@ -38,15 +38,15 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void InspectContextForRepeatedNonceThrows()
         {
-            var nonceStore = MockRepository.GenerateStub<INonceStore>();
+            INonceStore nonceStore = MockRepository.GenerateStub<INonceStore>();
 
-            var context = new OAuthContext { Nonce = "1" };
+            OAuthContext context = new OAuthContext { Nonce = "1" };
 
             _ = nonceStore.Stub(stub => stub.RecordNonceAndCheckIsUnique(context, "1")).Return(false);
 
-            var inspector = new NonceStoreInspector(nonceStore);
+            NonceStoreInspector inspector = new NonceStoreInspector(nonceStore);
 
-            var ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
 
             Assert.AreEqual("The nonce value \"1\" has already been used", ex.Message);
         }
@@ -54,15 +54,15 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
         [TestMethod]
         public void InspectContextForUniqueNoncePasses()
         {
-            var nonceStore = MockRepository.GenerateStub<INonceStore>();
+            INonceStore nonceStore = MockRepository.GenerateStub<INonceStore>();
 
-            var context = new OAuthContext { Nonce = "2" };
+            OAuthContext context = new OAuthContext { Nonce = "2" };
 
             _ = nonceStore.Stub(stub => stub.RecordNonceAndCheckIsUnique(context, "2")).Return(true);
 
-            var inspector = new NonceStoreInspector(nonceStore);
+            NonceStoreInspector inspector = new NonceStoreInspector(nonceStore);
 
-            var exception = Record.Exception(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
+            Exception exception = Record.Exception(() => inspector.InspectContext(ProviderPhase.GrantRequestToken, context));
 
             Assert.IsNull(exception);
         }

@@ -35,7 +35,7 @@ namespace Hyperar.OAuthCore.UnitTest.Framework
         [TestMethod]
         public void RoundTripEpoch()
         {
-            var newYears = new DateTime(2008, 1, 1, 0, 0, 0);
+            DateTime newYears = new DateTime(2008, 1, 1, 0, 0, 0);
 
             long epoch = newYears.Epoch();
 

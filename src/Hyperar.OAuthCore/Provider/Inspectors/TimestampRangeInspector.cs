@@ -63,6 +63,7 @@ namespace Hyperar.OAuthCore.Provider.Inspectors
                                              "The timestamp is to old, it must be at most {0} seconds before the servers current date and time",
                                              this._maxBeforeNow.TotalSeconds));
             }
+
             if (now.Add(this._maxAfterNow) < timestamp)
             {
                 throw new OAuthException(context, OAuthProblems.TimestampRefused,

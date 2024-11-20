@@ -51,7 +51,7 @@
         public void GetRequestDescriptionCopiesHeadersFromContextToDescription()
         {
             this.context.Headers["a-key"] = "a-value";
-            var request = new ConsumerRequest(this.context, this.consumerContext, this.accessToken);
+            ConsumerRequest request = new ConsumerRequest(this.context, this.consumerContext, this.accessToken);
             RequestDescription description = request.GetRequestDescription();
             Assert.AreEqual("a-value", description.Headers["a-key"]);
         }

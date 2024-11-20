@@ -51,7 +51,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
             SHA1 sha1 = GenerateHash(signingContext);
 
-            var deformatter = new RSAPKCS1SignatureDeformatter(signingContext.Algorithm);
+            RSAPKCS1SignatureDeformatter deformatter = new RSAPKCS1SignatureDeformatter(signingContext.Algorithm);
             deformatter.SetHashAlgorithm("MD5");
 
             byte[] signature = Convert.FromBase64String(authContext.Signature);
@@ -63,11 +63,11 @@ namespace Hyperar.OAuthCore.Framework.Signing
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(signingContext.SignatureBase);
 
-            var sha1 = SHA1.Create();
+            SHA1 sha1 = SHA1.Create();
 
             byte[] dataBuffer = Encoding.ASCII.GetBytes(signingContext.SignatureBase);
 
-            var cs = new CryptoStream(Stream.Null, sha1, CryptoStreamMode.Write);
+            CryptoStream cs = new CryptoStream(Stream.Null, sha1, CryptoStreamMode.Write);
             cs.Write(dataBuffer, 0, dataBuffer.Length);
             cs.Close();
 
@@ -83,7 +83,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
             SHA1 sha1 = GenerateHash(signingContext);
 
-            var formatter = new RSAPKCS1SignatureFormatter(signingContext.Algorithm);
+            RSAPKCS1SignatureFormatter formatter = new RSAPKCS1SignatureFormatter(signingContext.Algorithm);
             formatter.SetHashAlgorithm("MD5");
 
             byte[] signature = formatter.CreateSignature(sha1);

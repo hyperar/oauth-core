@@ -141,7 +141,7 @@ namespace Hyperar.OAuthCore.Framework
 
         public static Exception MissingRequiredOAuthParameter(IOAuthContext context, string parameterName)
         {
-            var exception = new OAuthException(context, OAuthProblems.ParameterAbsent,
+            OAuthException exception = new OAuthException(context, OAuthProblems.ParameterAbsent,
                                                string.Format("Missing required parameter : {0}", parameterName));
 
             exception.Report?.ParametersAbsent?.Add(parameterName);
@@ -169,7 +169,7 @@ namespace Hyperar.OAuthCore.Framework
         {
             if (innerException.Response is HttpWebResponse response)
             {
-                using (var reader = new StreamReader(innerException.Response.GetResponseStream()))
+                using (StreamReader reader = new StreamReader(innerException.Response.GetResponseStream()))
                 {
                     string body = reader.ReadToEnd();
 

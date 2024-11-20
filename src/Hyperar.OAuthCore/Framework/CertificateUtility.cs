@@ -39,10 +39,10 @@ namespace Hyperar.OAuthCore.Framework
         /// <returns></returns>
         public static X509Certificate2 LoadCertificateFromStrings(string privateKey, string certificate)
         {
-            var parser = new AsnKeyParser(Convert.FromBase64String(privateKey));
+            AsnKeyParser parser = new AsnKeyParser(Convert.FromBase64String(privateKey));
             RSAParameters parameters = parser.ParseRSAPrivateKey();
-            var x509 = new X509Certificate2(Encoding.ASCII.GetBytes(certificate));
-            var provider = new RSACryptoServiceProvider();
+            X509Certificate2 x509 = new X509Certificate2(Encoding.ASCII.GetBytes(certificate));
+            RSACryptoServiceProvider provider = new RSACryptoServiceProvider();
             provider.ImportParameters(parameters);
 
             return x509.CopyWithPrivateKey(provider);

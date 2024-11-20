@@ -39,7 +39,8 @@ namespace Hyperar.OAuthCore.Utility
                 _ = stream.Seek(0, 0);
             }
 
-            var reader = new StreamReader(stream);
+            StreamReader reader = new StreamReader(stream);
+
             return reader.ReadToEnd();
         }
 

@@ -68,7 +68,7 @@ namespace Hyperar.OAuthCore.Consumer
 
             try
             {
-                var certificate = new X509Certificate2(this._filename, this._password);
+                X509Certificate2 certificate = new X509Certificate2(this._filename, this._password);
                 Debug.Assert(certificate.Subject != string.Empty);
                 return certificate;
             }

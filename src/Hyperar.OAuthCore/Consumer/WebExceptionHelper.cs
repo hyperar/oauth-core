@@ -49,7 +49,7 @@ namespace Hyperar.OAuthCore.Consumer
 
             if (content.Contains(Parameters.OAuth_Problem))
             {
-                var report = new OAuthProblemReport(content);
+                OAuthProblemReport report = new OAuthProblemReport(content);
 
                 authException = new OAuthException(report.ProblemAdvice ?? report.Problem ?? string.Empty, webEx)
                 {

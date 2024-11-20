@@ -40,14 +40,14 @@
         [TestMethod]
         public void InspectBodyForHmacSha1SignatureDoesNotThrowWhenBodyHashIsNull()
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = true,
                 BodyHash = null,
                 SignatureMethod = SignatureMethod.HmacSha1
             };
 
-            var exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
+            Exception exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
 
             Assert.IsNull(exception);
         }
@@ -55,14 +55,14 @@
         [TestMethod]
         public void InspectBodyForHmacSha1SignatureDoesNotThrowWhenHashMatches()
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = true,
                 BodyHash = EmptyBodyHash,
                 SignatureMethod = SignatureMethod.HmacSha1
             };
 
-            var exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
+            Exception exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
 
             Assert.IsNull(exception);
         }
@@ -70,14 +70,14 @@
         [TestMethod]
         public void InspectBodyForHmacSha1SignatureThrowsWhenHashDoesNotMatch()
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = true,
                 BodyHash = "wrong",
                 SignatureMethod = SignatureMethod.HmacSha1
             };
 
-            var ex = Assert.ThrowsException<OAuthException>(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
 
             Assert.AreEqual("Failed to validate body hash", ex.Message);
         }
@@ -85,14 +85,14 @@
         [TestMethod]
         public void InspectBodyForPlainttextSignatureDoesNothing()
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = true,
                 BodyHash = "wrong",
                 SignatureMethod = SignatureMethod.PlainText
             };
 
-            var exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
+            Exception exception = Record.Exception(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
 
             Assert.IsNull(exception);
         }
@@ -100,14 +100,14 @@
         [TestMethod]
         public void InspectWhenContextHasFormParametersThrows()
         {
-            var context = new OAuthContext
+            OAuthContext context = new OAuthContext
             {
                 UseAuthorizationHeader = false,
                 BodyHash = "1234",
                 SignatureMethod = SignatureMethod.HmacSha1
             };
 
-            var ex = Assert.ThrowsException<OAuthException>(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.inspector.InspectContext(ProviderPhase.AccessProtectedResourceRequest, context));
 
             Assert.AreEqual("Encountered unexpected oauth_body_hash value in form-encoded request", ex.Message);
         }

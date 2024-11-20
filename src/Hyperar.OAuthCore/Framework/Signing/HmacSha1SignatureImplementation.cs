@@ -73,7 +73,7 @@ namespace Hyperar.OAuthCore.Framework.Signing
 
             string hashSource = string.Format("{0}&{1}", consumerSecret, tokenSecret);
 
-            var hashAlgorithm = new HMACSHA1 { Key = Encoding.ASCII.GetBytes(hashSource) };
+            HMACSHA1 hashAlgorithm = new HMACSHA1 { Key = Encoding.ASCII.GetBytes(hashSource) };
 
             return ComputeHash(hashAlgorithm, signingContext.SignatureBase);
         }
