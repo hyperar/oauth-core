@@ -1,6 +1,7 @@
 namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
 {
     using System.Security.Cryptography.X509Certificates;
+
     #region License
 
     // The MIT License

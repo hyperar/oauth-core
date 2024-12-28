@@ -24,78 +24,6 @@
             return this.initialCount - this.octets.Count;
         }
 
-        public int RemainingBytes()
-        {
-            return this.octets.Count;
-        }
-
-        private int GetLength()
-        {
-            int length = 0;
-
-            // Checkpoint
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-
-                if (b == (b & 0x7f))
-                {
-                    return b;
-                }
-
-                int i = b & 0x7f;
-
-                if (i > 4)
-                {
-                    StringBuilder sb = new StringBuilder("Invalid Length Encoding. ");
-                    _ = sb.AppendFormat("Length uses {0} octets",
-                                    i.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                while (0 != i--)
-                {
-                    // shift left
-                    length <<= 8;
-
-                    length |= this.GetNextOctet();
-                }
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
-            }
-
-            return length;
-        }
-
-        public byte[] Next()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                int length = this.GetLength();
-                
-                if (length > this.RemainingBytes())
-                {
-                    StringBuilder sb = new StringBuilder("Incorrect Size. ");
-                    _ = sb.AppendFormat(Constants.SpecifiedRemainingMessageMask,
-                                    length.ToString(CultureInfo.InvariantCulture),
-                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                return this.GetOctets(length);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
-            }
-        }
-
         public byte GetNextOctet()
         {
             int position = this.CurrentPosition();
@@ -142,77 +70,19 @@
             return values;
         }
 
+        public bool IsNextBitString()
+        {
+            return 0x03 == this.octets[0];
+        }
+
+        public bool IsNextInteger()
+        {
+            return 0x02 == this.octets[0];
+        }
+
         public bool IsNextNull()
         {
             return 0x05 == this.octets[0];
-        }
-
-        public int NextNull()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-                if (0x05 != b)
-                {
-                    StringBuilder sb = new StringBuilder("Expected Null. ");
-                    _ = sb.AppendFormat(Constants.SpecifiedIdentifierMessageMask, b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                // Next octet must be 0
-                b = this.GetNextOctet();
-                if (0x00 != b)
-                {
-                    StringBuilder sb = new StringBuilder("Null has non-zero size. ");
-                    _ = sb.AppendFormat("Size: {0}", b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                return 0;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
-            }
-        }
-
-        public bool IsNextSequence()
-        {
-            return 0x30 == this.octets[0];
-        }
-
-        public int NextSequence()
-        {
-            int position = this.CurrentPosition();
-
-            try
-            {
-                byte b = this.GetNextOctet();
-                if (0x30 != b)
-                {
-                    StringBuilder sb = new StringBuilder("Expected Sequence. ");
-                    _ = sb.AppendFormat(Constants.SpecifiedIdentifierMessageMask, b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                int length = this.GetLength();
-                if (length > this.RemainingBytes())
-                {
-                    StringBuilder sb = new StringBuilder(Constants.IncorrectSequenceSizeMessage);
-                    _ = sb.AppendFormat(Constants.SpecifiedRemainingMessageMask,
-                                    length.ToString(CultureInfo.InvariantCulture),
-                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
-                return length;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
-            }
         }
 
         public bool IsNextOctetString()
@@ -220,41 +90,34 @@
             return 0x04 == this.octets[0];
         }
 
-        public int NextOctetString()
+        public bool IsNextSequence()
+        {
+            return 0x30 == this.octets[0];
+        }
+
+        public byte[] Next()
         {
             int position = this.CurrentPosition();
 
             try
             {
-                byte b = this.GetNextOctet();
-                if (0x04 != b)
-                {
-                    StringBuilder sb = new StringBuilder("Expected Octet String. ");
-                    _ = sb.AppendFormat(Constants.SpecifiedIdentifierMessageMask, b.ToString(CultureInfo.InvariantCulture));
-                    throw new BerDecodeException(sb.ToString(), position);
-                }
-
                 int length = this.GetLength();
+
                 if (length > this.RemainingBytes())
                 {
-                    StringBuilder sb = new StringBuilder("Incorrect Octet String Size. ");
+                    StringBuilder sb = new StringBuilder("Incorrect Size. ");
                     _ = sb.AppendFormat(Constants.SpecifiedRemainingMessageMask,
                                     length.ToString(CultureInfo.InvariantCulture),
                                     this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
                     throw new BerDecodeException(sb.ToString(), position);
                 }
 
-                return length;
+                return this.GetOctets(length);
             }
             catch (ArgumentOutOfRangeException ex)
             {
                 throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
-        }
-
-        public bool IsNextBitString()
-        {
-            return 0x03 == this.octets[0];
         }
 
         public int NextBitString()
@@ -292,11 +155,6 @@
             }
         }
 
-        public bool IsNextInteger()
-        {
-            return 0x02 == this.octets[0];
-        }
-
         public byte[] NextInteger()
         {
             int position = this.CurrentPosition();
@@ -322,6 +180,69 @@
                 }
 
                 return this.GetOctets(length);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
+            }
+        }
+
+        public int NextNull()
+        {
+            int position = this.CurrentPosition();
+
+            try
+            {
+                byte b = this.GetNextOctet();
+                if (0x05 != b)
+                {
+                    StringBuilder sb = new StringBuilder("Expected Null. ");
+                    _ = sb.AppendFormat(Constants.SpecifiedIdentifierMessageMask, b.ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString(), position);
+                }
+
+                // Next octet must be 0
+                b = this.GetNextOctet();
+                if (0x00 != b)
+                {
+                    StringBuilder sb = new StringBuilder("Null has non-zero size. ");
+                    _ = sb.AppendFormat("Size: {0}", b.ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString(), position);
+                }
+
+                return 0;
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
+            }
+        }
+
+        public int NextOctetString()
+        {
+            int position = this.CurrentPosition();
+
+            try
+            {
+                byte b = this.GetNextOctet();
+                if (0x04 != b)
+                {
+                    StringBuilder sb = new StringBuilder("Expected Octet String. ");
+                    _ = sb.AppendFormat(Constants.SpecifiedIdentifierMessageMask, b.ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString(), position);
+                }
+
+                int length = this.GetLength();
+                if (length > this.RemainingBytes())
+                {
+                    StringBuilder sb = new StringBuilder("Incorrect Octet String Size. ");
+                    _ = sb.AppendFormat(Constants.SpecifiedRemainingMessageMask,
+                                    length.ToString(CultureInfo.InvariantCulture),
+                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString(), position);
+                }
+
+                return length;
             }
             catch (ArgumentOutOfRangeException ex)
             {
@@ -367,6 +288,85 @@
             {
                 throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
             }
+        }
+
+        public int NextSequence()
+        {
+            int position = this.CurrentPosition();
+
+            try
+            {
+                byte b = this.GetNextOctet();
+                if (0x30 != b)
+                {
+                    StringBuilder sb = new StringBuilder("Expected Sequence. ");
+                    _ = sb.AppendFormat(Constants.SpecifiedIdentifierMessageMask, b.ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString(), position);
+                }
+
+                int length = this.GetLength();
+                if (length > this.RemainingBytes())
+                {
+                    StringBuilder sb = new StringBuilder(Constants.IncorrectSequenceSizeMessage);
+                    _ = sb.AppendFormat(Constants.SpecifiedRemainingMessageMask,
+                                    length.ToString(CultureInfo.InvariantCulture),
+                                    this.RemainingBytes().ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString(), position);
+                }
+
+                return length;
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
+            }
+        }
+
+        public int RemainingBytes()
+        {
+            return this.octets.Count;
+        }
+
+        private int GetLength()
+        {
+            int length = 0;
+
+            // Checkpoint
+            int position = this.CurrentPosition();
+
+            try
+            {
+                byte b = this.GetNextOctet();
+
+                if (b == (b & 0x7f))
+                {
+                    return b;
+                }
+
+                int i = b & 0x7f;
+
+                if (i > 4)
+                {
+                    StringBuilder sb = new StringBuilder("Invalid Length Encoding. ");
+                    _ = sb.AppendFormat("Length uses {0} octets",
+                                    i.ToString(CultureInfo.InvariantCulture));
+                    throw new BerDecodeException(sb.ToString(), position);
+                }
+
+                while (0 != i--)
+                {
+                    // shift left
+                    length <<= 8;
+
+                    length |= this.GetNextOctet();
+                }
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new BerDecodeException(Constants.ErrorParsingKeyMessage, position, ex);
+            }
+
+            return length;
         }
     }
 }

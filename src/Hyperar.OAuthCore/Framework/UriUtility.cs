@@ -38,8 +38,9 @@ namespace Hyperar.OAuthCore.Framework
 
         private static readonly string[] QuoteCharacters = new[] { "\"", "'" };
 
-        private static readonly string[] UriRfc3986CharsToEscape = new[] { "!", "*", "'", "(", ")" };
         private static readonly char[] separator = new[] { ',' };
+
+        private static readonly string[] UriRfc3986CharsToEscape = new[] { "!", "*", "'", "(", ")" };
 
         static UriUtility()
         {

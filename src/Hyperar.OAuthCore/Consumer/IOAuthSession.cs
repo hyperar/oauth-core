@@ -50,17 +50,17 @@ namespace Hyperar.OAuthCore.Consumer
 
         IConsumerRequest BuildRequestTokenContext(string method);
 
-        IToken ExchangeRequestTokenForAccessToken(IToken requestToken);
+        Task<IToken> ExchangeRequestTokenForAccessTokenAsync(IToken requestToken, string verificationCode);
 
-        IToken ExchangeRequestTokenForAccessToken(IToken requestToken, string verificationCode);
+        Task<IToken> ExchangeRequestTokenForAccessTokenAsync(IToken requestToken, string method, string verificationCode);
 
-        IToken ExchangeRequestTokenForAccessToken(IToken requestToken, string method, string verificationCode);
+        Task<IToken> ExchangeRequestTokenForAccessTokenAsync(IToken requestToken);
 
-        IToken GetAccessTokenUsingXAuth(string authMode, string username, string password);
+        Task<IToken> GetAccessTokenUsingXAuthAsync(string authMode, string username, string password);
 
-        IToken GetRequestToken();
+        Task<IToken> GetRequestTokenAsync(string method);
 
-        IToken GetRequestToken(string method);
+        Task<IToken> GetRequestTokenAsync();
 
         string GetUserAuthorizationUrlForToken(IToken token, string callbackUrl);
 

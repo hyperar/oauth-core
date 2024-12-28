@@ -81,25 +81,19 @@ namespace Hyperar.OAuthCore.Consumer
             return request.ForMethod("PUT");
         }
 
-        public static string ReadBody(this IConsumerRequest request)
+        public static async Task<string> ReadBodyAsync(this IConsumerRequest request)
         {
-            HttpResponseMessage response = request.ToResponseMessageAsync()
-                .GetAwaiter()
-                .GetResult();
+            HttpResponseMessage response = await request.ToResponseMessageAsync();
 
-            return response.Content.ReadAsStringAsync()
-                .GetAwaiter()
-                .GetResult();
+            return await response.Content.ReadAsStringAsync();
         }
 
-        public static T Select<T>(this IConsumerRequest request, Func<NameValueCollection, T> selectFunc)
+        public static async Task<T> SelectAsync<T>(this IConsumerRequest request, Func<NameValueCollection, T> selectFunc)
         {
             try
             {
                 return selectFunc(
-                    request.ToBodyParametersAsync()
-                        .GetAwaiter()
-                        .GetResult());
+                    await request.ToBodyParametersAsync());
             }
             catch (ArgumentNullException argumentException)
             {

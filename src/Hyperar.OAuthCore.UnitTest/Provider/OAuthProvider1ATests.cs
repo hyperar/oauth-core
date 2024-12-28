@@ -53,23 +53,6 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
                                          new OAuth10AInspector(tokenStore));
         }
 
-        private static OAuthSession CreateConsumer(string signatureMethod)
-        {
-            OAuthConsumerContext consumerContext = new OAuthConsumerContext
-            {
-                SignatureMethod = signatureMethod,
-                ConsumerKey = "key",
-                ConsumerSecret = "secret",
-                Key = TestCertificates.OAuthTestCertificate().GetRSAPrivateKey() ?? throw new NullReferenceException("GetRSAPrivateKey")
-            };
-
-            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/oauth/requesttoken.rails",
-                                           "http://localhost/oauth/userauhtorize.rails",
-                                           "http://localhost/oauth/accesstoken.rails");
-
-            return session;
-        }
-
         [TestMethod]
         public void ExchangeTokensWhenVerifierIsMatchDoesNotThrowException()
         {
@@ -117,6 +100,23 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             context.CallbackUrl = null; // clear parameter, as it will default to "oob"
             OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
             Assert.AreEqual("Missing required parameter : oauth_callback", ex.Message);
+        }
+
+        private static OAuthSession CreateConsumer(string signatureMethod)
+        {
+            OAuthConsumerContext consumerContext = new OAuthConsumerContext
+            {
+                SignatureMethod = signatureMethod,
+                ConsumerKey = "key",
+                ConsumerSecret = "secret",
+                Key = TestCertificates.OAuthTestCertificate().GetRSAPrivateKey() ?? throw new NullReferenceException("GetRSAPrivateKey")
+            };
+
+            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/oauth/requesttoken.rails",
+                                           "http://localhost/oauth/userauhtorize.rails",
+                                           "http://localhost/oauth/accesstoken.rails");
+
+            return session;
         }
     }
 }

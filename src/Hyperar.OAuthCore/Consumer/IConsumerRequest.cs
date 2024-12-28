@@ -55,12 +55,12 @@ namespace Hyperar.OAuthCore.Consumer
 
         Task<byte[]> ToBytesAsync();
 
-        Task<string> ToStringAsync();
-
-        Task<XDocument> ToXDocumentAsync();
-
         HttpRequestMessage ToRequestMessage();
 
         Task<HttpResponseMessage> ToResponseMessageAsync();
+
+        Task<string> ToStringAsync();
+
+        Task<XDocument> ToXDocumentAsync();
     }
 }

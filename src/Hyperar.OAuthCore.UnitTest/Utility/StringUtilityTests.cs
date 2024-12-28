@@ -33,6 +33,30 @@
     [TestClass]
     public class StringUtilityTests
     {
+        public static long TimeCompareValuesOverIterationsConstantTime(string value, string other, int iterations)
+        {
+            Stopwatch stopWatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                _ = value.EqualsInConstantTime(other);
+            }
+
+            return stopWatch.ElapsedTicks;
+        }
+
+        public static long TimeCompareValuesOverIterationsStringEquals(string value, string other, int iterations)
+        {
+            Stopwatch stopWatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                _ = value.Equals(other);
+            }
+
+            return stopWatch.ElapsedTicks;
+        }
+
         [TestMethod]
         public void EqualsInConstantTimeComparesInConstantTimeRegardlessOfPercentMatchToWithinMarginOfError()
         {
@@ -87,30 +111,6 @@
         {
             bool expected = string.Equals(value, other);
             Assert.AreEqual(expected, value.EqualsInConstantTime(other));
-        }
-
-        public static long TimeCompareValuesOverIterationsConstantTime(string value, string other, int iterations)
-        {
-            Stopwatch stopWatch = Stopwatch.StartNew();
-
-            for (int i = 0; i < iterations; i++)
-            {
-                _ = value.EqualsInConstantTime(other);
-            }
-
-            return stopWatch.ElapsedTicks;
-        }
-
-        public static long TimeCompareValuesOverIterationsStringEquals(string value, string other, int iterations)
-        {
-            Stopwatch stopWatch = Stopwatch.StartNew();
-
-            for (int i = 0; i < iterations; i++)
-            {
-                _ = value.Equals(other);
-            }
-
-            return stopWatch.ElapsedTicks;
         }
 
         private static decimal CalculatePercentageDifference(long[] rangesOfTime)

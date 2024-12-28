@@ -46,6 +46,19 @@ namespace Hyperar.OAuthCore.Testing
 
         public string VerificationCode { get; set; }
 
+        public static IToken CreateAccessTokenForRequestToken(IOAuthContext requestContext)
+        {
+            EnsureTestConsumer(requestContext);
+            return new TokenBase
+            {
+                ConsumerKey = "key",
+                Realm = null,
+                Token = "accesskey",
+                TokenSecret = AccessSecret,
+                SessionHandle = "sessionHandle"
+            };
+        }
+
         public void ConsumeAccessToken(IOAuthContext accessContext)
         {
             EnsureTestConsumer(accessContext);
@@ -71,19 +84,6 @@ namespace Hyperar.OAuthCore.Testing
         public IToken CreateAccessToken(IOAuthContext context)
         {
             EnsureTestConsumer(context);
-            return new TokenBase
-            {
-                ConsumerKey = "key",
-                Realm = null,
-                Token = "accesskey",
-                TokenSecret = AccessSecret,
-                SessionHandle = "sessionHandle"
-            };
-        }
-
-        public static IToken CreateAccessTokenForRequestToken(IOAuthContext requestContext)
-        {
-            EnsureTestConsumer(requestContext);
             return new TokenBase
             {
                 ConsumerKey = "key",

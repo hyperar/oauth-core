@@ -203,15 +203,6 @@ namespace Hyperar.OAuthCore.Framework
             }
         }
 
-        private static Uri RemoveEmptyQueryStringParameterIntroducedBySomeOpenSocialPlatformImplementations(Uri adjustedUri)
-        {
-            // this is a fix for OpenSocial platforms sometimes appending an empty query string parameter
-            // to their url.
-
-            string originalUrl = adjustedUri.OriginalString;
-            return originalUrl.EndsWith('&') ? new Uri(originalUrl.Substring(0, originalUrl.Length - 1)) : adjustedUri;
-        }
-
         private static NameValueCollection GetQueryNameValueCollectionFromUri(Uri uri)
         {
             NameValueCollection result = new NameValueCollection();
@@ -227,6 +218,15 @@ namespace Hyperar.OAuthCore.Framework
             }
 
             return result;
+        }
+
+        private static Uri RemoveEmptyQueryStringParameterIntroducedBySomeOpenSocialPlatformImplementations(Uri adjustedUri)
+        {
+            // this is a fix for OpenSocial platforms sometimes appending an empty query string parameter
+            // to their url.
+
+            string originalUrl = adjustedUri.OriginalString;
+            return originalUrl.EndsWith('&') ? new Uri(originalUrl.Substring(0, originalUrl.Length - 1)) : adjustedUri;
         }
     }
 }

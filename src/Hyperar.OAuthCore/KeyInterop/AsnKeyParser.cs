@@ -35,7 +35,6 @@ namespace Hyperar.OAuthCore.KeyInterop
 
     public class AsnKeyParser
     {
-
         private readonly AsnParser parser;
 
         public AsnKeyParser(string pathname)
@@ -52,23 +51,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         public AsnKeyParser(byte[] contents)
         {
             this.parser = new AsnParser(contents);
-        }
-
-        public static byte[] TrimLeadingZero(byte[] values)
-        {
-            byte[] r;
-            if ((0x00 == values[0]) && (values.Length > 1))
-            {
-                r = new byte[values.Length - 1];
-                Array.Copy(values, 1, r, 0, values.Length - 1);
-            }
-            else
-            {
-                r = new byte[values.Length];
-                Array.Copy(values, r, values.Length);
-            }
-
-            return r;
         }
 
         public static bool EqualOid(byte[] first, byte[] second)
@@ -89,69 +71,85 @@ namespace Hyperar.OAuthCore.KeyInterop
             return true;
         }
 
-        public RSAParameters ParseRSAPublicKey()
+        public static byte[] TrimLeadingZero(byte[] values)
         {
-            RSAParameters parameters = new RSAParameters();
+            byte[] r;
+            if ((0x00 == values[0]) && (values.Length > 1))
+            {
+                r = new byte[values.Length - 1];
+                Array.Copy(values, 1, r, 0, values.Length - 1);
+            }
+            else
+            {
+                r = new byte[values.Length];
+                Array.Copy(values, r, values.Length);
+            }
+
+            return r;
+        }
+
+        public DSAParameters ParseDSAPrivateKey()
+        {
+            DSAParameters parameters = new DSAParameters();
+
+            this.ValidateSequenceSize();
+
+            // Checkpoint
+            int position = this.parser.CurrentPosition();
+
+            // Current value
+            // Version
+            byte[] value = this.parser.NextInteger();
+
+            if (0x00 != value[0])
+            {
+                throw new BerDecodeException("Incorrect PrivateKeyInfo Version", position);
+            }
+
+            this.ValidateAlgorithmIdentifierSize();
+
+            this.ValidateDsaKeyOid();
+
+            this.ValidateDdsParametersSize();
+
+            // Next three are curve parameters
+            parameters.P = TrimLeadingZero(this.parser.NextInteger());
+            parameters.Q = TrimLeadingZero(this.parser.NextInteger());
+            parameters.G = TrimLeadingZero(this.parser.NextInteger());
+
+            // Ignore OctetString - PrivateKey
+            _ = this.parser.NextOctetString();
+
+            // Private Key
+            parameters.X = TrimLeadingZero(this.parser.NextInteger());
+
+            Debug.Assert(0 == this.parser.RemainingBytes());
+
+            return parameters;
+        }
+
+        public DSAParameters ParseDSAPublicKey()
+        {
+            DSAParameters parameters = new DSAParameters();
 
             this.ValidateSequenceSize();
 
             this.ValidateAlgorithmIdentifierSize();
 
-            this.ValidateRsaKeyOid();
+            this.ValidateDsaKeyOid();
 
-            // Optional Parameters
-            if (this.parser.IsNextNull())
-            {
-                _ = this.parser.NextNull();
+            this.ValidateDdsParametersSize();
 
-                // Also OK: value = parser.Next();
-            }
-            else
-            {
-                // Gracefully skip the optional data
-                _ = this.parser.Next();
-            }
+            // Next three are curve parameters
+            parameters.P = TrimLeadingZero(this.parser.NextInteger());
+            parameters.Q = TrimLeadingZero(this.parser.NextInteger());
+            parameters.G = TrimLeadingZero(this.parser.NextInteger());
 
-            // Checkpoint
-            int position = this.parser.CurrentPosition();
+            // Ignore BitString - PrivateKey
+            _ = this.parser.NextBitString();
 
-            // Ignore BitString - PublicKey
-            int length = this.parser.NextBitString();
-
-            if (length > this.parser.RemainingBytes())
-            {
-                StringBuilder sb = new StringBuilder("Incorrect PublicKey Size. ");
-
-                _ = sb.AppendFormat(
-                    Constants.SpecifiedRemainingMessageMask,
-                    length.ToString(CultureInfo.InvariantCulture),
-                    this.parser.RemainingBytes()
-                               .ToString(CultureInfo.InvariantCulture));
-
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            // Checkpoint
-            position = this.parser.CurrentPosition();
-
-            // Ignore Sequence - RSAPublicKey
-            length = this.parser.NextSequence();
-
-            if (length < this.parser.RemainingBytes())
-            {
-                StringBuilder sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
-
-                _ = sb.AppendFormat(
-                    Constants.SpecifiedRemainingMessageMask,
-                    length.ToString(CultureInfo.InvariantCulture),
-                    this.parser.RemainingBytes()
-                               .ToString(CultureInfo.InvariantCulture));
-
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-
-            parameters.Modulus = TrimLeadingZero(this.parser.NextInteger());
-            parameters.Exponent = TrimLeadingZero(this.parser.NextInteger());
+            // Public Key
+            parameters.Y = TrimLeadingZero(this.parser.NextInteger());
 
             Debug.Assert(0 == this.parser.RemainingBytes());
 
@@ -267,85 +265,108 @@ namespace Hyperar.OAuthCore.KeyInterop
             return parameters;
         }
 
-        public DSAParameters ParseDSAPublicKey()
+        public RSAParameters ParseRSAPublicKey()
         {
-            DSAParameters parameters = new DSAParameters();
+            RSAParameters parameters = new RSAParameters();
 
             this.ValidateSequenceSize();
 
             this.ValidateAlgorithmIdentifierSize();
 
-            this.ValidateDsaKeyOid();
+            this.ValidateRsaKeyOid();
 
-            this.ValidateDdsParametersSize();
+            // Optional Parameters
+            if (this.parser.IsNextNull())
+            {
+                _ = this.parser.NextNull();
 
-            // Next three are curve parameters
-            parameters.P = TrimLeadingZero(this.parser.NextInteger());
-            parameters.Q = TrimLeadingZero(this.parser.NextInteger());
-            parameters.G = TrimLeadingZero(this.parser.NextInteger());
-
-            // Ignore BitString - PrivateKey
-            _ = this.parser.NextBitString();
-
-            // Public Key
-            parameters.Y = TrimLeadingZero(this.parser.NextInteger());
-
-            Debug.Assert(0 == this.parser.RemainingBytes());
-
-            return parameters;
-        }
-
-        public DSAParameters ParseDSAPrivateKey()
-        {
-            DSAParameters parameters = new DSAParameters();
-
-            this.ValidateSequenceSize();
+                // Also OK: value = parser.Next();
+            }
+            else
+            {
+                // Gracefully skip the optional data
+                _ = this.parser.Next();
+            }
 
             // Checkpoint
             int position = this.parser.CurrentPosition();
 
-            // Current value
-            // Version
-            byte[] value = this.parser.NextInteger();
+            // Ignore BitString - PublicKey
+            int length = this.parser.NextBitString();
 
-            if (0x00 != value[0])
+            if (length > this.parser.RemainingBytes())
             {
-                throw new BerDecodeException("Incorrect PrivateKeyInfo Version", position);
+                StringBuilder sb = new StringBuilder("Incorrect PublicKey Size. ");
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
+                throw new BerDecodeException(sb.ToString(), position);
             }
 
-            this.ValidateAlgorithmIdentifierSize();
+            // Checkpoint
+            position = this.parser.CurrentPosition();
 
-            this.ValidateDsaKeyOid();
+            // Ignore Sequence - RSAPublicKey
+            length = this.parser.NextSequence();
 
-            this.ValidateDdsParametersSize();
+            if (length < this.parser.RemainingBytes())
+            {
+                StringBuilder sb = new StringBuilder("Incorrect RSAPublicKey Size. ");
 
-            // Next three are curve parameters
-            parameters.P = TrimLeadingZero(this.parser.NextInteger());
-            parameters.Q = TrimLeadingZero(this.parser.NextInteger());
-            parameters.G = TrimLeadingZero(this.parser.NextInteger());
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
 
-            // Ignore OctetString - PrivateKey
-            _ = this.parser.NextOctetString();
+                throw new BerDecodeException(sb.ToString(), position);
+            }
 
-            // Private Key
-            parameters.X = TrimLeadingZero(this.parser.NextInteger());
+            parameters.Modulus = TrimLeadingZero(this.parser.NextInteger());
+            parameters.Exponent = TrimLeadingZero(this.parser.NextInteger());
 
             Debug.Assert(0 == this.parser.RemainingBytes());
 
             return parameters;
         }
 
-        private void ValidateSequenceSize()
+        private void ValidateAlgorithmIdentifierSize()
         {
-            // Current Position
+            // Checkpoint
             int position = this.parser.CurrentPosition();
 
-            // Ignore Sequence - PrivateKeyInfo
+            // Ignore Sequence - AlgorithmIdentifier
             int length = this.parser.NextSequence();
 
-            if (length != this.parser.RemainingBytes())
+            if (length > this.parser.RemainingBytes())
             {
-                StringBuilder sb = new StringBuilder(Constants.IncorrectSequenceSizeMessage);
+                StringBuilder sb = new StringBuilder(Constants.IncorrectAlgorithmIdentifierSizeMessage);
+
+                _ = sb.AppendFormat(
+                    Constants.SpecifiedRemainingMessageMask,
+                    length.ToString(CultureInfo.InvariantCulture),
+                    this.parser.RemainingBytes()
+                               .ToString(CultureInfo.InvariantCulture));
+
+                throw new BerDecodeException(sb.ToString(), position);
+            }
+        }
+
+        private void ValidateDdsParametersSize()
+        {
+            // Checkpoint
+            int position = this.parser.CurrentPosition();
+
+            // Ignore Sequence - DSS-Params
+            int length = this.parser.NextSequence();
+
+            if (length > this.parser.RemainingBytes())
+            {
+                StringBuilder sb = new StringBuilder("Incorrect DSS-Params Size. ");
 
                 _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
@@ -389,39 +410,17 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
         }
 
-        private void ValidateDdsParametersSize()
+        private void ValidateSequenceSize()
         {
-            // Checkpoint
+            // Current Position
             int position = this.parser.CurrentPosition();
 
-            // Ignore Sequence - DSS-Params
+            // Ignore Sequence - PrivateKeyInfo
             int length = this.parser.NextSequence();
 
-            if (length > this.parser.RemainingBytes())
+            if (length != this.parser.RemainingBytes())
             {
-                StringBuilder sb = new StringBuilder("Incorrect DSS-Params Size. ");
-
-                _ = sb.AppendFormat(
-                    Constants.SpecifiedRemainingMessageMask,
-                    length.ToString(CultureInfo.InvariantCulture),
-                    this.parser.RemainingBytes()
-                               .ToString(CultureInfo.InvariantCulture));
-
-                throw new BerDecodeException(sb.ToString(), position);
-            }
-        }
-
-        private void ValidateAlgorithmIdentifierSize()
-        {
-            // Checkpoint
-            int position = this.parser.CurrentPosition();
-
-            // Ignore Sequence - AlgorithmIdentifier
-            int length = this.parser.NextSequence();
-
-            if (length > this.parser.RemainingBytes())
-            {
-                StringBuilder sb = new StringBuilder(Constants.IncorrectAlgorithmIdentifierSizeMessage);
+                StringBuilder sb = new StringBuilder(Constants.IncorrectSequenceSizeMessage);
 
                 _ = sb.AppendFormat(
                     Constants.SpecifiedRemainingMessageMask,
