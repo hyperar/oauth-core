@@ -30,7 +30,6 @@ namespace Hyperar.OAuthCore.KeyInterop
 
     internal static class AsnKeyBuilder
     {
-
         /// <summary>
         /// <para>An ordered sequence of zero, one or more bits. Returns
         /// the AsnType representing an ASN.1 encoded bit string.</para>
@@ -537,61 +536,6 @@ namespace Hyperar.OAuthCore.KeyInterop
 
             // OctetString: Tag 0x04 (4, Universal, Primitive)
             return CreateOctetString(octets.ToArray());
-        }
-
-        private static bool ValidateOidValue(string value, ref ulong a, ref List<ulong> arcs)
-        {
-            // Punt?
-            if (IsEmpty(value))
-            {
-                return false;
-            }
-
-            string[] tokens = value.Split(Constants.SeparatorSpaceAndDot);
-
-            // Punt?
-            if (IsEmpty(tokens))
-            {
-                return false;
-            }
-
-            // Parsing/Manipulation of the arc value
-            a = 0;
-
-            // One or more strings are available
-            arcs = new List<ulong>();
-
-            foreach (string t in tokens)
-            {
-                // No empty or ill-formed strings...
-                if (t.Length == 0)
-                {
-                    break;
-                }
-
-                try
-                {
-                    a = Convert.ToUInt64(t, CultureInfo.InvariantCulture);
-                }
-                catch (FormatException /*e*/)
-                {
-                    break;
-                }
-                catch (OverflowException /*e*/)
-                {
-                    break;
-                }
-
-                arcs.Add(a);
-            }
-
-            // Punt?
-            if (0 == arcs.Count)
-            {
-                return false;
-            }
-
-            return true;
         }
 
         /// <summary>
@@ -1383,6 +1327,61 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
 
             return allZeros;
+        }
+
+        private static bool ValidateOidValue(string value, ref ulong a, ref List<ulong> arcs)
+        {
+            // Punt?
+            if (IsEmpty(value))
+            {
+                return false;
+            }
+
+            string[] tokens = value.Split(Constants.SeparatorSpaceAndDot);
+
+            // Punt?
+            if (IsEmpty(tokens))
+            {
+                return false;
+            }
+
+            // Parsing/Manipulation of the arc value
+            a = 0;
+
+            // One or more strings are available
+            arcs = new List<ulong>();
+
+            foreach (string t in tokens)
+            {
+                // No empty or ill-formed strings...
+                if (t.Length == 0)
+                {
+                    break;
+                }
+
+                try
+                {
+                    a = Convert.ToUInt64(t, CultureInfo.InvariantCulture);
+                }
+                catch (FormatException /*e*/)
+                {
+                    break;
+                }
+                catch (OverflowException /*e*/)
+                {
+                    break;
+                }
+
+                arcs.Add(a);
+            }
+
+            // Punt?
+            if (0 == arcs.Count)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

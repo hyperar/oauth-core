@@ -12,6 +12,11 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
             return username == "username" && password == "password";
         }
 
+        public static bool ValidateXAuthMode(string authMode)
+        {
+            return authMode == "client_auth";
+        }
+
         [TestMethod]
         public void AuthenticationFailureThrows()
         {
@@ -72,11 +77,6 @@ namespace Hyperar.OAuthCore.UnitTest.Provider.Inspectors
             XAuthValidationInspector inspector = new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword);
             OAuthException ex = Assert.ThrowsException<OAuthException>(() => inspector.InspectContext(ProviderPhase.CreateAccessToken, context));
             Assert.AreEqual("The x_auth_mode parameter is invalid", ex.Message);
-        }
-
-        public static bool ValidateXAuthMode(string authMode)
-        {
-            return authMode == "client_auth";
         }
     }
 }

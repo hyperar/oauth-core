@@ -29,6 +29,10 @@ namespace Hyperar.OAuthCore.Framework
     [Serializable]
     public class OAuthProblemReport
     {
+        private static readonly char[] separatorAmpersand = new[] { '&' };
+
+        private static readonly char[] separatorHyphen = new[] { '-' };
+
         public OAuthProblemReport()
         {
             this.ParametersRejected = new List<string>();
@@ -86,9 +90,6 @@ namespace Hyperar.OAuthCore.Framework
         public string? Problem { get; set; }
 
         public string? ProblemAdvice { get; set; }
-
-        private static readonly char[] separatorHyphen = new[] { '-' };
-        private static readonly char[] separatorAmpersand = new[] { '&' };
 
         public override string ToString()
         {

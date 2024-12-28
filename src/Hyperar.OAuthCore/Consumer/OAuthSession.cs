@@ -190,65 +190,64 @@ namespace Hyperar.OAuthCore.Consumer
             return this;
         }
 
-        public IToken ExchangeRequestTokenForAccessToken(IToken requestToken)
+        public async Task<IToken> ExchangeRequestTokenForAccessTokenAsync(IToken requestToken, string verificationCode)
         {
-            return this.ExchangeRequestTokenForAccessToken(requestToken, "GET", null);
+            return await this.ExchangeRequestTokenForAccessTokenAsync(requestToken, "GET", verificationCode);
         }
 
-        public IToken ExchangeRequestTokenForAccessToken(IToken requestToken, string verificationCode)
+        public async Task<IToken> ExchangeRequestTokenForAccessTokenAsync(IToken requestToken, string method, string? verificationCode)
         {
-            return this.ExchangeRequestTokenForAccessToken(requestToken, "GET", verificationCode);
-        }
+            IConsumerRequest context = this.BuildExchangeRequestTokenForAccessTokenContext(requestToken, method, verificationCode);
 
-        public IToken ExchangeRequestTokenForAccessToken(IToken requestToken, string method, string? verificationCode)
-        {
-            TokenBase token = this.BuildExchangeRequestTokenForAccessTokenContext(requestToken, method, verificationCode)
-                .Select(collection =>
-                        new TokenBase
-                        {
-                            ConsumerKey = requestToken.ConsumerKey,
-                            Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
-                            TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
-                            SessionHandle = ParseResponseParameter(collection, Parameters.OAuth_Session_Handle)
-                        });
+            TokenBase token = await context.SelectAsync(collection =>
+                new TokenBase
+                {
+                    ConsumerKey = requestToken.ConsumerKey,
+                    Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
+                    TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
+                    SessionHandle = ParseResponseParameter(collection, Parameters.OAuth_Session_Handle)
+                });
 
             this.AccessToken = token;
 
             return token;
         }
 
-        public IToken GetAccessTokenUsingXAuth(string authMode, string username, string password)
+        public async Task<IToken> ExchangeRequestTokenForAccessTokenAsync(IToken requestToken)
         {
-            TokenBase token = this.BuildAccessTokenContext("GET", authMode, username, password)
-                   .Select(collection =>
-                           new TokenBase
-                           {
-                               ConsumerKey = this.ConsumerContext.ConsumerKey,
-                               Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
-                               TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
-                               SessionHandle = ParseResponseParameter(collection, Parameters.OAuth_Session_Handle)
-                           });
+            return await this.ExchangeRequestTokenForAccessTokenAsync(requestToken, "GET", null);
+        }
+
+        public async Task<IToken> GetAccessTokenUsingXAuthAsync(string authMode, string username, string password)
+        {
+            IConsumerRequest context = this.BuildAccessTokenContext("GET", authMode, username, password);
+
+            TokenBase token = await context.SelectAsync(collection =>
+                new TokenBase
+                {
+                    ConsumerKey = this.ConsumerContext.ConsumerKey,
+                    Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
+                    TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
+                    SessionHandle = ParseResponseParameter(collection, Parameters.OAuth_Session_Handle)
+                });
 
             this.AccessToken = token;
+
             return token;
         }
 
-        public IToken GetRequestToken()
+        public async Task<IToken> GetRequestTokenAsync(string method)
         {
-            return this.GetRequestToken("GET");
-        }
+            IConsumerRequest context = this.BuildRequestTokenContext(method);
 
-        public IToken GetRequestToken(string method)
-        {
-            var results = this.BuildRequestTokenContext(method)
-                .Select(collection =>
-                    new
-                    {
-                        this.ConsumerContext.ConsumerKey,
-                        Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
-                        TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
-                        CallackConfirmed = WasCallbackConfimed(collection)
-                    });
+            var results = await context.SelectAsync(collection =>
+                new
+                {
+                    this.ConsumerContext.ConsumerKey,
+                    Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
+                    TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
+                    CallackConfirmed = WasCallbackConfimed(collection)
+                });
 
             if (!results.CallackConfirmed && this.CallbackMustBeConfirmed)
             {
@@ -261,6 +260,11 @@ namespace Hyperar.OAuthCore.Consumer
                 Token = results.Token,
                 TokenSecret = results.TokenSecret
             };
+        }
+
+        public async Task<IToken> GetRequestTokenAsync()
+        {
+            return await this.GetRequestTokenAsync("GET");
         }
 
         public string GetUserAuthorizationUrlForToken(IToken token)
@@ -298,22 +302,23 @@ namespace Hyperar.OAuthCore.Consumer
             return builder.Uri + "?" + UriUtility.FormatQueryString(collection);
         }
 
-        public IToken RenewAccessToken(IToken accessToken, string sessionHandle)
+        public async Task<IToken> RenewAccessTokenAsync(IToken accessToken, string sessionHandle)
         {
-            return this.RenewAccessToken(accessToken, "GET", sessionHandle);
+            return await this.RenewAccessTokenAsync(accessToken, "GET", sessionHandle);
         }
 
-        public IToken RenewAccessToken(IToken accessToken, string method, string sessionHandle)
+        public async Task<IToken> RenewAccessTokenAsync(IToken accessToken, string method, string sessionHandle)
         {
-            TokenBase token = this.BuildRenewAccessTokenContext(accessToken, method, sessionHandle)
-                .Select(collection =>
-                        new TokenBase
-                        {
-                            ConsumerKey = accessToken.ConsumerKey,
-                            Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
-                            TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
-                            SessionHandle = ParseResponseParameter(collection, Parameters.OAuth_Session_Handle)
-                        });
+            IConsumerRequest context = this.BuildRenewAccessTokenContext(accessToken, method, sessionHandle);
+
+            TokenBase token = await context.SelectAsync(collection =>
+                new TokenBase
+                {
+                    ConsumerKey = accessToken.ConsumerKey,
+                    Token = ParseResponseParameter(collection, Parameters.OAuth_Token),
+                    TokenSecret = ParseResponseParameter(collection, Parameters.OAuth_Token_Secret),
+                    SessionHandle = ParseResponseParameter(collection, Parameters.OAuth_Session_Handle)
+                });
 
             this.AccessToken = token;
 

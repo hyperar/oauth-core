@@ -1685,7 +1685,6 @@ namespace Hyperar.OAuthCore.KeyInterop
         {
             if (obj is BigInteger bi)
             {
-
                 if (this.dataLength != bi.dataLength)
                 {
                     return false;
@@ -2648,8 +2647,106 @@ namespace Hyperar.OAuthCore.KeyInterop
             }
         }
 
+        private static BigInteger BarrettReduction(BigInteger x, BigInteger n, BigInteger constant)
+        {
+            int k = n.dataLength,
+                kPlusOne = k + 1,
+                kMinusOne = k - 1;
+
+            BigInteger q1 = new BigInteger();
+
+            // q1 = x / b^(k-1)
+            for (int i = kMinusOne, j = 0; i < x.dataLength; i++, j++)
+            {
+                q1.data[j] = x.data[i];
+            }
+
+            q1.dataLength = x.dataLength - kMinusOne;
+            if (q1.dataLength <= 0)
+            {
+                q1.dataLength = 1;
+            }
+
+            BigInteger q2 = q1 * constant;
+            BigInteger q3 = new BigInteger();
+
+            // q3 = q2 / b^(k+1)
+            for (int i = kPlusOne, j = 0; i < q2.dataLength; i++, j++)
+            {
+                q3.data[j] = q2.data[i];
+            }
+
+            q3.dataLength = q2.dataLength - kPlusOne;
+            if (q3.dataLength <= 0)
+            {
+                q3.dataLength = 1;
+            }
+
+            // r1 = x mod b^(k+1)
+            // i.e. keep the lowest (k+1) words
+            BigInteger r1 = new BigInteger();
+            int lengthToCopy = x.dataLength > kPlusOne ? kPlusOne : x.dataLength;
+            for (int i = 0; i < lengthToCopy; i++)
+            {
+                r1.data[i] = x.data[i];
+            }
+
+            r1.dataLength = lengthToCopy;
+
+            // r2 = (q3 * n) mod b^(k+1)
+            // partial multiplication of q3 and n
+
+            BigInteger r2 = new BigInteger();
+            for (int i = 0; i < q3.dataLength; i++)
+            {
+                if (q3.data[i] == 0)
+                {
+                    continue;
+                }
+
+                ulong mcarry = 0;
+                int t = i;
+                for (int j = 0; j < n.dataLength && t < kPlusOne; j++, t++)
+                {
+                    // t = i + j
+                    ulong val = (q3.data[i] * (ulong)n.data[j]) +
+                                r2.data[t] + mcarry;
+
+                    r2.data[t] = (uint)(val & 0xFFFFFFFF);
+                    mcarry = val >> 32;
+                }
+
+                if (t < kPlusOne)
+                {
+                    r2.data[t] = (uint)mcarry;
+                }
+            }
+
+            r2.dataLength = kPlusOne;
+            while (r2.dataLength > 1 && r2.data[r2.dataLength - 1] == 0)
+            {
+                r2.dataLength--;
+            }
+
+            r1 -= r2;
+            if ((r1.data[maxLength - 1] & 0x80000000) != 0) // negative
+            {
+                BigInteger val = new BigInteger();
+                val.data[kPlusOne] = 0x00000001;
+                val.dataLength = kPlusOne + 1;
+                r1 += val;
+            }
+
+            while (r1 >= n)
+            {
+                r1 -= n;
+            }
+
+            return r1;
+        }
+
         private static BigInteger[] LucasSequenceHelper(BigInteger P, BigInteger Q,
-                                                BigInteger k, BigInteger n,
+                                                        BigInteger k, BigInteger n,
                                                 BigInteger constant, int s)
         {
             BigInteger[] result = new BigInteger[3];
@@ -2767,8 +2864,298 @@ namespace Hyperar.OAuthCore.KeyInterop
             return result;
         }
 
+        //***********************************************************************
+        // Overloading of division operator
+        //***********************************************************************
+        //***********************************************************************
+        // Overloading of modulus operator
+        //***********************************************************************
+        //***********************************************************************
+        // Overloading of bitwise AND operator
+        //***********************************************************************
+        //***********************************************************************
+        // Overloading of bitwise OR operator
+        //***********************************************************************
+        //***********************************************************************
+        // Overloading of bitwise XOR operator
+        //***********************************************************************
+        //***********************************************************************
+        // Returns max(this, bi)
+        //***********************************************************************
+        //***********************************************************************
+        // Returns min(this, bi)
+        //***********************************************************************
+        //***********************************************************************
+        // Returns the absolute value
+        //***********************************************************************
+        //***********************************************************************
+        // Returns a string representing the BigInteger in base 10.
+        //***********************************************************************
+        //***********************************************************************
+        // Returns a string representing the BigInteger in sign-and-magnitude
+        // format in the specified radix.
+        //
+        // Example
+        // -------
+        // If the value of BigInteger is -255 in base 10, then
+        // ToString(16) returns "-FF"
+        //
+        //***********************************************************************
+        //***********************************************************************
+        // Returns a hex string showing the contains of the BigInteger
+        //
+        // Examples
+        // -------
+        // 1) If the value of BigInteger is 255 in base 10, then
+        //    ToHexString() returns "FF"
+        //
+        // 2) If the value of BigInteger is -255 in base 10, then
+        //    ToHexString() returns ".....FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF01",
+        //    which is the 2's complement representation of -255.
+        //
+        //***********************************************************************
+        //***********************************************************************
+        // Modulo Exponentiation
+        //***********************************************************************
+        //***********************************************************************
+        // Fast calculation of modular reduction using Barrett's reduction.
+        // Requires x < b^(2k), where b is the base.  In this case, base is
+        // 2^32 (uint).
+        //
+        // Reference [4]
+        //***********************************************************************
+        //***********************************************************************
+        // Returns gcd(this, bi)
+        //***********************************************************************
+        //***********************************************************************
+        // Populates "this" with the specified amount of random bits
+        //***********************************************************************
+        //***********************************************************************
+        // Returns the position of the most significant bit in the BigInteger.
+        //
+        // Eg.  The result is 0, if the value of BigInteger is 0...0000 0000
+        //      The result is 1, if the value of BigInteger is 0...0000 0001
+        //      The result is 2, if the value of BigInteger is 0...0000 0010
+        //      The result is 2, if the value of BigInteger is 0...0000 0011
+        //
+        //***********************************************************************
+        //***********************************************************************
+        // Probabilistic prime test based on Fermat's little theorem
+        //
+        // for any a < p (p does not divide a) if
+        //      a^(p-1) mod p != 1 then p is not prime.
+        //
+        // Otherwise, p is probably prime (pseudoprime to the chosen base).
+        //
+        // Returns
+        // -------
+        // True if "this" is a pseudoprime to randomly chosen
+        // bases.  The number of chosen bases is given by the "confidence"
+        // parameter.
+        //
+        // False if "this" is definitely NOT prime.
+        //
+        // Note - this method is fast but fails for Carmichael numbers except
+        // when the randomly chosen base is a factor of the number.
+        //
+        //***********************************************************************
+        //***********************************************************************
+        // Probabilistic prime test based on Rabin-Miller's
+        //
+        // for any p > 0 with p - 1 = 2^s * t
+        //
+        // p is probably prime (strong pseudoprime) if for any a < p,
+        // 1) a^t mod p = 1 or
+        // 2) a^((2^j)*t) mod p = p-1 for some 0 <= j <= s-1
+        //
+        // Otherwise, p is composite.
+        //
+        // Returns
+        // -------
+        // True if "this" is a strong pseudoprime to randomly chosen
+        // bases.  The number of chosen bases is given by the "confidence"
+        // parameter.
+        //
+        // False if "this" is definitely NOT prime.
+        //
+        //***********************************************************************
+        //***********************************************************************
+        // Probabilistic prime test based on Solovay-Strassen (Euler Criterion)
+        //
+        // p is probably prime if for any a < p (a is not multiple of p),
+        // a^((p-1)/2) mod p = J(a, p)
+        //
+        // where J is the Jacobi symbol.
+        //
+        // Otherwise, p is composite.
+        //
+        // Returns
+        // -------
+        // True if "this" is a Euler pseudoprime to randomly chosen
+        // bases.  The number of chosen bases is given by the "confidence"
+        // parameter.
+        //
+        // False if "this" is definitely NOT prime.
+        //
+        //***********************************************************************
+        //***********************************************************************
+        // Implementation of the Lucas Strong Pseudo Prime test.
+        //
+        // Let n be an odd number with gcd(n,D) = 1, and n - J(D, n) = 2^s * d
+        // with d odd and s >= 0.
+        //
+        // If Ud mod n = 0 or V2^r*d mod n = 0 for some 0 <= r < s, then n
+        // is a strong Lucas pseudoprime with parameters (P, Q).  We select
+        // P and Q based on Selfridge.
+        //
+        // Returns True if number is a strong Lucus pseudo prime.
+        // Otherwise, returns False indicating that number is composite.
+        //***********************************************************************
+        private static bool LucasStrongTestHelper(BigInteger thisVal)
+        {
+            // Do the test (selects D based on Selfridge)
+            // Let D be the first element of the sequence
+            // 5, -7, 9, -11, 13, ... for which J(D,n) = -1
+            // Let P = 1, Q = (1-D) / 4
+
+            long D = 5, sign = -1, dCount = 0;
+            bool done = false;
+
+            while (!done)
+            {
+                int Jresult = Jacobi(D, thisVal);
+
+                if (Jresult == -1)
+                {
+                    done = true; // J(D, this) = 1
+                }
+                else
+                {
+                    if (Jresult == 0 && Math.Abs(D) < thisVal) // divisor found
+                    {
+                        return false;
+                    }
+
+                    if (dCount == 20)
+                    {
+                        // check for square
+                        BigInteger root = thisVal.Sqrt();
+                        if (root * root == thisVal)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //Console.WriteLine(D);
+                    D = (Math.Abs(D) + 2) * sign;
+                    sign = -sign;
+                }
+
+                dCount++;
+            }
+
+            long Q = (1 - D) >> 2;
+
+            /*
+        Console.WriteLine("D = " + D);
+        Console.WriteLine("Q = " + Q);
+        Console.WriteLine("(n,D) = " + thisVal.gcd(D));
+        Console.WriteLine("(n,Q) = " + thisVal.gcd(Q));
+        Console.WriteLine("J(D|n) = " + BigInteger.Jacobi(D, thisVal));
+        */
+
+            BigInteger p_add1 = thisVal + 1;
+            int s = 0;
+
+            for (int index = 0; index < p_add1.dataLength; index++)
+            {
+                uint mask = 0x01;
+
+                for (int i = 0; i < 32; i++)
+                {
+                    if ((p_add1.data[index] & mask) != 0)
+                    {
+                        index = p_add1.dataLength; // to break the outer loop
+                        break;
+                    }
+
+                    mask <<= 1;
+                    s++;
+                }
+            }
+
+            BigInteger t = p_add1 >> s;
+
+            // calculate constant = b^(2k) / m
+            // for Barrett Reduction
+            BigInteger constant = new BigInteger();
+
+            int nLen = thisVal.dataLength << 1;
+            constant.data[nLen] = 0x00000001;
+            constant.dataLength = nLen + 1;
+
+            constant /= thisVal;
+
+            BigInteger[] lucas = LucasSequenceHelper(1, Q, t, thisVal, constant, 0);
+            bool isPrime = false;
+
+            if ((lucas[0].dataLength == 1 && lucas[0].data[0] == 0) ||
+                (lucas[1].dataLength == 1 && lucas[1].data[0] == 0))
+            {
+                // u(t) = 0 or V(t) = 0
+                isPrime = true;
+            }
+
+            for (int i = 1; i < s; i++)
+            {
+                if (!isPrime)
+                {
+                    // doubling of index
+                    lucas[1] = BarrettReduction(lucas[1] * lucas[1], thisVal, constant);
+                    lucas[1] = (lucas[1] - (lucas[2] << 1)) % thisVal;
+
+                    //lucas[1] = ((lucas[1] * lucas[1]) - (lucas[2] << 1)) % thisVal;
+
+                    if (lucas[1].dataLength == 1 && lucas[1].data[0] == 0)
+                    {
+                        isPrime = true;
+                    }
+                }
+
+                lucas[2] = BarrettReduction(lucas[2] * lucas[2], thisVal, constant); //Q^k
+            }
+
+            if (isPrime) // additional checks for composite numbers
+            {
+                // If n is prime and gcd(n, Q) == 1, then
+                // Q^((n+1)/2) = Q * Q^((n-1)/2) is congruent to (Q * J(Q, n)) mod n
+
+                BigInteger g = thisVal.Gcd(Q);
+                if (g.dataLength == 1 && g.data[0] == 1) // gcd(this, Q) == 1
+                {
+                    if ((lucas[2].data[maxLength - 1] & 0x80000000) != 0)
+                    {
+                        lucas[2] += thisVal;
+                    }
+
+                    BigInteger temp = Q * Jacobi(Q, thisVal) % thisVal;
+                    if ((temp.data[maxLength - 1] & 0x80000000) != 0)
+                    {
+                        temp += thisVal;
+                    }
+
+                    if (lucas[2] != temp)
+                    {
+                        isPrime = false;
+                    }
+                }
+            }
+
+            return isPrime;
+        }
+
         private static void MultiByteDivide(BigInteger bi1, BigInteger bi2,
-                                    BigInteger outQuotient, BigInteger outRemainder)
+                                            BigInteger outQuotient, BigInteger outRemainder)
         {
             uint[] result = new uint[maxLength];
 
@@ -3093,395 +3480,6 @@ namespace Hyperar.OAuthCore.KeyInterop
             {
                 outRemainder.dataLength--;
             }
-        }
-
-        //***********************************************************************
-        // Overloading of division operator
-        //***********************************************************************
-        //***********************************************************************
-        // Overloading of modulus operator
-        //***********************************************************************
-        //***********************************************************************
-        // Overloading of bitwise AND operator
-        //***********************************************************************
-        //***********************************************************************
-        // Overloading of bitwise OR operator
-        //***********************************************************************
-        //***********************************************************************
-        // Overloading of bitwise XOR operator
-        //***********************************************************************
-        //***********************************************************************
-        // Returns max(this, bi)
-        //***********************************************************************
-        //***********************************************************************
-        // Returns min(this, bi)
-        //***********************************************************************
-        //***********************************************************************
-        // Returns the absolute value
-        //***********************************************************************
-        //***********************************************************************
-        // Returns a string representing the BigInteger in base 10.
-        //***********************************************************************
-        //***********************************************************************
-        // Returns a string representing the BigInteger in sign-and-magnitude
-        // format in the specified radix.
-        //
-        // Example
-        // -------
-        // If the value of BigInteger is -255 in base 10, then
-        // ToString(16) returns "-FF"
-        //
-        //***********************************************************************
-        //***********************************************************************
-        // Returns a hex string showing the contains of the BigInteger
-        //
-        // Examples
-        // -------
-        // 1) If the value of BigInteger is 255 in base 10, then
-        //    ToHexString() returns "FF"
-        //
-        // 2) If the value of BigInteger is -255 in base 10, then
-        //    ToHexString() returns ".....FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF01",
-        //    which is the 2's complement representation of -255.
-        //
-        //***********************************************************************
-        //***********************************************************************
-        // Modulo Exponentiation
-        //***********************************************************************
-        //***********************************************************************
-        // Fast calculation of modular reduction using Barrett's reduction.
-        // Requires x < b^(2k), where b is the base.  In this case, base is
-        // 2^32 (uint).
-        //
-        // Reference [4]
-        //***********************************************************************
-
-        private static BigInteger BarrettReduction(BigInteger x, BigInteger n, BigInteger constant)
-        {
-            int k = n.dataLength,
-                kPlusOne = k + 1,
-                kMinusOne = k - 1;
-
-            BigInteger q1 = new BigInteger();
-
-            // q1 = x / b^(k-1)
-            for (int i = kMinusOne, j = 0; i < x.dataLength; i++, j++)
-            {
-                q1.data[j] = x.data[i];
-            }
-
-            q1.dataLength = x.dataLength - kMinusOne;
-            if (q1.dataLength <= 0)
-            {
-                q1.dataLength = 1;
-            }
-
-            BigInteger q2 = q1 * constant;
-            BigInteger q3 = new BigInteger();
-
-            // q3 = q2 / b^(k+1)
-            for (int i = kPlusOne, j = 0; i < q2.dataLength; i++, j++)
-            {
-                q3.data[j] = q2.data[i];
-            }
-
-            q3.dataLength = q2.dataLength - kPlusOne;
-            if (q3.dataLength <= 0)
-            {
-                q3.dataLength = 1;
-            }
-
-            // r1 = x mod b^(k+1)
-            // i.e. keep the lowest (k+1) words
-            BigInteger r1 = new BigInteger();
-            int lengthToCopy = x.dataLength > kPlusOne ? kPlusOne : x.dataLength;
-            for (int i = 0; i < lengthToCopy; i++)
-            {
-                r1.data[i] = x.data[i];
-            }
-
-            r1.dataLength = lengthToCopy;
-
-            // r2 = (q3 * n) mod b^(k+1)
-            // partial multiplication of q3 and n
-
-            BigInteger r2 = new BigInteger();
-            for (int i = 0; i < q3.dataLength; i++)
-            {
-                if (q3.data[i] == 0)
-                {
-                    continue;
-                }
-
-                ulong mcarry = 0;
-                int t = i;
-                for (int j = 0; j < n.dataLength && t < kPlusOne; j++, t++)
-                {
-                    // t = i + j
-                    ulong val = (q3.data[i] * (ulong)n.data[j]) +
-                                r2.data[t] + mcarry;
-
-                    r2.data[t] = (uint)(val & 0xFFFFFFFF);
-                    mcarry = val >> 32;
-                }
-
-                if (t < kPlusOne)
-                {
-                    r2.data[t] = (uint)mcarry;
-                }
-            }
-
-            r2.dataLength = kPlusOne;
-            while (r2.dataLength > 1 && r2.data[r2.dataLength - 1] == 0)
-            {
-                r2.dataLength--;
-            }
-
-            r1 -= r2;
-            if ((r1.data[maxLength - 1] & 0x80000000) != 0) // negative
-            {
-                BigInteger val = new BigInteger();
-                val.data[kPlusOne] = 0x00000001;
-                val.dataLength = kPlusOne + 1;
-                r1 += val;
-            }
-
-            while (r1 >= n)
-            {
-                r1 -= n;
-            }
-
-            return r1;
-        }
-
-        //***********************************************************************
-        // Returns gcd(this, bi)
-        //***********************************************************************
-        //***********************************************************************
-        // Populates "this" with the specified amount of random bits
-        //***********************************************************************
-        //***********************************************************************
-        // Returns the position of the most significant bit in the BigInteger.
-        //
-        // Eg.  The result is 0, if the value of BigInteger is 0...0000 0000
-        //      The result is 1, if the value of BigInteger is 0...0000 0001
-        //      The result is 2, if the value of BigInteger is 0...0000 0010
-        //      The result is 2, if the value of BigInteger is 0...0000 0011
-        //
-        //***********************************************************************
-        //***********************************************************************
-        // Probabilistic prime test based on Fermat's little theorem
-        //
-        // for any a < p (p does not divide a) if
-        //      a^(p-1) mod p != 1 then p is not prime.
-        //
-        // Otherwise, p is probably prime (pseudoprime to the chosen base).
-        //
-        // Returns
-        // -------
-        // True if "this" is a pseudoprime to randomly chosen
-        // bases.  The number of chosen bases is given by the "confidence"
-        // parameter.
-        //
-        // False if "this" is definitely NOT prime.
-        //
-        // Note - this method is fast but fails for Carmichael numbers except
-        // when the randomly chosen base is a factor of the number.
-        //
-        //***********************************************************************
-        //***********************************************************************
-        // Probabilistic prime test based on Rabin-Miller's
-        //
-        // for any p > 0 with p - 1 = 2^s * t
-        //
-        // p is probably prime (strong pseudoprime) if for any a < p,
-        // 1) a^t mod p = 1 or
-        // 2) a^((2^j)*t) mod p = p-1 for some 0 <= j <= s-1
-        //
-        // Otherwise, p is composite.
-        //
-        // Returns
-        // -------
-        // True if "this" is a strong pseudoprime to randomly chosen
-        // bases.  The number of chosen bases is given by the "confidence"
-        // parameter.
-        //
-        // False if "this" is definitely NOT prime.
-        //
-        //***********************************************************************
-        //***********************************************************************
-        // Probabilistic prime test based on Solovay-Strassen (Euler Criterion)
-        //
-        // p is probably prime if for any a < p (a is not multiple of p),
-        // a^((p-1)/2) mod p = J(a, p)
-        //
-        // where J is the Jacobi symbol.
-        //
-        // Otherwise, p is composite.
-        //
-        // Returns
-        // -------
-        // True if "this" is a Euler pseudoprime to randomly chosen
-        // bases.  The number of chosen bases is given by the "confidence"
-        // parameter.
-        //
-        // False if "this" is definitely NOT prime.
-        //
-        //***********************************************************************
-        //***********************************************************************
-        // Implementation of the Lucas Strong Pseudo Prime test.
-        //
-        // Let n be an odd number with gcd(n,D) = 1, and n - J(D, n) = 2^s * d
-        // with d odd and s >= 0.
-        //
-        // If Ud mod n = 0 or V2^r*d mod n = 0 for some 0 <= r < s, then n
-        // is a strong Lucas pseudoprime with parameters (P, Q).  We select
-        // P and Q based on Selfridge.
-        //
-        // Returns True if number is a strong Lucus pseudo prime.
-        // Otherwise, returns False indicating that number is composite.
-        //***********************************************************************
-        private static bool LucasStrongTestHelper(BigInteger thisVal)
-        {
-            // Do the test (selects D based on Selfridge)
-            // Let D be the first element of the sequence
-            // 5, -7, 9, -11, 13, ... for which J(D,n) = -1
-            // Let P = 1, Q = (1-D) / 4
-
-            long D = 5, sign = -1, dCount = 0;
-            bool done = false;
-
-            while (!done)
-            {
-                int Jresult = Jacobi(D, thisVal);
-
-                if (Jresult == -1)
-                {
-                    done = true; // J(D, this) = 1
-                }
-                else
-                {
-                    if (Jresult == 0 && Math.Abs(D) < thisVal) // divisor found
-                    {
-                        return false;
-                    }
-
-                    if (dCount == 20)
-                    {
-                        // check for square
-                        BigInteger root = thisVal.Sqrt();
-                        if (root * root == thisVal)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //Console.WriteLine(D);
-                    D = (Math.Abs(D) + 2) * sign;
-                    sign = -sign;
-                }
-
-                dCount++;
-            }
-
-            long Q = (1 - D) >> 2;
-
-            /*
-        Console.WriteLine("D = " + D);
-        Console.WriteLine("Q = " + Q);
-        Console.WriteLine("(n,D) = " + thisVal.gcd(D));
-        Console.WriteLine("(n,Q) = " + thisVal.gcd(Q));
-        Console.WriteLine("J(D|n) = " + BigInteger.Jacobi(D, thisVal));
-        */
-
-            BigInteger p_add1 = thisVal + 1;
-            int s = 0;
-
-            for (int index = 0; index < p_add1.dataLength; index++)
-            {
-                uint mask = 0x01;
-
-                for (int i = 0; i < 32; i++)
-                {
-                    if ((p_add1.data[index] & mask) != 0)
-                    {
-                        index = p_add1.dataLength; // to break the outer loop
-                        break;
-                    }
-
-                    mask <<= 1;
-                    s++;
-                }
-            }
-
-            BigInteger t = p_add1 >> s;
-
-            // calculate constant = b^(2k) / m
-            // for Barrett Reduction
-            BigInteger constant = new BigInteger();
-
-            int nLen = thisVal.dataLength << 1;
-            constant.data[nLen] = 0x00000001;
-            constant.dataLength = nLen + 1;
-
-            constant /= thisVal;
-
-            BigInteger[] lucas = LucasSequenceHelper(1, Q, t, thisVal, constant, 0);
-            bool isPrime = false;
-
-            if ((lucas[0].dataLength == 1 && lucas[0].data[0] == 0) ||
-                (lucas[1].dataLength == 1 && lucas[1].data[0] == 0))
-            {
-                // u(t) = 0 or V(t) = 0
-                isPrime = true;
-            }
-
-            for (int i = 1; i < s; i++)
-            {
-                if (!isPrime)
-                {
-                    // doubling of index
-                    lucas[1] = BarrettReduction(lucas[1] * lucas[1], thisVal, constant);
-                    lucas[1] = (lucas[1] - (lucas[2] << 1)) % thisVal;
-
-                    //lucas[1] = ((lucas[1] * lucas[1]) - (lucas[2] << 1)) % thisVal;
-
-                    if (lucas[1].dataLength == 1 && lucas[1].data[0] == 0)
-                    {
-                        isPrime = true;
-                    }
-                }
-
-                lucas[2] = BarrettReduction(lucas[2] * lucas[2], thisVal, constant); //Q^k
-            }
-
-            if (isPrime) // additional checks for composite numbers
-            {
-                // If n is prime and gcd(n, Q) == 1, then
-                // Q^((n+1)/2) = Q * Q^((n-1)/2) is congruent to (Q * J(Q, n)) mod n
-
-                BigInteger g = thisVal.Gcd(Q);
-                if (g.dataLength == 1 && g.data[0] == 1) // gcd(this, Q) == 1
-                {
-                    if ((lucas[2].data[maxLength - 1] & 0x80000000) != 0)
-                    {
-                        lucas[2] += thisVal;
-                    }
-
-                    BigInteger temp = Q * Jacobi(Q, thisVal) % thisVal;
-                    if ((temp.data[maxLength - 1] & 0x80000000) != 0)
-                    {
-                        temp += thisVal;
-                    }
-
-                    if (lucas[2] != temp)
-                    {
-                        isPrime = false;
-                    }
-                }
-            }
-
-            return isPrime;
         }
 
         //***********************************************************************

@@ -53,34 +53,9 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
                                    new XAuthValidationInspector(ValidateXAuthMode, AuthenticateXAuthUsernameAndPassword));
         }
 
-        private static OAuthSession CreateConsumer(string signatureMethod)
-        {
-            OAuthConsumerContext consumerContext = new OAuthConsumerContext
-            {
-                SignatureMethod = signatureMethod,
-                ConsumerKey = "key",
-                ConsumerSecret = "secret",
-                Key = TestCertificates.OAuthTestCertificate().GetRSAPrivateKey() ?? throw new NullReferenceException("GetRSAPrivateKey")
-            };
-
-            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/oauth/requesttoken.rails",
-                                           "http://localhost/oauth/userauhtorize.rails",
-                                           "http://localhost/oauth/accesstoken.rails");
-
-            return session;
-        }
-
         public static bool AuthenticateXAuthUsernameAndPassword(string username, string password)
         {
             return username == "username" && password == "password";
-        }
-
-        [TestMethod]
-        public void RequestTokenWithTokenSecretparameterThrowsException()
-        {
-            IOAuthContext context = new OAuthContext { TokenSecret = "secret" };
-            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
-            Assert.AreEqual("The oauth_token_secret must not be transmitted to the provider.", ex.Message);
         }
 
         public static bool ValidateXAuthMode(string authMode)
@@ -106,6 +81,17 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             IOAuthContext context = session.Request().Get().ForUrl("http://localhost/protected.rails").SignWithToken().Context;
             context.TokenSecret = null;
             this.provider.AccessProtectedResourceRequest(context);
+        }
+
+        [TestMethod]
+        public void AccessTokenWithHmacSha1()
+        {
+            OAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
+            IOAuthContext context = session.BuildAccessTokenContext("GET", "client_auth", "username", "password").Context;
+            context.TokenSecret = null;
+            IToken accessToken = this.provider.CreateAccessToken(context);
+            Assert.AreEqual("accesskey", accessToken.Token);
+            Assert.AreEqual("accesssecret", accessToken.TokenSecret);
         }
 
         [TestMethod]
@@ -219,15 +205,30 @@ namespace Hyperar.OAuthCore.UnitTest.Provider
             OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.GrantRequestToken(context));
             Assert.AreEqual("Failed to validate signature", ex.Message);
         }
+
         [TestMethod]
-        public void AccessTokenWithHmacSha1()
+        public void RequestTokenWithTokenSecretparameterThrowsException()
         {
-            OAuthSession session = CreateConsumer(SignatureMethod.HmacSha1);
-            IOAuthContext context = session.BuildAccessTokenContext("GET", "client_auth", "username", "password").Context;
-            context.TokenSecret = null;
-            IToken accessToken = this.provider.CreateAccessToken(context);
-            Assert.AreEqual("accesskey", accessToken.Token);
-            Assert.AreEqual("accesssecret", accessToken.TokenSecret);
+            IOAuthContext context = new OAuthContext { TokenSecret = "secret" };
+            OAuthException ex = Assert.ThrowsException<OAuthException>(() => this.provider.ExchangeRequestTokenForAccessToken(context));
+            Assert.AreEqual("The oauth_token_secret must not be transmitted to the provider.", ex.Message);
+        }
+
+        private static OAuthSession CreateConsumer(string signatureMethod)
+        {
+            OAuthConsumerContext consumerContext = new OAuthConsumerContext
+            {
+                SignatureMethod = signatureMethod,
+                ConsumerKey = "key",
+                ConsumerSecret = "secret",
+                Key = TestCertificates.OAuthTestCertificate().GetRSAPrivateKey() ?? throw new NullReferenceException("GetRSAPrivateKey")
+            };
+
+            OAuthSession session = new OAuthSession(consumerContext, "http://localhost/oauth/requesttoken.rails",
+                                           "http://localhost/oauth/userauhtorize.rails",
+                                           "http://localhost/oauth/accesstoken.rails");
+
+            return session;
         }
     }
 }

@@ -114,6 +114,14 @@ namespace Hyperar.OAuthCore.Provider
             this.ApplyInspectors(context, phase);
         }
 
+        private static void AssertContextDoesNotIncludeToken(IOAuthContext context)
+        {
+            if (context.Token != null)
+            {
+                throw Error.RequestForTokenMustNotIncludeTokenInContext(context);
+            }
+        }
+
         private static void AssertContextDoesNotIncludeTokenSecret(IOAuthContext context)
         {
             if (!string.IsNullOrEmpty(context.TokenSecret))
@@ -143,14 +151,6 @@ namespace Hyperar.OAuthCore.Provider
             foreach (IContextInspector inspector in this._inspectors)
             {
                 inspector.InspectContext(phase, context);
-            }
-        }
-
-        private static void AssertContextDoesNotIncludeToken(IOAuthContext context)
-        {
-            if (context.Token != null)
-            {
-                throw Error.RequestForTokenMustNotIncludeTokenInContext(context);
             }
         }
     }

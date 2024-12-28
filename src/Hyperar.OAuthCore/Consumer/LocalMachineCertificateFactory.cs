@@ -49,6 +49,19 @@ namespace Hyperar.OAuthCore.Consumer
         }
 
         /// <summary>
+        /// Remotes the certificate validation callback.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="certificate">The certificate.</param>
+        /// <param name="chain">The chain.</param>
+        /// <param name="sslPolicyErrors">The SSL policy errors.</param>
+        /// <returns></returns>
+        public static bool RemoteCertificateValidationCallback(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
+        }
+
+        /// <summary>
         /// Creates the certificate.
         /// </summary>
         /// <returns></returns>
@@ -65,19 +78,6 @@ namespace Hyperar.OAuthCore.Consumer
         public int GetMatchingCertificateCount()
         {
             return this.GetCertificateCollection().Count;
-        }
-
-        /// <summary>
-        /// Remotes the certificate validation callback.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="certificate">The certificate.</param>
-        /// <param name="chain">The chain.</param>
-        /// <param name="sslPolicyErrors">The SSL policy errors.</param>
-        /// <returns></returns>
-        public static bool RemoteCertificateValidationCallback(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
         }
 
         /// <summary>

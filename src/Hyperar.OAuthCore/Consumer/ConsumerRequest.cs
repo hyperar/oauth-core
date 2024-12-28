@@ -166,24 +166,6 @@ namespace Hyperar.OAuthCore.Consumer
             return Convert.FromBase64String(await this.ToStringAsync());
         }
 
-        public async Task<XDocument> ToXDocumentAsync()
-        {
-            return XDocument.Parse(await this.ToStringAsync());
-        }
-
-        public async Task<string> ToStringAsync()
-        {
-            if (string.IsNullOrEmpty(this.ResponseBody))
-            {
-                HttpResponseMessage responseMessage = await this.ToResponseMessageAsync();
-
-                this.ResponseBody = await responseMessage.Content
-                    .ReadAsStringAsync();
-            }
-
-            return this.ResponseBody;
-        }
-
         public HttpRequestMessage ToRequestMessage()
         {
             RequestDescription description = this.GetRequestDescription();
@@ -236,31 +218,6 @@ namespace Hyperar.OAuthCore.Consumer
             return requestMessage;
         }
 
-        protected virtual HttpClientHandler GetHttpClientHandler()
-        {
-            HttpClientHandler httpClientHandler = new HttpClientHandler();
-
-            if (this.ProxyServerUri != null)
-            {
-                httpClientHandler.Proxy = new WebProxy(this.ProxyServerUri, false);
-            }
-
-            return httpClientHandler;
-        }
-
-        private HttpClient GetHttpClient()
-        {
-            HttpClient httpClient = new HttpClient(
-                this.GetHttpClientHandler());
-
-            if (this.Timeout.HasValue)
-            {
-                httpClient.Timeout = new TimeSpan(0, 0, 0, 0, this.Timeout.Value);
-            }
-
-            return httpClient;
-        }
-
         public async Task<HttpResponseMessage> ToResponseMessageAsync()
         {
             try
@@ -283,12 +240,55 @@ namespace Hyperar.OAuthCore.Consumer
             }
         }
 
+        public async Task<string> ToStringAsync()
+        {
+            if (string.IsNullOrEmpty(this.ResponseBody))
+            {
+                HttpResponseMessage responseMessage = await this.ToResponseMessageAsync();
+
+                this.ResponseBody = await responseMessage.Content
+                    .ReadAsStringAsync();
+            }
+
+            return this.ResponseBody;
+        }
+
+        public async Task<XDocument> ToXDocumentAsync()
+        {
+            return XDocument.Parse(await this.ToStringAsync());
+        }
+
+        protected virtual HttpClientHandler GetHttpClientHandler()
+        {
+            HttpClientHandler httpClientHandler = new HttpClientHandler();
+
+            if (this.ProxyServerUri != null)
+            {
+                httpClientHandler.Proxy = new WebProxy(this.ProxyServerUri, false);
+            }
+
+            return httpClientHandler;
+        }
+
         private void EnsureRequestHasNotBeenSignedYet()
         {
             if (!string.IsNullOrEmpty(this.Context.Signature))
             {
                 throw Error.ThisConsumerRequestHasAlreadyBeenSigned();
             }
+        }
+
+        private HttpClient GetHttpClient()
+        {
+            HttpClient httpClient = new HttpClient(
+                this.GetHttpClientHandler());
+
+            if (this.Timeout.HasValue)
+            {
+                httpClient.Timeout = new TimeSpan(0, 0, 0, 0, this.Timeout.Value);
+            }
+
+            return httpClient;
         }
     }
 }
